@@ -132,7 +132,7 @@
 
             {{-- ── FIELD COMPARISON (read-only) ─────────────────────────────── --}}
             <div>
-                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3 flex items-center gap-2">
+                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-2">
                     <i data-lucide="columns-2" class="w-3.5 h-3.5"></i>
                     Field-by-Field Comparison
                 </h3>
@@ -201,7 +201,7 @@
 
             {{-- ── NOTE ──────────────────────────────────────────────────────── --}}
             <div>
-                <label class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-1.5 block" for="merge-note">Note (optional)</label>
+                <label class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-1.5 block" for="merge-note">Note (optional)</label>
                 <textarea id="merge-note" x-model="note" rows="2"
                     placeholder="Why these are the same person, or anything the next reviewer should know."
                     class="w-full text-sm rounded-xl p-3 placeholder-slate-400 text-ink focus:outline-none transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
@@ -244,7 +244,7 @@
                 >
                     <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="merging" x-cloak></i>
                     <i data-lucide="git-merge" class="w-3.5 h-3.5" x-show="!merging"></i>
-                    <span x-text="merging ? 'Merging…' : 'Proceed with Merge'"></span>
+                    <span x-text="merging ? 'Merging…' : 'Proceed with merge'"></span>
                 </button>
             </div>
 

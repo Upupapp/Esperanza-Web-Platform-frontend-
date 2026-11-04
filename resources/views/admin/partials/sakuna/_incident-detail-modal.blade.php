@@ -45,7 +45,7 @@
             <div class="flex items-center gap-2">
                 <span x-show="selectedIncident?.severity" :class="severityBadge(selectedIncident?.severity ?? '')" class="sk-pill" x-text="(selectedIncident?.severity ?? '') + ' severity'"></span>
                 <span :class="statusBadge(selectedIncident?.status ?? '')" x-text="incidentStatusLabel(selectedIncident?.status ?? '')" :title="'Status on record: ' + (selectedIncident?.status ?? '')"></span>
-                <button aria-label="Close window" title="Close window" @click="showIncidentDetail = false" class="w-8 h-8 rounded-2xl hover:bg-slate-100 flex items-center justify-center text-ink-muted hover:text-slate-600 transition-colors ml-2">
+                <button aria-label="Close window" title="Close window" @click="showIncidentDetail = false" class="sk-mclose ml-2">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -189,7 +189,7 @@
                     </div>
                     <p x-show="!hasMapPin(selectedIncident)" class="text-xs text-ink-muted">No map location was saved with this incident. Use the barangay and sitio above.</p>
                     <button x-show="can('sakuna_incidents', 'edit')" type="button" @click="startIncidentLocation()" :disabled="incidentDetailFailed || onLastCopy" :title="incidentDetailFailed || onLastCopy ? 'Waits for the connection' : ''"
-                        class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="sk-btn sk-btn-soft sk-btn-sm mt-2">
                         <i data-lucide="map-pinned" class="w-3.5 h-3.5"></i><span x-text="hasMapPin(selectedIncident) ? 'Move the pin' : 'Add map location'"></span>
                     </button>
                 </div>
@@ -197,10 +197,10 @@
                     <x-sakuna.location-picker target="incidentLocationDraft" search subject="incident" />
                     <div class="flex items-center gap-2 mt-2">
                         <button type="button" @click="saveIncidentLocation()" :disabled="incidentLocationSaving"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors disabled:opacity-50">
+                            class="sk-btn sk-btn-p sk-btn-sm">
                             <i data-lucide="save" class="w-3.5 h-3.5"></i><span x-text="incidentLocationSaving ? 'Saving…' : (hasMapPin(incidentLocationDraft) ? 'Save location' : 'Save without a pin')"></span>
                         </button>
-                        <button type="button" @click="incidentLocationEditing = false" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 border border-slate-200 rounded-xl transition-colors">Cancel</button>
+                        <button type="button" @click="incidentLocationEditing = false" class="sk-btn sk-btn-sm">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -248,7 +248,7 @@
                     </div>
                     <div class="flex gap-2">
                         <button @click="actIncidentVerb(selectedIncident, 'escalate', { severity: escalateSeverity, note: escalateNote || null }); escalateNote = ''" class="sk-btn sk-btn-sm sk-btn-p" x-text="'Raise from ' + (selectedIncident?.severity || '—') + ' to ' + escalateSeverity">Raise severity</button>
-                        <button @click="showEscalateForm = false" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 border border-slate-200 rounded-xl transition-colors">Cancel</button>
+                        <button @click="showEscalateForm = false" class="sk-btn sk-btn-sm">Cancel</button>
                     </div>
                 </div>
 
@@ -290,7 +290,7 @@
              open their forms; the other steps wait under More actions. Marking
              resolved or closing the incident asks first, because it ends the
              work; closing the window is only the × above. --}}
-        <div class="flex flex-wrap items-center gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 flex-shrink-0"
+        <div x-show="!showAssignForm && !showEscalateForm" class="flex flex-wrap items-center gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 flex-shrink-0"
              x-data="{ more: false }" @keydown.escape.stop="if (more) more = false; else if (incidentConfirmVerb) incidentConfirmVerb = ''; else if (showAssignForm) showAssignForm = false; else if (showEscalateForm) showEscalateForm = false; else showIncidentDetail = false">
             <template x-if="incidentConfirmVerb">
                 <div class="w-full flex flex-wrap items-center gap-2" role="alertdialog" aria-labelledby="incident-confirm-text">

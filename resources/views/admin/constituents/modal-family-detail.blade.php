@@ -139,7 +139,7 @@
                         {{-- Left column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Family Details</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Family Details</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-ink-muted">Family Type</dt>
@@ -172,7 +172,7 @@
                         {{-- Right column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Status & Verification</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Status & Verification</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-center gap-2">
                                         <dt class="text-xs text-ink-muted">Record Status</dt>
@@ -195,7 +195,7 @@
 
                             {{-- Programs chips --}}
                             <x-ui.card class="p-4">
-                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Enrolled Programs</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Enrolled Programs</h4>
                                 <div class="flex flex-wrap gap-1.5">
                                     <template x-if="!selectedFamily.programs || selectedFamily.programs.length === 0">
                                         <span class="text-xs text-ink-muted italic">No enrolled programs</span>
@@ -208,7 +208,7 @@
 
                             {{-- Notes --}}
                             <x-ui.card class="p-4">
-                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-2">Notes / Remarks</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2">Notes / Remarks</h4>
                                 <p class="text-xs text-slate-600 leading-relaxed" x-text="selectedFamily.notes || 'No notes recorded.'"></p>
                             </x-ui.card>
                         </div>
@@ -240,7 +240,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <x-ui.button variant="secondary" size="sm" @click="editing = false">Cancel</x-ui.button>
-                                <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="saveEdit()" x-text="saving ? 'Saving…' : 'Save Changes'"></x-ui.button>
+                                <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="saveEdit()" x-text="saving ? 'Saving…' : 'Save changes'"></x-ui.button>
                             </div>
                         </div>
                     </template>
@@ -334,7 +334,7 @@
 
             {{-- ── Modal Footer ── --}}
             <div class="flex-shrink-0 px-6 py-4 border-t border-brand-600/10 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
-                <x-ui.button size="sm" icon="pencil" x-show="can('const_family','edit')" @click="startEdit()">Edit Family</x-ui.button>
+                <x-ui.button size="sm" icon="pencil" x-show="can('const_family','edit')" @click="startEdit()">Edit family</x-ui.button>
             </div>
 
         </div>

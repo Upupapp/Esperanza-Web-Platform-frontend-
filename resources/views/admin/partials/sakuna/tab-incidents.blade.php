@@ -272,11 +272,11 @@
                     <i data-lucide="siren" class="w-5 h-5 text-rose-600"></i>
                 </span>
                 <div>
-                    <h3 class="text-base font-semibold text-ink-body">Report New Incident</h3>
+                    <h3 class="text-base font-semibold text-ink-body">Report new incident</h3>
                     <p class="text-xs text-ink-muted">The reporting officer is recorded automatically from your session.</p>
                 </div>
             </div>
-            <button aria-label="Close window" @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors">
+            <button aria-label="Close window" @click="showCreateIncident = false" class="sk-mclose">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
@@ -348,11 +348,11 @@
         </div>
 
         <div class="flex items-center gap-3 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl">
-            <button @click="showCreateIncident = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
+            <button @click="showCreateIncident = false" class="sk-btn">Cancel</button>
             <button :disabled="incidentSaving || !incidentForm.title || !incidentForm.type || !incidentForm.barangay || !incidentForm.severity" @click="submitIncident()"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-2xl transition-colors ml-auto disabled:opacity-50">
+                class="sk-btn sk-btn-p ml-auto">
                 <i data-lucide="save" class="w-4 h-4"></i>
-                <span x-text="incidentSaving ? 'Reporting…' : 'Submit Incident'"></span>
+                <span x-text="incidentSaving ? 'Reporting…' : 'Submit incident'"></span>
             </button>
         </div>
     </div>

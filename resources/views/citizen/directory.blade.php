@@ -121,10 +121,10 @@
                     <input aria-label="Search" type="text" x-model="search" x-bind:placeholder="$store.lang.current === 'en' ? 'Search offices or barangays...' : 'Maghanap ng opisina o barangay...'" class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                 </div>
                 <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto shrink-0">
-                    <button type="button" @click="tab = 'offices'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                    <button type="button" @click="tab = 'offices'" class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="building-2" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Opisina" en="Municipal Offices" />
                     </button>
-                    <button type="button" @click="tab = 'barangays'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                    <button type="button" @click="tab = 'barangays'" class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="map-pin" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Barangay" en="Barangays" />
                     </button>
                 </div>
@@ -157,10 +157,10 @@
                             <p class="text-sm font-semibold text-ink leading-snug" x-text="office.name"></p>
                             <p class="text-xs text-ink-muted mt-0.5" x-text="office.head"></p>
                             <div class="flex items-center gap-2 mt-3.5 pt-3.5 border-t border-brand-600/10">
-                                <a :href="'tel:' + office.contact.replace(/[^0-9+]/g, '')" class="flex-1 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl px-2.5 py-2 transition-colors">
+                                <a :href="'tel:' + office.contact.replace(/[^0-9+]/g, '')" class="tap flex-1 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl px-2.5 py-2 transition-colors">
                                     <i data-lucide="phone" class="w-3.5 h-3.5"></i><span x-text="office.contact"></span>
                                 </a>
-                                <a :href="'mailto:' + office.email" class="w-9 h-9 shrink-0 inline-flex items-center justify-center text-ink-muted bg-slate-50 hover:bg-brand-50 hover:text-brand-600 rounded-xl transition-colors" :title="office.email">
+                                <a :href="'mailto:' + office.email" class="tap w-9 h-9 shrink-0 inline-flex items-center justify-center text-ink-muted bg-slate-50 hover:bg-brand-50 hover:text-brand-600 rounded-xl transition-colors" :title="office.email">
                                     <i data-lucide="mail" class="w-3.5 h-3.5"></i>
                                 </a>
                             </div>

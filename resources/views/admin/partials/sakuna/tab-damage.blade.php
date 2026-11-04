@@ -145,7 +145,7 @@
                         <div class="sk-empty" style="padding: 36px 16px;">
                             <i data-lucide="clipboard-list"></i>
                             <span>No assessments match your filters.</span>
-                            <button type="button" @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="sk-clear">Clear Filters</button>
+                            <button type="button" @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="sk-clear">Clear filters</button>
                         </div>
                     </td>
                 </tr>
@@ -159,14 +159,14 @@
 {{-- ── Assessment Detail Modal ─────────────────────────────────────────────────────────── --}}
 <div x-show="showAssessmentDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showAssessmentDetail = false"
         x-trap="showAssessmentDetail"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showAssessmentDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
@@ -176,7 +176,7 @@
                 </div>
                 <p class="text-xs text-ink-muted mt-0.5" x-text="(selectedAssessment?.sector ?? '') + ' · ' + (selectedAssessment?.barangay ?? '')"></p>
             </div>
-            <button aria-label="Close window" @click="showAssessmentDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showAssessmentDetail = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
@@ -209,7 +209,7 @@
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex items-center gap-2">
             <button x-show="can('sakuna_damage','edit')" @click="showAssessmentDetail = false; openEditAssessment(selectedAssessment)"
-                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors">
+                class="sk-btn">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Edit
             </button>
         </div>
@@ -219,18 +219,18 @@
 {{-- ── New / Edit Assessment Modal ─────────────────────────────────────────────────────── --}}
 <div x-show="showCreateAssessment" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showCreateAssessment = false"
         x-trap="showCreateAssessment"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showCreateAssessment = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
-            <h3 class="font-semibold text-ink-body" x-text="damageFormMode === 'create' ? 'New Damage Assessment' : 'Edit Assessment'"></h3>
-            <button aria-label="Close window" @click="showCreateAssessment = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 class="font-semibold text-ink-body" x-text="damageFormMode === 'create' ? 'New damage assessment' : 'Edit assessment'"></h3>
+            <button aria-label="Close window" @click="showCreateAssessment = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -284,11 +284,11 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
-            <button @click="showCreateAssessment = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">Cancel</button>
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
+            <button @click="showCreateAssessment = false" class="sk-btn">Cancel</button>
             <button :disabled="damageSaving || !damageForm.barangay || !damageForm.sector" @click="saveDamage()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
-                <span x-text="damageSaving ? 'Saving…' : (damageFormMode === 'create' ? 'Record Assessment' : 'Save Changes')"></span>
+                class="sk-btn sk-btn-p">
+                <span x-text="damageSaving ? 'Saving…' : (damageFormMode === 'create' ? 'Record assessment' : 'Save changes')"></span>
             </button>
         </div>
     </div>

@@ -422,16 +422,16 @@
     }
 
     /* compact variant (6-up grids): diagonal gradient so the faded object sits in the light corner */
-    .slab-diag { background: linear-gradient(135deg, var(--slab-1) 0%, var(--slab-1) 50%, var(--slab-2) 100%); }
+    .slab-diag { background: linear-gradient(135deg, var(--slab-1) 0%, var(--slab-1) 55%, var(--slab-2) 100%); }
     .slab-diag::before { background: radial-gradient(140px 80px at 10% 0%, rgb(255 255 255 / .05), transparent 70%); }
 
-    /* tones — all text is white; every sub colour passes 4.5:1 on the left 45% of the gradient */
-    .slab-brand  { --slab-1:#2F62F5; --slab-2:#7C9FFF; --slab-text:#fff;    --slab-sub:#DCE5FF; --slab-shadow: rgb(29 71 214 / .30); }
-    .slab-sky    { --slab-1:#1565D0; --slab-2:#7CC4FF; --slab-text:#fff;    --slab-sub:#D9ECFF; --slab-shadow: rgb(21 101 208 / .30); }
+    /* tones — all text is white; every sub colour passes 4.5:1 on the solid part of the gradient (lifted 2026-11-04) */
+    .slab-brand  { --slab-1:#2F62F5; --slab-2:#7C9FFF; --slab-text:#fff;    --slab-sub:#FDFEFF; --slab-shadow: rgb(29 71 214 / .30); }
+    .slab-sky    { --slab-1:#1565D0; --slab-2:#7CC4FF; --slab-text:#fff;    --slab-sub:#F2F8FF; --slab-shadow: rgb(21 101 208 / .30); }
     .slab-deep   { --slab-1:#1836A8; --slab-2:#5B7FE6; --slab-text:#fff;    --slab-sub:#D6DEFA; --slab-shadow: rgb(24 54 168 / .32); }
     .slab-navy   { --slab-1:#142B66; --slab-2:#3F63C0; --slab-text:#fff;    --slab-sub:#BFCBEB; --slab-shadow: rgb(20 43 102 / .35); }
-    .slab-violet { --slab-1:#5B4FE0; --slab-2:#A39CF4; --slab-text:#fff;    --slab-sub:#E6E3FF; --slab-shadow: rgb(91 79 224 / .30); }
-    .slab-teal   { --slab-1:#0A6F8F; --slab-2:#4FBAD6; --slab-text:#fff;    --slab-sub:#DDF4FA; --slab-shadow: rgb(10 111 143 / .30); }
+    .slab-violet { --slab-1:#5B4FE0; --slab-2:#A39CF4; --slab-text:#fff;    --slab-sub:#F0EEFF; --slab-shadow: rgb(91 79 224 / .30); }
+    .slab-teal   { --slab-1:#0A6F8F; --slab-2:#4FBAD6; --slab-text:#fff;    --slab-sub:#E2F6FB; --slab-shadow: rgb(10 111 143 / .30); }
     .slab-gold   { --slab-1:#7F5E00; --slab-2:#E0B400; --slab-text:#fff;    --slab-sub:#FFF0BF; --slab-shadow: rgb(127 94 0 / .35); }
     .slab-amber  { --slab-1:#8C4500; --slab-2:#F08A1D; --slab-text:#fff;    --slab-sub:#FFE3C2; --slab-shadow: rgb(140 69 0 / .35); }
     .slab-rose   { --slab-1:#BE123C; --slab-2:#F27A93; --slab-text:#fff;    --slab-sub:#FFDDE5; --slab-shadow: rgb(190 18 60 / .30); }
@@ -606,6 +606,13 @@ body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area):not(.html2can
 }
 body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-print-area):not(.html2canvas-container) {
     display: none !important;
+}
+
+/* Tap targets (UI pass 2026-11-04): on a touch screen a small control gets an
+   invisible hit area of at least 44 x 44px, centred on it. It looks the same. */
+@media (pointer: coarse) {
+    .tap { position: relative; }
+    .tap::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
 }
 
 @media print {

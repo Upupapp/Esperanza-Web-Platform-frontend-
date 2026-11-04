@@ -146,7 +146,7 @@
                                             :aria-label="(channel === 'sms' ? 'SMS' : 'Email') + ': ' + ($store.lang.current === 'en' ? pref.label?.en : (pref.label?.fil || pref.label?.en))"
                                             :disabled="channel === 'sms' && !smsAvailable"
                                             :title="channel === 'sms' && !smsAvailable ? ($store.lang.current === 'en' ? 'Text messages are coming soon' : 'Darating pa ang text message') : null"
-                                            class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative disabled:opacity-40 disabled:cursor-not-allowed"
+                                            class="tap w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative disabled:opacity-40 disabled:cursor-not-allowed"
                                             :class="pref[channel] ? 'bg-brand-600' : 'bg-slate-200'"
                                         >
                                             <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="pref[channel] && 'translate-x-4'"></span>
@@ -174,7 +174,7 @@
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="savingPassword" x-cloak></i>
                                 <i data-lucide="check" class="w-3.5 h-3.5" x-show="!savingPassword"></i>
-                                <span x-text="savingPassword ? ($store.lang.current === 'en' ? 'Saving…' : 'Sine-save…') : ($store.lang.current === 'en' ? 'Update Password' : 'I-update ang Password')"></span>
+                                <span x-text="savingPassword ? ($store.lang.current === 'en' ? 'Saving…' : 'Sine-save…') : ($store.lang.current === 'en' ? 'Update password' : 'I-update ang password')"></span>
                             </span>
                         </x-ui.button>
                     </div>
@@ -219,7 +219,7 @@
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="requestingData" x-cloak></i>
                                 <i data-lucide="send" class="w-3.5 h-3.5" x-show="!requestingData"></i>
-                                <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : ($store.lang.current === 'en' ? 'Send Request' : 'Ipadala ang Hiling')"></span>
+                                <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : ($store.lang.current === 'en' ? 'Send request' : 'Ipadala ang hiling')"></span>
                             </span>
                         </x-ui.button>
                     </form>

@@ -169,7 +169,7 @@
 
         <div x-show="view === 'overview'" class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-[14.5px] text-ink-body">Live counts, refreshed each time this page opens.</p>
-            <x-ui.button :href="route('admin.reports')" icon="download">Export Report</x-ui.button>
+            <x-ui.button :href="route('admin.reports')" icon="download">Export report</x-ui.button>
         </div>
 
         <!-- Skeleton state -->

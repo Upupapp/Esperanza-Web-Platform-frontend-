@@ -181,7 +181,7 @@
                                 <option>Filipino</option>
                             </select>
                         </div>
-                        <x-ui.button icon="check" @click="save()" x-show="can('set_general','edit')">Save Changes</x-ui.button>
+                        <x-ui.button icon="check" @click="save()" x-show="can('set_general','edit')">Save changes</x-ui.button>
                     </div>
                 </x-ui.card>
             </div>
@@ -346,7 +346,7 @@
                             </div>
                             <x-ui.input name="municipality_name" label="Municipality Name" x-model="municipalityName" x-bind:disabled="!can('set_branding','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                             <p class="text-[11px] text-ink-muted" x-show="current?.version">Current version <span x-text="current?.version"></span><span x-show="current?.effective_date"> · effective <span x-text="current?.effective_date"></span></span></p>
-                            <x-ui.button icon="check" x-bind:disabled="saving" @click="save()" x-show="can('set_branding','edit')" x-text="saving ? 'Publishing…' : 'Publish New Version'"></x-ui.button>
+                            <x-ui.button icon="check" x-bind:disabled="saving" @click="save()" x-show="can('set_branding','edit')" x-text="saving ? 'Publishing…' : 'Publish new version'"></x-ui.button>
                         </div>
                     </x-ui.card>
 

@@ -28,7 +28,7 @@
         <p class="text-sm font-semibold text-ink" x-text="$store.lang.current === 'en' ? @js($titleEn ?? $title) : @js($title)">{{ $title }}</p>
         <p class="text-xs text-ink-muted mt-0.5 leading-relaxed">{{ $slot }}</p>
     </div>
-    <button @click="dismiss()" class="text-ink-muted hover:text-ink shrink-0 transition-colors" aria-label="Dismiss">
+    <button @click="dismiss()" class="tap text-ink-muted hover:text-ink shrink-0 transition-colors" aria-label="Dismiss">
         <i data-lucide="x" class="w-4 h-4"></i>
     </button>
 </div>

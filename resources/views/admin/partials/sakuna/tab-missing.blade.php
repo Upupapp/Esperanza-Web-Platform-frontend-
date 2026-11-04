@@ -190,9 +190,11 @@
             </div>
         </section>
 
-        {{-- One case --}}
-        <section x-show="open" x-cloak class="sk-card overflow-hidden" aria-label="Case details">
-            <div class="sk-chead">
+        {{-- One case: a window like every other tab's (owner, 2026-11-04). --}}
+        <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+            @click.self="open = null" @keydown.escape.window="open = null">
+        <section x-trap="open" role="dialog" aria-modal="true" aria-label="Case details" class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto overflow-hidden">
+            <div class="sk-chead" style="padding: 16px 24px;">
                 <div>
                     <p class="sk-csub" x-text="open ? open.ref + ' · ' + kinds[open.kind] : ''"></p>
                     <div class="flex flex-wrap items-center gap-2 mt-0.5">
@@ -200,9 +202,9 @@
                         <span class="sk-pill" :class="open ? statusTone[open.status] : ''" x-text="open ? open.status : ''"></span>
                     </div>
                 </div>
-                <button type="button" @click="open = null" class="sk-btn sk-btn-sm">Close</button>
+                <button type="button" aria-label="Close window" @click="open = null" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div class="p-3.5 space-y-3">
+            <div class="px-6 py-4 space-y-3">
                 <dl class="grid gap-3 sm:grid-cols-2 text-[12.5px]" x-show="open">
                     <div><dt class="sk-ssub">Incident</dt><dd x-text="open?.incident ? open.incident.ref + ' · ' + open.incident.title : '—'"></dd></div>
                     <div><dt class="sk-ssub">Registry record</dt><dd x-text="open?.registry_ref || 'Not in the registry'"></dd></div>
@@ -257,11 +259,14 @@
                 </div>
             </div>
         </section>
+        </div>
 
-        {{-- Record a person --}}
-        <section x-show="adding" x-cloak class="sk-card overflow-hidden" aria-label="Record a person">
-            <div class="sk-chead"><h2 class="sk-ctitle">Record a person</h2><button type="button" @click="adding = false" class="sk-btn sk-btn-sm">Cancel</button></div>
-            <div class="p-3.5 space-y-3">
+        {{-- Record a person: a window too. --}}
+        <div x-show="adding" x-cloak class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+            @click.self="adding = false" @keydown.escape.window="adding = false">
+        <section x-trap="adding" role="dialog" aria-modal="true" aria-label="Record a person" class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto overflow-hidden">
+            <div class="sk-chead" style="padding: 16px 24px;"><h2 class="sk-ctitle" style="font-size: 15px;">Record a person</h2><button type="button" aria-label="Close window" @click="adding = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+            <div class="px-6 py-4 space-y-3">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <label class="text-xs text-[#4B5568] flex flex-col gap-1">Incident *
                         <select x-model="form.incident" class="sk-sel w-full">
@@ -303,8 +308,12 @@
                         <textarea x-model="form.description" rows="2" maxlength="2000" class="w-full text-[12.5px] border border-[#E3E8F1] rounded-lg px-2 py-1.5"></textarea>
                     </label>
                 </div>
+            </div>
+            <div class="flex justify-end gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/60">
+                <button type="button" class="sk-btn" @click="adding = false">Cancel</button>
                 <button type="button" class="sk-btn sk-btn-p" :disabled="saving || !form.incident" @click="record()"><i data-lucide="check"></i><span x-text="saving ? 'Saving…' : 'Record'"></span></button>
             </div>
         </section>
+        </div>
     </div>
 </div>

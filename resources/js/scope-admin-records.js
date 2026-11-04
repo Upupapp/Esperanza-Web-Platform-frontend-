@@ -456,7 +456,7 @@ function adminBalita(barangays = []) {
         // review (a writer), or schedule (an approver with a time).
         get primaryLabel() {
             if (this.form.schedule) return this.approver ? 'Schedule Post' : 'Send for review';
-            return this.approver ? 'Publish Now' : 'Send for review';
+            return this.approver ? 'Publish now' : 'Send for review';
         },
         // The post as residents will see it in Balita.
         get previewWhen() {

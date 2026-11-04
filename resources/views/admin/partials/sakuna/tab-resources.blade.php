@@ -147,7 +147,7 @@
                         <div class="sk-empty" style="padding: 36px 16px;">
                             <i data-lucide="package"></i>
                             <span>No resources match your filters.</span>
-                            <button type="button" @click="resourceSearch = ''; resourceCategoryFilter = ''" class="sk-clear">Clear Filters</button>
+                            <button type="button" @click="resourceSearch = ''; resourceCategoryFilter = ''" class="sk-clear">Clear filters</button>
                         </div>
                     </td>
                 </tr>
@@ -178,13 +178,13 @@
                     <p class="text-xs text-ink-muted" x-text="selectedResource?.name ?? '—'"></p>
                 </div>
             </div>
-            <button aria-label="Close window" @click="showDeployModal = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showDeployModal = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">
             <div class="flex items-center justify-between text-xs bg-slate-50 rounded-xl p-3">
-                <span class="text-ink-muted">Available: <strong class="text-emerald-600" x-text="selectedResource?.available"></strong></span>
-                <span class="text-ink-muted">Deployed: <strong class="text-orange-600" x-text="selectedResource?.deployed"></strong></span>
+                <span class="text-ink-muted">Available: <strong class="text-emerald-700" x-text="selectedResource?.available"></strong></span>
+                <span class="text-ink-muted">Deployed: <strong class="text-orange-700" x-text="selectedResource?.deployed"></strong></span>
             </div>
 
             <div>
@@ -204,7 +204,7 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
             <button :disabled="deploySaving || !deployForm.quantity || Number(deployForm.quantity) > (selectedResource?.deployed ?? 0)" @click="submitDeploy('return')"
                 class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-white/60 transition-colors disabled:opacity-40">
                 <i data-lucide="undo-2" class="w-4 h-4 inline mr-1.5"></i> Return
@@ -220,14 +220,14 @@
 {{-- ── Resource Detail Modal ───────────────────────────────────────────────────────────── --}}
 <div x-show="showResourceDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showResourceDetail = false"
         x-trap="showResourceDetail"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showResourceDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">
@@ -241,7 +241,7 @@
                     </div>
                 </div>
             </div>
-            <button aria-label="Close window" @click="showResourceDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showResourceDetail = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
@@ -260,8 +260,8 @@
                 <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="boxes" class="w-3.5 h-3.5"></i> Inventory</h4>
                 <div class="bg-slate-50 rounded-xl p-4">
                     <div class="flex items-center justify-between mb-2 text-xs text-ink-muted">
-                        <span>Deployed: <strong class="text-orange-600" x-text="selectedResource?.deployed"></strong></span>
-                        <span>Available: <strong class="text-emerald-600" x-text="selectedResource?.available"></strong></span>
+                        <span>Deployed: <strong class="text-orange-700" x-text="selectedResource?.deployed"></strong></span>
+                        <span>Available: <strong class="text-emerald-700" x-text="selectedResource?.available"></strong></span>
                     </div>
                     <div class="h-2.5 bg-emerald-200 rounded-full overflow-hidden">
                         <div class="h-full bg-orange-400" :style="'width: ' + (selectedResource?.quantity ? (selectedResource.deployed / selectedResource.quantity * 100) : 0) + '%'"></div>
@@ -291,12 +291,12 @@
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex flex-wrap gap-2 items-center">
             <button x-show="can('sakuna_resources','edit')" @click="showResourceDetail = false; openEditResource(selectedResource)"
-                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors">
+                class="sk-btn">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Edit
             </button>
             <button x-show="selectedResource?.available > 0 || selectedResource?.deployed > 0" @click="showResourceDetail = false; openDeploy(selectedResource)"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 transition-colors ml-auto">
-                <i data-lucide="send" class="w-4 h-4"></i> Deploy / Return
+                <i data-lucide="send" class="w-4 h-4"></i> Deploy / return
             </button>
         </div>
     </div>
@@ -315,8 +315,8 @@
         class="bg-white rounded-[28px] shadow-float w-full max-w-xl">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
-            <h3 class="font-semibold text-ink-body" x-text="resourceFormMode === 'create' ? 'Add Resource to Inventory' : 'Edit Resource'"></h3>
-            <button aria-label="Close window" @click="showCreateResource = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 class="font-semibold text-ink-body" x-text="resourceFormMode === 'create' ? 'Add resource to inventory' : 'Edit resource'"></h3>
+            <button aria-label="Close window" @click="showCreateResource = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-2 gap-4">
@@ -359,14 +359,14 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
             <button @click="showCreateResource = false"
-                class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">
+                class="sk-btn">
                 Cancel
             </button>
             <button :disabled="resourceSaving || !resourceForm.name || !resourceForm.category || resourceForm.quantity === ''" @click="saveResource()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
-                <span x-text="resourceSaving ? 'Saving…' : (resourceFormMode === 'create' ? 'Add Resource' : 'Save Changes')"></span>
+                class="sk-btn sk-btn-p">
+                <span x-text="resourceSaving ? 'Saving…' : (resourceFormMode === 'create' ? 'Add resource' : 'Save changes')"></span>
             </button>
         </div>
     </div>

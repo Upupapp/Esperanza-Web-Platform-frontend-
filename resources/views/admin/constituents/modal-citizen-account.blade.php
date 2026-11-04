@@ -373,11 +373,11 @@
                      must keep working there exactly as before. --}}
                 <p x-show="accountDetail?.identity && accountDetail.identity.status !== 'Verified'" x-cloak class="text-xs text-amber-700">The identity is not verified yet. Verify it above (by hand, with a reason, if the automated check could not) before approving the account.</p>
                 <div class="flex flex-wrap gap-2">
-                    <x-ui.button size="sm" icon="check" x-show="can('const_citizen_verification','verify')" x-bind:disabled="processingCitizen || (accountDetail?.identity && accountDetail.identity.status !== 'Verified')" @click="decideAccount('verify')">Verify Account</x-ui.button>
+                    <x-ui.button size="sm" icon="check" x-show="can('const_citizen_verification','verify')" x-bind:disabled="processingCitizen || (accountDetail?.identity && accountDetail.identity.status !== 'Verified')" @click="decideAccount('verify')">Verify account</x-ui.button>
                 </div>
                 <div x-show="accountDetail?.status === 'Pending Review' && can('const_citizen_verification','reject')" class="space-y-2">
                     <textarea aria-label="Rejection remarks" x-model="rejectAccountRemarks" rows="2" placeholder="Reason for rejection (the resident will read it)..." class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none"></textarea>
-                    <button type="button" @click="decideAccount('reject')" :disabled="processingCitizen || rejectAccountRemarks.trim().length < 5" class="text-xs font-semibold rounded-xl px-3 py-2 bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">Reject Account</button>
+                    <button type="button" @click="decideAccount('reject')" :disabled="processingCitizen || rejectAccountRemarks.trim().length < 5" class="text-xs font-semibold rounded-xl px-3 py-2 bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">Reject account</button>
                 </div>
             </section>
 

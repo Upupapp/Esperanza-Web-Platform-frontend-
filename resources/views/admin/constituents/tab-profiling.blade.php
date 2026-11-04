@@ -153,7 +153,7 @@
                         <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Last Visit</th>
                         <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Assigned Encoder</th>
                         <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
-                        <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-brand-600/[.08]">
@@ -223,13 +223,13 @@
                             </td>
 
                             {{-- Actions --}}
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <td class="px-4 py-3 text-left whitespace-nowrap">
                                 <button
                                     @click="goToBarangayResidents(b.name)"
                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 ring-1 ring-brand-200 transition"
                                     :title="'View residents in Brgy. ' + b.name"
                                 >
-                                    <i data-lucide="users" class="w-3 h-3"></i> View Residents
+                                    <i data-lucide="users" class="w-3 h-3"></i> View residents
                                 </button>
                             </td>
                         </tr>

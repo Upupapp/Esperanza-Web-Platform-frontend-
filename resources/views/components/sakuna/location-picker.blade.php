@@ -28,16 +28,16 @@
                 <span x-show="isRequired" class="text-rose-500">*</span>
                 <span x-show="!isRequired" class="font-normal text-ink-muted" x-text="t('(optional)', '(opsyonal)')"></span>
             </p>
-            <p x-show="hasPin" class="text-[11px] font-semibold text-emerald-700 mt-0.5 flex items-center gap-1">
+            <p x-show="hasPin" class="text-xs font-semibold text-emerald-700 mt-0.5 flex items-center gap-1">
                 <i data-lucide="map-pin-check" class="w-3.5 h-3.5"></i>
                 <span x-text="t('Pinned at', 'Naka-pin sa')"></span>
                 <span class="font-mono" x-text="coords"></span>
             </p>
-            <p x-show="!hasPin" class="text-[11px] mt-0.5" :class="isRequired ? 'text-rose-700 font-semibold' : 'text-ink-muted'" x-text="emptyText"></p>
+            <p x-show="!hasPin" class="text-xs mt-0.5" :class="isRequired ? 'text-rose-700 font-semibold' : 'text-ink-muted'" x-text="emptyText"></p>
         </div>
         <div class="flex items-center gap-1.5" x-show="hasPin">
-            <a :href="osm" target="_blank" rel="noopener" class="text-[11px] font-semibold text-brand-600 hover:underline" x-text="t('View larger', 'Tingnan nang mas malaki')"></a>
-            <button type="button" @click="clearPin()" class="text-[11px] font-semibold text-slate-600 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50" x-text="t('Remove pin', 'Alisin ang pin')"></button>
+            <a :href="osm" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-600 hover:underline" x-text="t('View larger', 'Tingnan nang mas malaki')"></a>
+            <button type="button" @click="clearPin()" class="text-xs font-semibold text-slate-600 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50" x-text="t('Remove pin', 'Alisin ang pin')"></button>
         </div>
     </div>
 
@@ -51,9 +51,9 @@
             <i data-lucide="locate-fixed" class="w-4 h-4"></i><span x-text="gps === 'locating' ? t('Finding you…', 'Hinahanap ka…') : t('Use my location', 'Gamitin ang aking lokasyon')"></span>
         </button>
     </div>
-    <p x-show="gps === 'idle' && !hasPin" class="text-[11px] text-ink-muted mt-1.5"
+    <p x-show="gps === 'idle' && !hasPin" class="text-xs text-ink-muted mt-1.5"
        x-text="t('Your device asks before sharing your location; it is used only to place the pin.', 'Magtatanong muna ang iyong device bago ibahagi ang lokasyon mo; gagamitin lang ito para ilagay ang pin.')"></p>
-    <p x-show="gpsMessage" x-cloak role="status" class="text-[11px] mt-1.5" :class="gpsTrouble ? 'text-amber-800 font-semibold' : 'text-ink-muted'" x-text="gpsMessage"></p>
+    <p x-show="gpsMessage" x-cloak role="status" class="text-xs mt-1.5" :class="gpsTrouble ? 'text-amber-800 font-semibold' : 'text-ink-muted'" x-text="gpsMessage"></p>
 
     @if ($search)
         <div x-show="canSearch" class="mt-3">
@@ -74,9 +74,9 @@
                     </li>
                 </template>
             </ul>
-            <p x-show="searchState === 'empty'" class="text-[11px] text-ink-muted mt-1.5" x-text="t('Nothing found for that. Try other words, or pin it on the map.', 'Walang nahanap. Subukan ang ibang salita, o i-pin sa mapa.')"></p>
-            <p x-show="searchState === 'failed'" class="text-[11px] text-amber-800 font-semibold mt-1.5" x-text="t('The address search is not available right now. Pin the place on the map instead.', 'Hindi magamit ang paghahanap ngayon. I-pin na lang sa mapa.')"></p>
-            <p x-show="searchState === 'chosen'" class="text-[11px] text-ink-muted mt-1.5" x-text="t('A search result is approximate. Check the pin and drag it to the exact spot.', 'Tantiya lang ang resulta ng paghahanap. Tingnan ang pin at i-drag sa eksaktong lugar.')"></p>
+            <p x-show="searchState === 'empty'" class="text-xs text-ink-muted mt-1.5" x-text="t('Nothing found for that. Try other words, or pin it on the map.', 'Walang nahanap. Subukan ang ibang salita, o i-pin sa mapa.')"></p>
+            <p x-show="searchState === 'failed'" class="text-xs text-amber-800 font-semibold mt-1.5" x-text="t('The address search is not available right now. Pin the place on the map instead.', 'Hindi magamit ang paghahanap ngayon. I-pin na lang sa mapa.')"></p>
+            <p x-show="searchState === 'chosen'" class="text-xs text-ink-muted mt-1.5" x-text="t('A search result is approximate. Check the pin and drag it to the exact spot.', 'Tantiya lang ang resulta ng paghahanap. Tingnan ang pin at i-drag sa eksaktong lugar.')"></p>
         </div>
     @endif
 
@@ -85,12 +85,12 @@
             <div x-ref="map" class="sakuna-map h-64 sm:h-72 w-full rounded-xl overflow-hidden border border-slate-200"
                  :aria-label="t('Map. Tap or click to place the pin.', 'Mapa. I-tap o i-click para ilagay ang pin.')" role="application"></div>
             <div x-show="mapState === 'loading'" class="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
-                <span class="text-[11px] font-semibold text-slate-600 bg-white/90 rounded-full px-2.5 py-1 shadow" x-text="t('Loading the map…', 'Nilo-load ang mapa…')"></span>
+                <span class="text-xs font-semibold text-slate-600 bg-white/90 rounded-full px-2.5 py-1 shadow" x-text="t('Loading the map…', 'Nilo-load ang mapa…')"></span>
             </div>
         </div>
-        <p x-show="mapState !== 'failed'" class="text-[11px] text-ink-muted mt-1.5"
+        <p x-show="mapState !== 'failed'" class="text-xs text-ink-muted mt-1.5"
            x-text="t('Tap the map to place the pin. Tap another spot to move it.', 'I-tap ang mapa para ilagay ang pin. I-tap ang ibang lugar para ilipat ito.') + ' ' + t('You can also drag the pin.', 'Puwede mo ring i-drag ang pin.')"></p>
-        <div x-show="mapState === 'failed'" x-cloak role="alert" class="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-900">
+        <div x-show="mapState === 'failed'" x-cloak role="alert" class="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
             <p class="font-semibold" x-text="t('The map could not load (no connection, or the map service is busy).', 'Hindi ma-load ang mapa (walang koneksyon, o abala ang serbisyo ng mapa).')"></p>
             <p x-text="failedText"></p>
             <button type="button" @click="retryMap()" class="mt-1 font-semibold underline underline-offset-2" x-text="t('Try again', 'Subukang muli')"></button>

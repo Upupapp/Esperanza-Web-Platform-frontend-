@@ -377,7 +377,7 @@
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden lg:table-cell">Submitted By</th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden sm:table-cell">Date</th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Status</th>
-                    <th class="px-4 py-2.5 text-right text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Action</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-brand-600/[.08]">
@@ -391,7 +391,7 @@
                         <td class="px-4 py-3">
                             <x-ui.badge statusBind="s.status" />
                         </td>
-                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                        <td class="px-4 py-3 text-left whitespace-nowrap">
                             <div x-show="s.can_decide" class="inline-flex items-center gap-1.5">
                                 <button type="button" @click="startDecision(s, 'approve')" class="text-xs font-semibold text-emerald-700 hover:underline">Approve</button>
                                 <span class="text-slate-200" aria-hidden="true">·</span>
@@ -429,7 +429,7 @@
                         :disabled="deciding || (decision?.kind === 'reject' && !decisionRemarks.trim())"
                         :class="decision?.kind === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'"
                         class="px-4 py-2 text-xs font-semibold text-white rounded-2xl disabled:opacity-40"
-                        x-text="deciding ? 'Saving…' : (decision?.kind === 'approve' ? 'Confirm Approval' : 'Confirm Rejection')"></button>
+                        x-text="deciding ? 'Saving…' : (decision?.kind === 'approve' ? 'Confirm approval' : 'Confirm rejection')"></button>
                 </div>
             </div>
         </div>
@@ -595,7 +595,7 @@
                 <x-ui.button size="sm" x-show="!doneSubmit && formStep >= totalFormSteps" x-bind:disabled="submitting" @click="submit()">
                     <span class="inline-flex items-center gap-1.5">
                         <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>
-                        <span x-text="submitting ? 'Submitting…' : 'Submit Form'"></span>
+                        <span x-text="submitting ? 'Submitting…' : 'Submit form'"></span>
                     </span>
                 </x-ui.button>
             </x-slot:footer>

@@ -295,7 +295,7 @@
             </div>
 
             {{-- Hotlines --}}
-            <aside class="surface-glass rounded-[26px] p-5 lg:sticky lg:top-4" aria-labelledby="hotlines-heading">
+            <aside class="surface-glass rounded-[26px] p-5 max-lg:order-first lg:sticky lg:top-4" aria-labelledby="hotlines-heading">
                 <h2 id="hotlines-heading" class="text-base font-extrabold text-ink flex items-center gap-2"><i data-lucide="phone" class="w-5 h-5 text-rose-600"></i><x-ui.t fil="Mga Emergency Hotline" en="Emergency Hotlines" /></h2>
                 <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="I-tap para tumawag." en="Tap a number to call." /></p>
                 <div x-show="hotlinesState === 'loading'" class="space-y-2 mt-4"><x-ui.skeleton class="h-14 rounded-2xl" /><x-ui.skeleton class="h-14 rounded-2xl opacity-70" /></div>
@@ -537,7 +537,7 @@
                             class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-60 transition-colors">
                             <span x-show="submitting" x-cloak><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i></span>
                             <span x-show="!submitting"><i data-lucide="send" class="w-4 h-4"></i></span>
-                            <span x-text="submitting ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : (reportFailure && typeof reportFailure !== 'string' ? ($store.lang.current === 'en' ? 'Try again' : 'Subukang muli') : ($store.lang.current === 'en' ? 'Submit Report' : 'Ipadala ang Ulat'))"></span>
+                            <span x-text="submitting ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : (reportFailure && typeof reportFailure !== 'string' ? ($store.lang.current === 'en' ? 'Try again' : 'Subukang muli') : ($store.lang.current === 'en' ? 'Submit report' : 'Ipadala ang ulat'))"></span>
                         </button>
                     </form>
                 </div>

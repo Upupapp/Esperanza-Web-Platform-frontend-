@@ -136,7 +136,7 @@
     <div x-show="filteredAlerts.length === 0" class="sk-empty flex-col">
         <i data-lucide="siren"></i>
         <span>No alerts match your filters.</span>
-        <button type="button" @click="alertSearch = ''; alertTypeFilter = ''; alertLevelFilter = ''; alertStatusFilter = ''" class="sk-clear">Clear Filters</button>
+        <button type="button" @click="alertSearch = ''; alertTypeFilter = ''; alertLevelFilter = ''; alertStatusFilter = ''" class="sk-clear">Clear filters</button>
     </div>
     <div class="sk-tfoot" x-show="filteredAlerts.length" x-text="'Showing ' + filteredAlerts.length + ' of ' + alertsList.length + ' alerts'"></div>
 </section>{{-- /loaded content --}}
@@ -234,7 +234,7 @@
                 <button type="button" x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="removingHotline = h.id" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Remove ' + h.office" title="Remove"><i data-lucide="trash-2"></i></button>
                 <span x-show="removingHotline === h.id" x-cloak class="flex items-center gap-2 text-xs">
                     <span class="text-ink-body">Remove from residents' page?</span>
-                    <button type="button" @click="removeHotline(h)" class="font-semibold text-rose-700 hover:underline">Remove</button>
+                    <button type="button" @click="removeHotline(h)" class="sk-btn sk-btn-danger">Remove</button>
                     <button type="button" @click="removingHotline = null" class="text-slate-600 hover:underline">Keep</button>
                 </span>
             </li>
@@ -248,7 +248,7 @@
 {{-- ── Alert Detail Modal ──────────────────────────────────────────────────────────────── --}}
 <div x-show="showAlertDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showAlertDetail = false"
         x-trap="showAlertDetail"
         role="dialog"
@@ -256,7 +256,7 @@
         aria-labelledby="alert-detail-title"
         @keydown.escape.window="showAlertDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
@@ -267,7 +267,7 @@
                 </div>
                 <h3 id="alert-detail-title" class="font-semibold text-ink-body mt-1" x-text="selectedAlert?.title?.en"></h3>
             </div>
-            <button aria-label="Close window" @click="showAlertDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showAlertDetail = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">
@@ -293,15 +293,15 @@
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex flex-wrap gap-2 items-center">
             <button x-show="can('sakuna_alerts','edit') && selectedAlert?.status === 'Draft'" @click="showAlertDetail = false; openEditAlert(selectedAlert)"
-                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors">
+                class="sk-btn">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Edit
             </button>
             <button x-show="can('sakuna_alerts','publish') && selectedAlert?.status === 'Draft'" @click="askPublishAlert(selectedAlert)"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 transition-colors ml-auto">
+                class="sk-btn sk-btn-p ml-auto">
                 <i data-lucide="send" class="w-4 h-4"></i> Review and send
             </button>
             <button x-show="can('sakuna_alerts','cancel') && selectedAlert?.status === 'Released'" @click="showAlertDetail = false; openCancelAlert(selectedAlert)"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors ml-auto">
+                class="sk-btn ml-auto">
                 <i data-lucide="octagon-x" class="w-4 h-4"></i> Cancel alert
             </button>
         </div>
@@ -322,7 +322,7 @@
         <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center flex-shrink-0"><i data-lucide="octagon-x" class="w-5 h-5 text-rose-600"></i></div>
             <div>
-                <h3 id="cancel-alert-title" class="text-base font-semibold text-ink-body">Cancel Alert</h3>
+                <h3 id="cancel-alert-title" class="text-base font-semibold text-ink-body">Cancel alert</h3>
                 <p class="text-xs text-ink-muted" x-text="selectedAlert?.ref"></p>
             </div>
         </div>
@@ -332,11 +332,11 @@
         <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="cancel-reason">Reason <span class="text-rose-500">*</span></label>
         <textarea id="cancel-reason" x-model="cancelReason" rows="2" placeholder="Why is this alert being cancelled?"
             class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors resize-none mb-5 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></textarea>
-        <div class="flex gap-3">
-            <button @click="showCancelAlert = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">Back</button>
+        <div class="flex justify-end gap-2">
+            <button @click="showCancelAlert = false" class="sk-btn">Back</button>
             <button :disabled="cancelSaving || !cancelReason.trim()" @click="submitCancelAlert()"
-                class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-2xl hover:bg-rose-700 transition-colors disabled:opacity-40">
-                <span x-text="cancelSaving ? 'Cancelling…' : 'Confirm Cancellation'"></span>
+                class="sk-btn sk-btn-navy">
+                <span x-text="cancelSaving ? 'Cancelling…' : 'Confirm cancellation'"></span>
             </button>
         </div>
     </div>
@@ -385,10 +385,10 @@
             </div>
         </div>
         <p class="text-xs text-ink-muted mb-5">Once sent it cannot be unsent. If it is wrong, cancel it: the cancellation reaches the same residents.</p>
-        <div class="flex gap-3">
-            <button @click="showPublishConfirm = false" :disabled="publishSaving" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors disabled:opacity-40">Not yet</button>
+        <div class="flex justify-end gap-2">
+            <button @click="showPublishConfirm = false" :disabled="publishSaving" class="sk-btn">Not yet</button>
             <button @click="confirmPublishAlert()" :disabled="publishSaving"
-                class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-brand-600 rounded-2xl hover:bg-brand-700 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-1.5">
+                class="sk-btn sk-btn-p">
                 <i data-lucide="send" class="w-4 h-4"></i>
                 <span x-text="publishSaving ? 'Sending…' : 'Send to residents'"></span>
             </button>
@@ -399,7 +399,7 @@
 {{-- ── Create / Edit Alert Modal ───────────────────────────────────────────────────────── --}}
 <div x-show="showCreateAlert" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="closeAlertForm()"
         x-trap="showCreateAlert"
         role="dialog"
@@ -407,14 +407,14 @@
         aria-labelledby="alert-form-title"
         @keydown.escape.window="if (!showCreateAlert) return; if (alertDiscardAsk) alertDiscardAsk = false; else closeAlertForm()">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
                 <h3 id="alert-form-title" class="font-semibold text-ink-body" x-text="alertFormMode === 'create' ? 'New alert' : 'Edit draft alert'"></h3>
                 <p class="text-xs text-ink-muted mt-0.5">Both languages are required — an emergency is the worst moment to send someone a language they don't read.</p>
             </div>
-            <button aria-label="Close window" @click="closeAlertForm()" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="closeAlertForm()" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4" x-effect="JSON.stringify(alertForm); keepAlertDraft()">
@@ -511,20 +511,20 @@
 
         <div x-show="alertDiscardAsk" x-cloak class="px-6 py-4 border-t border-amber-200 bg-amber-50 rounded-b-2xl flex flex-wrap items-center gap-3" role="alertdialog" aria-labelledby="alert-discard-text">
             <p id="alert-discard-text" class="text-sm text-amber-900 flex-1 min-w-[14rem]">Discard what you have written? It has not been saved.</p>
-            <button type="button" @click="alertDiscardAsk = false" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-2xl hover:border-slate-300 transition-colors">Keep writing</button>
-            <button type="button" @click="closeAlertForm(true)" class="px-4 py-2 text-sm font-semibold text-rose-700 bg-white border border-rose-200 rounded-2xl hover:bg-rose-50 transition-colors">Discard</button>
+            <button type="button" @click="alertDiscardAsk = false" class="sk-btn">Keep writing</button>
+            <button type="button" @click="closeAlertForm(true)" class="sk-btn sk-btn-danger">Discard</button>
         </div>
         <p x-show="!alertDiscardAsk && !alertFormReady && alertFormMissing.length" x-cloak class="px-6 pt-3 text-xs text-ink-muted border-t border-brand-600/10" aria-live="polite" x-text="'To save: ' + alertFormMissing.join(', ') + '.'"></p>
-        <div x-show="!alertDiscardAsk" class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
-            <button @click="closeAlertForm()" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">Cancel</button>
+        <div x-show="!alertDiscardAsk" class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
+            <button @click="closeAlertForm()" class="sk-btn">Cancel</button>
             <button :disabled="alertSaving || !alertFormReady" @click="alertSendAfterSave = false; saveAlert()"
-                :class="can('sakuna_alerts','publish') ? 'text-slate-700 bg-white border border-slate-200 hover:border-brand-200 hover:text-brand-700' : 'text-white bg-brand-600 hover:bg-brand-700'"
-                class="flex-1 py-2.5 text-sm font-semibold rounded-2xl transition-colors disabled:opacity-50">
-                <span x-text="alertSaving && !alertSendAfterSave ? 'Saving…' : (alertFormMode === 'create' ? 'Save as Draft' : 'Save Changes')"></span>
+                :class="can('sakuna_alerts','publish') ? '' : 'sk-btn-p'"
+                class="sk-btn">
+                <span x-text="alertSaving && !alertSendAfterSave ? 'Saving…' : (alertFormMode === 'create' ? 'Save as draft' : 'Save changes')"></span>
             </button>
             {{-- The writer who may publish goes straight on to review and send (critique 2026-11-03). --}}
             <button x-show="can('sakuna_alerts','publish')" :disabled="alertSaving || !alertFormReady" @click="alertSendAfterSave = true; saveAlert()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+                class="sk-btn sk-btn-p">
                 <i data-lucide="send" class="w-4 h-4"></i>
                 <span x-text="alertSaving && alertSendAfterSave ? 'Saving…' : 'Save and review sending'"></span>
             </button>

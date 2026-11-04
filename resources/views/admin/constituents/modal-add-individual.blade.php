@@ -674,7 +674,7 @@
                 >
                     <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting"></i>
                     <i data-lucide="save" class="w-4 h-4" x-show="!submitting"></i>
-                    <span x-text="submitting ? 'Saving…' : 'Save Resident'"></span>
+                    <span x-text="submitting ? 'Saving…' : 'Save resident'"></span>
                 </button>
             </div>
 

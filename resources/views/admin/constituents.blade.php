@@ -849,22 +849,22 @@
             <div class="flex items-center gap-2 relative" x-show="can('const_resident','create') || can('const_family','create') || can('const_household','create')">
                 <button @click="showAddMenu=!showAddMenu" @click.outside="showAddMenu=false"
                         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold clay-blue hover:brightness-95 transition-all">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Record
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>Add record
                     <i data-lucide="chevron-down" class="w-3 h-3 opacity-70 transition-transform" :class="showAddMenu&&'rotate-180'"></i>
                 </button>
                 <div x-show="showAddMenu" x-transition.origin.top.right x-cloak
                      class="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl border border-slate-200 shadow-lg z-30 overflow-hidden">
                     <button x-show="can('const_resident','create')" @click="addIndividualStep=1;showAddIndividual=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
-                        <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New Resident
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New resident
                     </button>
                     <button x-show="can('const_family','create')" @click="addFamilyStep=1;showAddFamily=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
-                        <i data-lucide="users" class="w-3.5 h-3.5 text-purple-500"></i>New Family
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-purple-500"></i>New family
                     </button>
                     <button x-show="can('const_household','create')" @click="addHouseholdStep=1;showAddHousehold=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
-                        <i data-lucide="house" class="w-3.5 h-3.5 text-emerald-500"></i>New Household
+                        <i data-lucide="house" class="w-3.5 h-3.5 text-emerald-500"></i>New household
                     </button>
                     {{-- The LGU's own resident lists, in bulk (owner, 2026-10-09). --}}
                     <div x-show="can('const_resident','create')" class="border-t border-slate-100">
@@ -888,7 +888,7 @@
             <x-ui.stat-card layout="compact" @click="tab='registry';view='families';clearFilters()" class="cursor-pointer" label="Recorded Families"    valueBind="activeStats.families"   icon="users-round"    color="purple" :delay="80"  />
             <x-ui.stat-card layout="compact" @click="tab='registry';view='individuals';clearFilters();verificationFilter='Verified'" class="cursor-pointer" label="Records Confirmed"    valueBind="activeStats.verified"   icon="badge-check"    color="gold"   :delay="120" sublabel="Registry record checked" />
             <x-ui.stat-card layout="compact" @click="tab='registry';view='individuals';clearFilters();verificationFilter='For Validation'" class="cursor-pointer" label="Profiles to Review"   valueBind="activeStats.pending"    icon="clock"          color="orange" :delay="160" sublabel="Sent in by residents" />
-            <x-ui.stat-card layout="compact" @click="tab='data-quality';clearFilters()" class="cursor-pointer" label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="red"    :delay="200" sublabel="Needs attention" />
+            <x-ui.stat-card layout="compact" @click="tab='data-quality';clearFilters()" class="cursor-pointer" label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="orange" :delay="200" sublabel="Needs attention" />
         </div>
 
         {{-- Primary tab bar. On a phone the tabs wrap onto a second line, so every

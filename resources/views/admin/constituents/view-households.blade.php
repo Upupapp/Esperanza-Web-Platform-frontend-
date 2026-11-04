@@ -14,7 +14,7 @@
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
             <i data-lucide="plus" class="w-4 h-4"></i>
-            Add Household
+            Add household
         </button>
     </div>
 
@@ -22,14 +22,14 @@
     <x-ui.table>
         <thead>
             <tr class="bg-well/70">
-                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Household</th>
-                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden xl:table-cell">Barangay / Sitio</th>
-                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">Head</th>
-                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Members</th>
-                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">Dwelling</th>
-                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">Amenities</th>
-                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Record</th>
-                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Actions</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Household</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">Barangay / Sitio</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Head</th>
+                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Members</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Dwelling</th>
+                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Amenities</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Record</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-brand-600/[.08]">
@@ -134,7 +134,7 @@
 
                     {{-- Actions --}}
                     <td class="px-4 py-3" @click.stop>
-                        <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100 focus:opacity-100">
+                        <div class="flex items-center justify-start gap-1">
                             <button
                                 @click="openHousehold(h)"
                                 title="View household detail"

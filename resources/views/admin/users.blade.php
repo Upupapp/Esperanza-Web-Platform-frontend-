@@ -191,7 +191,7 @@
                 <x-ui.stat-card layout="compact" label="All Staff Accounts" valueBind="totalCount" icon="users" color="brand" :delay="0" sublabel="Including archived" />
                 <x-ui.stat-card layout="compact" label="Active Accounts" valueBind="activeCount" icon="user-round-check" color="green" :delay="40" />
                 <x-ui.stat-card layout="compact" label="Pending Approval" valueBind="pendingCount" icon="user-round-search" color="orange" :delay="80" />
-                <x-ui.stat-card layout="compact" label="Archived or Rejected" valueBind="archivedCount" icon="user-x" color="red" :delay="120" sublabel="Cannot sign in" />
+                <x-ui.stat-card layout="compact" label="Archived or Rejected" valueBind="archivedCount" icon="user-x" color="slate" :delay="120" sublabel="Cannot sign in" />
             </div>
 
             <div class="surface-glass rounded-[26px] p-3 mb-4 flex flex-wrap items-center gap-2">
@@ -201,7 +201,7 @@
                 </div>
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredUsers.length + ' of ' + users.length + ' personnel'"></p>
                 <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-                <x-ui.button @click="open = true" icon="user-plus" size="sm" class="shrink-0">Add Personnel</x-ui.button>
+                <x-ui.button @click="open = true" icon="user-plus" size="sm" class="shrink-0">Add personnel</x-ui.button>
             </div>
 
             <div x-show="usersLoading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /><x-ui.skeleton class="h-12 opacity-60" /></div>
@@ -213,11 +213,11 @@
                     <tr class="bg-well/70">
                         <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Personnel</th>
                         <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden sm:table-cell">Employee ID</th>
-                        <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell">Role</th>
-                        <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden lg:table-cell">Department</th>
+                        {{-- Role and Department share one two-line cell, so the Actions column fits at 1366 (design critique 2026-11-04). --}}
+                        <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell">Role / Department</th>
                         <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell">Access Scope</th>
                         <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Status</th>
-                        <th class="px-4 py-2.5"></th>
+                        <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-brand-600/[.08]">
@@ -228,8 +228,10 @@
                                 <span class="text-slate-700 font-medium whitespace-nowrap group-hover:text-brand-600 transition-colors" x-text="u.name"></span>
                             </td>
                             <td class="px-4 py-3 text-ink-muted hidden sm:table-cell font-mono text-xs" x-text="u.id"></td>
-                            <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-text="u.role"></td>
-                            <td class="px-4 py-3 text-ink-muted hidden lg:table-cell" x-text="u.dept"></td>
+                            <td class="px-4 py-3 hidden md:table-cell">
+                                <span class="block text-slate-700" x-text="u.role"></span>
+                                <span class="block text-xs text-ink-muted mt-0.5" x-text="u.dept"></span>
+                            </td>
                             <td class="px-4 py-3 hidden md:table-cell">
                                 <span
                                     class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1 whitespace-nowrap border"
@@ -245,7 +247,7 @@
                                     <span x-text="u.status"></span>
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <td class="px-4 py-3 text-left whitespace-nowrap">
                                 <button
                                     type="button"
                                     @click="openEdit(u)"
@@ -329,7 +331,7 @@
                     <x-slot:footer>
                         <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
                         <x-ui.button size="sm" icon="save" x-bind:disabled="editSaving" @click="saveEdit()">
-                            <span x-text="editSaving ? 'Saving…' : 'Save Changes'"></span>
+                            <span x-text="editSaving ? 'Saving…' : 'Save changes'"></span>
                         </x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
@@ -546,7 +548,7 @@
                         <x-ui.button variant="secondary" size="sm" x-show="step > 1" @click="back()" icon="arrow-left">Back</x-ui.button>
                         <x-ui.button size="sm" x-show="step < 4" @click="next()" icon="arrow-right">Continue</x-ui.button>
                         <x-ui.button size="sm" x-show="step === 4" icon="user-plus" x-bind:disabled="submitting" @click="await createPersonnel(); if (!createError) open = false">
-                            <span x-text="submitting ? 'Creating…' : 'Create Account'"></span>
+                            <span x-text="submitting ? 'Creating…' : 'Create account'"></span>
                         </x-ui.button>
                         <p class="text-xs text-rose-600 mt-1" x-show="createError" x-text="createError"></p>
                     </x-slot:footer>
@@ -622,7 +624,7 @@
         >
             <div class="flex items-center justify-between gap-3 mb-4">
                 <p class="text-sm text-ink-muted" x-text="roles.length + ' staff roles · ' + totalAccounts + ' staff accounts in use (active or pending; archived not counted)'"></p>
-                <x-ui.button icon="plus" size="sm" @click="open = true; createError = ''">New Role</x-ui.button>
+                <x-ui.button icon="plus" size="sm" @click="open = true; createError = ''">New role</x-ui.button>
             </div>
 
             <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -696,7 +698,7 @@
                 <x-slot:footer>
                     <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
                     <x-ui.button size="sm" icon="plus" x-bind:disabled="creating || newRole.name.trim().length < 3" @click="createRole()">
-                        <span x-text="creating ? 'Creating…' : 'Create Role'"></span>
+                        <span x-text="creating ? 'Creating…' : 'Create role'"></span>
                     </x-ui.button>
                     <p class="text-xs text-rose-600 mt-1" x-show="createError" x-text="createError"></p>
                 </x-slot:footer>
@@ -820,14 +822,14 @@
                                 variant="secondary" size="sm" icon="download"
                                 x-show="$store.session.canExportReports()"
                                 @click="downloadReport()"
-                            >Download Report (CSV)</x-ui.button>
+                            >Download report (CSV)</x-ui.button>
                             <x-ui.button
                                 variant="secondary" size="sm" icon="file-down"
                                 x-show="$store.session.canExportReports()"
                                 @click="downloadReport('pdf')"
                             >PDF</x-ui.button>
                             <x-ui.button size="sm" icon="save" x-show="selectedRole?.editable" x-bind:disabled="!dirty || saving" @click="savePerms()">
-                                <span x-text="saving ? 'Saving…' : 'Save Changes'"></span>
+                                <span x-text="saving ? 'Saving…' : 'Save changes'"></span>
                             </x-ui.button>
                         </div>
                     </div>

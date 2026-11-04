@@ -70,7 +70,7 @@
 
             {{-- ── SECTION 1: Record Context ──────────────────────────────── --}}
             <section>
-                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3 flex items-center gap-2">
+                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-2">
                     <i data-lucide="file-user" class="w-3.5 h-3.5"></i>
                     Record Context
                 </h3>
@@ -108,7 +108,7 @@
 
             {{-- ── SECTION 2: Issue Details ────────────────────────────────── --}}
             <section>
-                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3 flex items-center gap-2">
+                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-2">
                     <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
                     Issue Details
                 </h3>
@@ -204,7 +204,7 @@
 
             {{-- ── SECTION 3: Merge Candidate (only if present) ────────────── --}}
             <section x-show="selectedDQIssue?.merge_candidate" x-cloak>
-                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3 flex items-center gap-2">
+                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-2">
                     <i data-lucide="git-merge" class="w-3.5 h-3.5 text-rose-500"></i>
                     Possible Duplicate Found
                 </h3>
@@ -234,7 +234,7 @@
                             class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition shadow-sm shrink-0"
                         >
                             <i data-lucide="git-merge" class="w-3.5 h-3.5"></i>
-                            Open Merge Review
+                            Open merge review
                         </button>
                     </div>
 
@@ -243,7 +243,7 @@
 
             {{-- ── SECTION 4: Resolve ───────────────────────────────────────── --}}
             <section x-show="can('const_data_quality','resolve') && selectedDQIssue?.status !== 'Resolved'" x-cloak>
-                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3 flex items-center gap-2">
+                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-2">
                     <i data-lucide="circle-check" class="w-3.5 h-3.5 text-emerald-500"></i>
                     Resolve This Issue
                 </h3>
@@ -273,7 +273,7 @@
                 :disabled="resolutionNote.trim().length < 3"
                 class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:pointer-events-none"
             >
-                <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Mark Resolved
+                <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Mark resolved
             </button>
 
         </div>

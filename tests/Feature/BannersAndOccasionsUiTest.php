@@ -101,7 +101,7 @@ class BannersAndOccasionsUiTest extends TestCase
         $this->assertStringContainsString("@click=\"save('draft')\"", $view);
         $this->assertStringContainsString("@click=\"save('send')\"", $view);
         $this->assertStringContainsString("if (this.form.schedule) return this.approver ? 'Schedule Post' : 'Send for review';", $js);
-        $this->assertStringContainsString("return this.approver ? 'Publish Now' : 'Send for review';", $js);
+        $this->assertStringContainsString("return this.approver ? 'Publish now' : 'Send for review';", $js);
         $this->assertStringContainsString('x-model="form.publish_date"', $view);
         $this->assertStringContainsString('x-model="form.publish_time"', $view);
         $this->assertStringContainsString("const manilaIso = (ymd, hm) => (ymd ? String(ymd).slice(0, 10) + 'T' + (hm || '00:00') + ':00+08:00' : null);", $js);

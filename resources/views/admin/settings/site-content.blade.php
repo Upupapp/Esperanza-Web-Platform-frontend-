@@ -77,7 +77,7 @@
                 <button type="button" @click="contentTab = '{{ $docTab }}'" class="shrink-0 whitespace-nowrap px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="contentTab === '{{ $docTab }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" :aria-current="contentTab === '{{ $docTab }}' ? 'true' : null"><i data-lucide="{{ $docIcon }}" class="w-3.5 h-3.5"></i>{{ $docLabel }}</button>
             @endforeach
         </div>
-        <x-ui.button x-show="(contentTab === 'privacy' || contentTab === 'terms') && !loading && !failed" variant="secondary" size="sm" icon="eye" @click="previewOpen = true">Preview as Citizen</x-ui.button>
+        <x-ui.button x-show="(contentTab === 'privacy' || contentTab === 'terms') && !loading && !failed" variant="secondary" size="sm" icon="eye" @click="previewOpen = true">Preview as citizen</x-ui.button>
     </div>
 
     <div
@@ -167,8 +167,8 @@
         </div>
 
         <div class="flex items-center justify-between mt-4" x-show="can('set_site_content','edit')">
-            <button type="button" @click="addSection()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Section</button>
-            <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="publish(contentTab, doc)" x-text="saving ? 'Publishing…' : 'Save Changes'"></x-ui.button>
+            <button type="button" @click="addSection()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add section</button>
+            <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="publish(contentTab, doc)" x-text="saving ? 'Publishing…' : 'Save changes'"></x-ui.button>
         </div>
     </div>
 
@@ -231,8 +231,8 @@
         </div>
 
         <div class="flex items-center justify-between mt-4" x-show="can('set_site_content','edit')">
-            <button type="button" @click="addChannel()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Contact Channel</button>
-            <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="publish('support', docs.support)" x-text="saving ? 'Publishing…' : 'Save Changes'"></x-ui.button>
+            <button type="button" @click="addChannel()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add contact channel</button>
+            <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="publish('support', docs.support)" x-text="saving ? 'Publishing…' : 'Save changes'"></x-ui.button>
         </div>
     </div>
 
@@ -257,7 +257,7 @@
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-brand-600/10 bg-slate-50/60 shrink-0">
-                <x-ui.button size="sm" @click="previewOpen = false">Close Preview</x-ui.button>
+                <x-ui.button size="sm" @click="previewOpen = false">Close preview</x-ui.button>
             </div>
         </x-ui.modal>
     </div>

@@ -466,7 +466,7 @@
                     <span x-text="t('Your selfie is used only to verify your account: the LGU staff who review it compare it with your valid ID. It is not your profile photo and is never shown publicly.', 'Ginagamit lamang ang iyong selfie para i-verify ang iyong account: ihahambing ito ng staff ng LGU sa iyong valid ID. Hindi ito ang iyong profile photo at hindi ito ipinapakita sa publiko.')"></span>
                 </div>
                 <x-ui.button type="button" size="lg" class="w-full" icon="camera" @click="takeSelfie()">
-                    <span x-text="selfie ? t('Retake Selfie', 'Kunan Muli') : t('Take Selfie', 'Mag-selfie')"></span>
+                    <span x-text="selfie ? t('Retake selfie', 'Kunan muli') : t('Take selfie', 'Mag-selfie')"></span>
                 </x-ui.button>
                 <p x-show="selfieError" x-cloak class="text-center text-xs text-rose-600" x-text="selfieError"></p>
             </div>
@@ -510,7 +510,7 @@
                 </x-ui.button>
                 <x-ui.button type="submit" size="lg" class="flex-[2]" loading="loading">
                     <span class="inline-flex items-center gap-2">
-                        <span x-text="stepKey === 'review' ? t('Submit for Verification', 'Ipasa para sa Beripikasyon') : t('Continue', 'Susunod')"></span>
+                        <span x-text="stepKey === 'review' ? t('Submit for verification', 'Ipasa para sa beripikasyon') : t('Continue', 'Susunod')"></span>
                         <i x-show="stepKey !== 'review'" data-lucide="arrow-right" class="w-4 h-4"></i>
                     </span>
                 </x-ui.button>
@@ -545,7 +545,7 @@
                 <x-ui.input name="code" type="text" inputmode="numeric" maxlength="6" label="6-digit code" label-fil="6-digit na code" icon="mail-check" class="font-mono text-center tracking-[0.4em]" x-model="otpCode" />
                 <p x-show="error" x-cloak class="text-sm text-rose-600" x-text="error"></p>
                 <x-ui.button type="submit" size="lg" class="w-full" loading="loading">
-                    <span x-text="t('Confirm Code', 'Kumpirmahin ang Code')"></span>
+                    <span x-text="t('Confirm code', 'Kumpirmahin ang code')"></span>
                 </x-ui.button>
             </form>
 
@@ -554,7 +554,7 @@
                 <h3 class="text-base font-bold text-ink" x-text="t('Verify your identity', 'I-verify ang iyong pagkakakilanlan')"></h3>
                 <p class="text-sm text-ink-muted" x-text="t('Have your valid ID ready. You will scan it with your camera, then do a quick face check - about 2 minutes. The check is done by Didit, our identity verification provider. You can also do this later from your profile.', 'Ihanda ang iyong valid ID. I-scan mo ito gamit ang camera, saka isang mabilis na face check - mga 2 minuto. Ang Didit, ang aming identity verification provider, ang gagawa ng pagsusuri. Maaari mo rin itong gawin mamaya mula sa iyong profile.')"></p>
                 <x-ui.button type="button" size="lg" class="w-full" icon="scan-line" @click="startDidit()" loading="launchingDidit">
-                    <span x-text="t('Verify My Identity', 'I-verify ang Aking Pagkakakilanlan')"></span>
+                    <span x-text="t('Verify my identity', 'I-verify ang aking pagkakakilanlan')"></span>
                 </x-ui.button>
             </div>
 
@@ -570,7 +570,7 @@
             </div>
 
             <x-ui.button x-show="signedIn" href="{{ route('citizen.dashboard') }}" size="lg" class="w-full" icon="arrow-right" iconPosition="right">
-                <span x-text="t('Continue to App', 'Magpatuloy sa App')"></span>
+                <span x-text="t('Continue to app', 'Magpatuloy sa app')"></span>
             </x-ui.button>
         </div>
     </div>

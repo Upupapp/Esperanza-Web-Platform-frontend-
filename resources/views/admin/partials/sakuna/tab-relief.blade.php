@@ -148,7 +148,7 @@
                                 <button type="button" x-show="can('sakuna_relief','release') && d.status === 'Submitted'" @click="releaseDistribution(d)" class="sk-btn sk-btn-sm sk-btn-soft">
                                     <i data-lucide="package-check"></i> Release
                                 </button>
-                                <button type="button" @click="reliefViewing = d" class="sk-btn sk-btn-sm" :aria-label="'View ' + d.ref">
+                                <button type="button" @click="reliefViewing = d" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'View ' + d.ref">
                                     <i data-lucide="eye"></i> View
                                 </button>
                             </div>
@@ -160,7 +160,7 @@
                         <div class="sk-empty" style="padding: 36px 16px;">
                             <i data-lucide="package"></i>
                             <span>No distributions match your filters.</span>
-                            <button type="button" @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="sk-clear">Clear Filters</button>
+                            <button type="button" @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="sk-clear">Clear filters</button>
                         </div>
                     </td>
                 </tr>
@@ -185,10 +185,10 @@
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
-                <h3 class="font-semibold text-ink-body">Record Distribution</h3>
+                <h3 class="font-semibold text-ink-body">Record distribution</h3>
                 <p class="text-xs text-ink-muted mt-0.5">A duplicate for the same operation and beneficiary is refused automatically.</p>
             </div>
-            <button aria-label="Close window" @click="showCreateDistribution = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showCreateDistribution = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -264,15 +264,15 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
-            <button @click="showCreateDistribution = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">Cancel</button>
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
+            <button @click="showCreateDistribution = false" class="sk-btn">Cancel</button>
             <button :disabled="distributionSaving || !distributionForm.operation || !distributionForm.barangay || !distributionForm.beneficiary_name || !distributionForm.item" @click="submitDistribution(true)"
-                class="flex-1 py-2.5 text-sm font-medium text-brand-700 bg-white border border-brand-200 rounded-2xl hover:bg-brand-50 transition-colors disabled:opacity-50" data-dist-another>
+                class="sk-btn sk-btn-soft" data-dist-another>
                 Record &amp; add another item
             </button>
             <button :disabled="distributionSaving || !distributionForm.operation || !distributionForm.barangay || !distributionForm.beneficiary_name || !distributionForm.item" @click="submitDistribution()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
-                <span x-text="distributionSaving ? 'Recording…' : 'Record Distribution'"></span>
+                class="sk-btn sk-btn-p">
+                <span x-text="distributionSaving ? 'Recording…' : 'Record distribution'"></span>
             </button>
         </div>
     </div>
@@ -284,16 +284,16 @@
      Read only: what the row leaves out (center or place, when it was recorded,
      the resident's answer and when). --}}
 <div x-show="reliefViewing" x-cloak
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="reliefViewing = null" x-trap="reliefViewing" role="dialog" aria-modal="true" aria-labelledby="relief-view-title"
     @keydown.escape.window="reliefViewing = null">
-    <div class="bg-white rounded-[28px] shadow-float w-full max-w-lg mb-8">
+    <div class="bg-white rounded-[28px] shadow-float w-full max-w-lg my-auto">
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
                 <h3 id="relief-view-title" class="font-semibold text-ink-body" x-text="reliefViewing ? reliefViewing.item + ' for ' + reliefViewing.beneficiary : ''"></h3>
                 <p class="font-mono text-xs text-ink-muted mt-0.5" x-text="reliefViewing?.ref || ''"></p>
             </div>
-            <button aria-label="Close window" @click="reliefViewing = null" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="reliefViewing = null" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <dl class="p-6 grid grid-cols-2 gap-3 text-sm">
             <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Operation</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.operation || '—'"></dd></div>

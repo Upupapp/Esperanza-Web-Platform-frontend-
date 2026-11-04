@@ -1003,7 +1003,7 @@
                 @click="backToProfile()"
                 class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline shrink-0"
             >
-                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Profile
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to profile
             </button>
         </div>
 
@@ -1011,7 +1011,7 @@
              never sidebar entries (owner rule). Services rendered left in
              round 2 (2026-10-30): it was the cases again. --}}
         <div class="flex flex-wrap items-center gap-2 mb-4" x-show="$store.session.canPerm('tulong_sessions', 'view') || $store.session.canPerm('set_service_catalog', 'view')" x-cloak>
-            <div class="flex items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full overflow-x-auto" role="group" aria-label="Tulong views">
+            <div class="flex flex-wrap items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full" role="group" aria-label="Tulong views">
                 @foreach(['cases' => ['Cases', 'folder-open', null], 'sessions' => ['Sessions', 'calendar-days', 'tulong_sessions']] as $viewKey => [$viewLabel, $viewIcon, $viewPerm])
                     <button type="button" @click="setView('{{ $viewKey }}')" :aria-pressed="view === '{{ $viewKey }}'" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" @endif
                             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors whitespace-nowrap"
@@ -1073,7 +1073,7 @@
                 <button type="button" x-show="canApplyAny()" x-cloak @click="$dispatch('tulong-apply', {})"
                         title="File a Tulong case for a person at the office, or record assistance already given."
                         class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-2xl px-3 py-2 clay-blue btn-shine hover:brightness-95 transition-colors shrink-0">
-                    <i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Apply for New Tulong
+                    <i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Apply for new Tulong
                 </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -1416,7 +1416,7 @@
                                         <button type="button" x-show="mayAccept(req)" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
                                         <span x-show="!mayAccept(req)" class="text-[11px] text-ink-muted">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>
-                                        <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
+                                        <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for replacement</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
                                     </div>
@@ -1751,11 +1751,11 @@
                             <div class="grid grid-cols-2 gap-2 mt-2.5" x-show="!selected.release_evidence">
                                 <button type="button" @click="captureReleaseEvidence('camera')" class="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 hover:border-purple-400 hover:bg-purple-50/40 py-3 text-ink-muted hover:text-purple-600 transition-colors">
                                     <i data-lucide="camera" class="w-4 h-4"></i>
-                                    <span class="text-[11px] font-medium">Take Photo</span>
+                                    <span class="text-[11px] font-medium">Take photo</span>
                                 </button>
                                 <button type="button" @click="captureReleaseEvidence('upload')" class="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 hover:border-purple-400 hover:bg-purple-50/40 py-3 text-ink-muted hover:text-purple-600 transition-colors">
                                     <i data-lucide="upload" class="w-4 h-4"></i>
-                                    <span class="text-[11px] font-medium">Upload Photo</span>
+                                    <span class="text-[11px] font-medium">Upload photo</span>
                                 </button>
                             </div>
                         </div>
@@ -1882,9 +1882,9 @@
                     <div class="flex items-center gap-2 flex-wrap justify-end">
                         {{-- The side moves the server allows from here (case.next),
                              each opening its reason form. --}}
-                        <x-ui.button variant="ghost" size="sm" x-show="canMove('Cancelled')" x-bind:disabled="processing" @click="openSideForm('cancel')">Cancel Case</x-ui.button>
-                        <x-ui.button variant="secondary" size="sm" x-show="canMove('Returned for Reassessment')" x-bind:disabled="processing" @click="openSideForm('return')">Return for Reassessment</x-ui.button>
-                        <x-ui.button variant="danger" size="sm" x-show="canMove('Rejected')" x-bind:disabled="processing" @click="openSideForm('reject')">Reject Case</x-ui.button>
+                        <x-ui.button variant="ghost" size="sm" x-show="canMove('Cancelled')" x-bind:disabled="processing" @click="openSideForm('cancel')">Cancel case</x-ui.button>
+                        <x-ui.button variant="secondary" size="sm" x-show="canMove('Returned for Reassessment')" x-bind:disabled="processing" @click="openSideForm('return')">Return for reassessment</x-ui.button>
+                        <x-ui.button variant="danger" size="sm" x-show="canMove('Rejected')" x-bind:disabled="processing" @click="openSideForm('reject')">Reject case</x-ui.button>
                         {{-- Primary action — one button, dynamic per stage
                              (stageActionLabels; primaryAction() calls the
                              matching endpoint). --}}

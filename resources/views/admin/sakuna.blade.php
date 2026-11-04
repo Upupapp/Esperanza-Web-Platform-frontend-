@@ -1867,7 +1867,7 @@
                 @click="backToProfile()"
                 class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline shrink-0"
             >
-                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Profile
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to profile
             </button>
         </div>
 

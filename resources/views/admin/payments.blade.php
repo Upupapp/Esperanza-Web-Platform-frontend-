@@ -262,7 +262,7 @@
                         <span class="flex items-center gap-2.5 text-left">
                             <span class="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-brand-100 text-ink-muted group-hover:text-brand-600 flex items-center justify-center shrink-0 transition-colors"><i data-lucide="file-text" class="w-4 h-4"></i></span>
                             <span class="min-w-0">
-                                <span class="block text-xs font-semibold text-ink">View Full Application</span>
+                                <span class="block text-xs font-semibold text-ink">View full application</span>
                                 <span class="block text-[11px] text-ink-muted">Submitted form and documents in <span x-text="payments[selected].type"></span></span>
                             </span>
                         </span>
@@ -309,7 +309,7 @@
                             <textarea aria-label="Reason for Rejection" x-model="rejectReason" rows="2" placeholder="Explain why this payment could not be verified (min. 5 characters)..." class="w-full text-xs rounded-xl border border-rose-200 bg-white px-3 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                             <div class="flex items-center justify-end gap-2 mt-2">
                                 <button type="button" @click="showRejectReason = false; rejectReason = ''" class="text-[11px] text-ink-muted hover:text-slate-600">Cancel</button>
-                                <button type="button" :disabled="rejectReason.trim().length < 5 || processing" @click="rejectPayment()" class="text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:pointer-events-none rounded-xl px-3 py-1.5">Confirm Rejection</button>
+                                <button type="button" :disabled="rejectReason.trim().length < 5 || processing" @click="rejectPayment()" class="text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:pointer-events-none rounded-xl px-3 py-1.5">Confirm rejection</button>
                             </div>
                         </div>
                     </div>
@@ -324,7 +324,7 @@
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="check" class="w-3.5 h-3.5" x-show="!processing"></i>
-                                <span x-text="processing ? 'Issuing…' : 'Issue Receipt'"></span>
+                                <span x-text="processing ? 'Issuing…' : 'Issue receipt'"></span>
                             </span>
                         </x-ui.button>
                     </div>

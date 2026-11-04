@@ -154,7 +154,7 @@
                     </span>
                 </div>
 
-                <div class="flex gap-1.5 mt-auto">
+                <div class="flex flex-wrap gap-1.5 mt-auto">
                     <button type="button" @click="openCenterDetail(c)" class="sk-btn sk-btn-sm sk-btn-soft flex-1">
                         <i data-lucide="eye"></i> View details
                     </button>
@@ -265,7 +265,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span :class="statusBadge(selectedCenter?.status ?? '')" x-text="selectedCenter?.status === 'Processing' ? 'Open' : (selectedCenter?.status === 'Archived' ? 'Closed' : 'Registered')"></span>
-                <button aria-label="Close window" @click="showCenterDetail = false" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors">
+                <button aria-label="Close window" @click="showCenterDetail = false" class="sk-mclose flex-shrink-0">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -283,7 +283,7 @@
         <div x-show="centerTab === 'overview'" class="p-6 space-y-5">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="bg-slate-50 rounded-xl p-4 space-y-2.5">
-                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]r">Facility</h4>
+                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Facility</h4>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between"><span class="text-ink-muted">Ref</span><span class="font-mono font-medium text-ink-body" x-text="selectedCenter?.ref || '—'"></span></div>
                         <div class="flex justify-between"><span class="text-ink-muted">Barangay</span><span class="font-medium text-ink-body" x-text="selectedCenter?.barangay || '—'"></span></div>
@@ -292,7 +292,7 @@
                     </div>
                 </div>
                 <div class="bg-slate-50 rounded-xl p-4 space-y-2.5">
-                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]r">Capacity & Occupancy</h4>
+                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Capacity & Occupancy</h4>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between"><span class="text-ink-muted">Capacity</span><span class="font-medium text-ink-body" x-text="selectedCenter?.capacity ?? '—'"></span></div>
                         <div class="flex justify-between"><span class="text-ink-muted">Current Occupants</span><span class="font-medium text-ink-body" x-text="selectedCenter?.individuals ?? 0"></span></div>
@@ -305,7 +305,7 @@
             </div>
             {{-- Where it is (2026-10-26): what residents see on their map. --}}
             <div>
-                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]r mb-2">Map Location</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-2">Map Location</h4>
                 <div x-show="hasMapPin(selectedCenter)">
                     <div x-data="sakunaPinView({ point: () => ({ lat: selectedCenter?.lat, lng: selectedCenter?.lng }), tone: 'centre' })" x-effect="show()">
                         <div x-ref="map" class="sakuna-map h-56 w-full rounded-xl overflow-hidden border border-slate-200" role="img" aria-label="Map showing where the center is"></div>
@@ -325,7 +325,7 @@
 
         {{-- Tab: Services --}}
         <div x-show="centerTab === 'services'" class="p-6">
-            <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Services On File</h4>
+            <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Services On File</h4>
             <div class="flex flex-wrap gap-1.5">
                 <template x-for="s in (selectedCenter?.services || [])" :key="s">
                     <span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200" x-text="s"></span>
@@ -336,7 +336,7 @@
 
         {{-- Tab: Occupants (real, fetched from GET /sakuna/evacuees?center=) --}}
         <div x-show="centerTab === 'occupants'" class="p-6 space-y-3">
-            <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]r">Checked-In Families</h4>
+            <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Checked-In Families</h4>
             <div class="divide-y divide-brand-600/[.08] border border-brand-600/10 rounded-xl overflow-hidden">
                 <template x-for="f in centerEvacuees" :key="f.ref">
                     <div class="flex items-center justify-between px-4 py-2.5">
@@ -350,18 +350,16 @@
                 <div x-show="centerEvacuees.length === 0" class="px-4 py-8 text-center text-xs text-ink-muted">No families currently checked in here.</div>
             </div>
             <div class="flex justify-end">
-                <button @click="setTab('evacuees')" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-4 py-2 rounded-2xl transition-colors">
-                    <i data-lucide="users" class="w-4 h-4"></i> Manage Evacuees
+                <button @click="setTab('evacuees')" class="sk-btn sk-btn-soft">
+                    <i data-lucide="users" class="w-4 h-4"></i> Manage evacuees
                 </button>
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl sticky bottom-0">
-            <button x-show="can('sakuna_centers','edit')" @click="openEditCenter(selectedCenter); showCenterDetail = false"
-                class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded-xl transition-colors">
+        <div x-show="can('sakuna_centers','edit')" class="flex flex-wrap items-center justify-end gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl sticky bottom-0">
+            <button @click="openEditCenter(selectedCenter); showCenterDetail = false" class="sk-btn sk-btn-sm">
                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
             </button>
-            <button @click="showCenterDetail = false" class="text-sm text-ink-muted hover:text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors">Close window</button>
         </div>
     </div>
 </div>
@@ -385,7 +383,7 @@
 
         <div class="flex items-center gap-3 mb-4">
             <span class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0"><i data-lucide="door-open" class="w-5 h-5 text-emerald-600"></i></span>
-            <h3 class="text-base font-semibold text-ink-body">Open Evacuation Center</h3>
+            <h3 class="text-base font-semibold text-ink-body">Open evacuation center</h3>
         </div>
 
         <p class="text-sm text-slate-600 leading-relaxed mb-5">
@@ -393,9 +391,9 @@
         </p>
 
         <div class="flex items-center justify-end gap-3">
-            <button @click="showOpenCenterConfirm = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
-            <button @click="confirmOpenCenter()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-5 py-2 rounded-2xl transition-colors">
-                <i data-lucide="check" class="w-4 h-4"></i> Confirm Open
+            <button @click="showOpenCenterConfirm = false" class="sk-btn">Cancel</button>
+            <button @click="confirmOpenCenter()" class="sk-btn sk-btn-p">
+                <i data-lucide="check" class="w-4 h-4"></i> Confirm open
             </button>
         </div>
     </div>
@@ -420,7 +418,7 @@
 
         <div class="flex items-center gap-3 mb-4">
             <span class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><i data-lucide="circle-x" class="w-5 h-5 text-rose-600"></i></span>
-            <h3 class="text-base font-semibold text-ink-body">Close Evacuation Center</h3>
+            <h3 class="text-base font-semibold text-ink-body">Close evacuation center</h3>
         </div>
 
         <p class="text-sm text-slate-600 leading-relaxed mb-4">
@@ -434,10 +432,9 @@
         </label>
 
         <div class="flex items-center justify-end gap-3">
-            <button @click="showCloseCenterConfirm = false; closeCenterConfirmed = false;" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
-            <button :disabled="!closeCenterConfirmed" :class="closeCenterConfirmed ? 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer' : 'bg-slate-100 text-ink-muted cursor-not-allowed'"
-                @click="if (closeCenterConfirmed) { confirmCloseCenter(); closeCenterConfirmed = false; }"
-                class="inline-flex items-center gap-1.5 text-sm font-medium px-5 py-2 rounded-2xl transition-colors">
+            <button @click="showCloseCenterConfirm = false; closeCenterConfirmed = false;" class="sk-btn">Cancel</button>
+            <button :disabled="!closeCenterConfirmed" @click="if (closeCenterConfirmed) { confirmCloseCenter(); closeCenterConfirmed = false; }"
+                class="sk-btn sk-btn-navy">
                 <i data-lucide="circle-x" class="w-4 h-4"></i> Close center
             </button>
         </div>
@@ -465,11 +462,11 @@
             <div class="flex items-center gap-3">
                 <span class="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center"><i data-lucide="building-2" class="w-5 h-5 text-brand-600"></i></span>
                 <div>
-                    <h3 class="text-base font-semibold text-ink-body" x-text="centerFormMode === 'create' ? 'Register Evacuation Center' : 'Edit Center — ' + centerForm.ref"></h3>
+                    <h3 class="text-base font-semibold text-ink-body" x-text="centerFormMode === 'create' ? 'Register evacuation center' : 'Edit center — ' + centerForm.ref"></h3>
                     <p class="text-xs text-ink-muted">Facility name, barangay, capacity and its place on the map, plus optional services.</p>
                 </div>
             </div>
-            <button aria-label="Close window" @click="showCreateCenter = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button aria-label="Close window" @click="showCreateCenter = false" class="sk-mclose"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
         <div class="px-6 py-5 space-y-4">
@@ -515,12 +512,12 @@
         </div>
 
         <div class="flex items-center gap-3 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl">
-            <button @click="showCreateCenter = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
+            <button @click="showCreateCenter = false" class="sk-btn">Cancel</button>
             <p x-show="centerNeedsPin && centerForm.name && centerForm.barangay && centerForm.capacity !== ''" class="text-xs font-semibold text-rose-700 ml-auto text-right">Pin the center on the map to register it.</p>
             <button :disabled="centerSaving || !centerForm.name || !centerForm.barangay || centerForm.capacity === '' || centerNeedsPin" @click="saveCenter()"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-2xl transition-colors ml-auto disabled:opacity-50">
+                class="sk-btn sk-btn-p ml-auto">
                 <i data-lucide="save" class="w-4 h-4"></i>
-                <span x-text="centerSaving ? 'Saving…' : (centerFormMode === 'create' ? 'Register Center' : 'Save Changes')"></span>
+                <span x-text="centerSaving ? 'Saving…' : (centerFormMode === 'create' ? 'Register center' : 'Save changes')"></span>
             </button>
         </div>
     </div>

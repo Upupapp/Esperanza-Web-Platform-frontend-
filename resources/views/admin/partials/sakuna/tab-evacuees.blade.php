@@ -196,7 +196,7 @@
                         <div class="sk-empty" style="padding: 36px 16px;">
                             <i data-lucide="users"></i>
                             <span>No evacuees match your filters.</span>
-                            <button type="button" @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''" class="sk-clear">Clear Filters</button>
+                            <button type="button" @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''" class="sk-clear">Clear filters</button>
                         </div>
                     </td>
                 </tr>
@@ -215,7 +215,7 @@
         <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0"><i data-lucide="arrow-right-left" class="w-5 h-5 text-blue-600"></i></div>
             <div>
-                <h3 class="text-base font-semibold text-ink-body">Transfer Household</h3>
+                <h3 class="text-base font-semibold text-ink-body">Transfer household</h3>
                 <p class="text-xs text-ink-muted" x-text="selectedEvacuee?.head_name || ''"></p>
             </div>
         </div>
@@ -227,9 +227,9 @@
             </template>
         </select>
         <div class="flex gap-3">
-            <button @click="showTransferForm = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">Cancel</button>
+            <button @click="showTransferForm = false" class="sk-btn">Cancel</button>
             <button :disabled="!transferToCenter" @click="transferEvacuee(selectedEvacuee, transferToCenter); showTransferForm = false"
-                class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-2xl hover:bg-blue-700 transition-colors disabled:opacity-40">Confirm Transfer</button>
+                class="sk-btn sk-btn-p">Confirm transfer</button>
         </div>
     </div>
 </div>
@@ -250,7 +250,7 @@
                 <i data-lucide="log-out" class="w-5 h-5 text-amber-600"></i>
             </div>
             <div>
-                <h3 class="text-base font-semibold text-ink-body">Confirm Check-Out</h3>
+                <h3 class="text-base font-semibold text-ink-body">Confirm check-out</h3>
                 <p class="text-xs text-ink-muted" x-text="checkoutEvacuee ? checkoutEvacuee.ref : ''"></p>
             </div>
         </div>
@@ -259,9 +259,9 @@
         </p>
         <div class="flex gap-3">
             <button @click="showCheckoutConfirm = false; checkoutEvacuee = null"
-                class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">Cancel</button>
+                class="sk-btn">Cancel</button>
             <button @click="checkOutEvacuee(checkoutEvacuee); showCheckoutConfirm = false; checkoutEvacuee = null"
-                class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-amber-600 rounded-2xl hover:bg-amber-700 transition-colors">Confirm Check-Out</button>
+                class="sk-btn sk-btn-navy">Confirm check-out</button>
         </div>
     </div>
 </div>
@@ -269,14 +269,14 @@
 {{-- ── Evacuee Detail Modal ─────────────────────────────────────────────────────────────── --}}
 <div x-show="showEvacueeDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showEvacueeDetail = false"
         x-trap="showEvacueeDetail"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showEvacueeDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">
@@ -290,7 +290,7 @@
                     </div>
                 </div>
             </div>
-            <button aria-label="Close window" @click="showEvacueeDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showEvacueeDetail = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
@@ -307,8 +307,8 @@
                     <div><label for="record-count" class="text-xs text-ink-muted mb-1 block">Headcount</label><input id="record-count" type="number" :min="Math.max(1, (selectedEvacuee?.members || []).length)" x-model="recordForm.member_count" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
                     <p class="col-span-2 text-xs text-ink-muted">A sitio is not a purok; leave the purok blank if it is not known. The headcount cannot be lower than the members listed below.</p>
                     <div class="col-span-2 flex justify-end gap-2">
-                        <button type="button" @click="recordEditing = false" class="text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5">Cancel</button>
-                        <button type="button" :disabled="recordSaving" @click="saveShelterRecord()" class="text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-1.5 disabled:opacity-50" x-text="recordSaving ? 'Saving…' : 'Save'"></button>
+                        <button type="button" @click="recordEditing = false" class="sk-btn sk-btn-sm">Cancel</button>
+                        <button type="button" :disabled="recordSaving" @click="saveShelterRecord()" class="sk-btn sk-btn-p sk-btn-sm" x-text="recordSaving ? 'Saving…' : 'Save'"></button>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -317,8 +317,8 @@
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Barangay</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.barangay ?? '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Sitio</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.sitio || '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Purok</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.purok || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Household Code</p><p class="text-sm font-mono font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code || '—'"></p><p class="text-xs mt-0.5" x-show="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code" :class="selectedEvacuee?.household_ref ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.household_ref ? 'From the registry' : 'Typed at the centre, not verified'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Resident Record</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.registered ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.registered ? 'Linked' : 'Unregistered household'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Household Code</p><p class="text-sm font-mono font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code || '—'"></p><p class="text-xs mt-0.5" x-show="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code" :class="selectedEvacuee?.household_ref ? 'text-emerald-700' : 'text-amber-600'" x-text="selectedEvacuee?.household_ref ? 'From the registry' : 'Typed at the centre, not verified'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Resident Record</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.registered ? 'text-emerald-700' : 'text-amber-600'" x-text="selectedEvacuee?.registered ? 'Linked' : 'Unregistered household'"></p></div>
                 </div>
             </div>
 
@@ -340,8 +340,8 @@
                 <div x-show="facedEditing" x-cloak class="space-y-3 rounded-2xl border border-brand-600/10 p-3" data-faced-edit>
                     @include('admin.partials.sakuna.faced-fields', ['model' => 'facedForm', 'idPrefix' => 'faced-edit'])
                     <div class="flex justify-end gap-2">
-                        <button type="button" @click="facedEditing = false" class="text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5">Cancel</button>
-                        <button type="button" :disabled="facedSaving" @click="saveFaced()" class="text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-1.5 disabled:opacity-50" x-text="facedSaving ? 'Saving…' : 'Save FACED details'"></button>
+                        <button type="button" @click="facedEditing = false" class="sk-btn sk-btn-sm">Cancel</button>
+                        <button type="button" :disabled="facedSaving" @click="saveFaced()" class="sk-btn sk-btn-p sk-btn-sm" x-text="facedSaving ? 'Saving…' : 'Save FACED details'"></button>
                     </div>
                 </div>
             </div>
@@ -368,8 +368,8 @@
                     <div class="col-span-2"><label for="member-vulnerability" class="text-xs text-ink-muted mb-1 block">Vulnerable sector</label><select id="member-vulnerability" x-model="memberForm.vulnerability" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"><option value="">None</option><option>Older person</option><option>Pregnant</option><option>Lactating mother</option><option>PWD</option><option>Solo parent</option><option>Child (under 18)</option></select></div>
                     <label class="col-span-2 sm:col-span-3 flex items-center gap-2 text-sm text-ink-body"><input type="checkbox" x-model="memberForm.is_head" class="rounded border-slate-300 text-brand-600"> Family head (unmarks anyone else)</label>
                     <div class="col-span-2 sm:col-span-3 flex justify-end gap-2">
-                        <button type="button" @click="memberEditing = null" class="text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5">Cancel</button>
-                        <button type="button" :disabled="memberSaving || !memberForm.name.trim()" @click="saveMember()" class="text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-1.5 disabled:opacity-50" x-text="memberSaving ? 'Saving…' : (memberEditing === 'new' ? 'Add member' : 'Save member')"></button>
+                        <button type="button" @click="memberEditing = null" class="sk-btn sk-btn-sm">Cancel</button>
+                        <button type="button" :disabled="memberSaving || !memberForm.name.trim()" @click="saveMember()" class="sk-btn sk-btn-p sk-btn-sm" x-text="memberSaving ? 'Saving…' : (memberEditing === 'new' ? 'Add member' : 'Save member')"></button>
                     </div>
                 </div>
                 <div class="divide-y divide-brand-600/[.08] border border-brand-600/10 rounded-xl overflow-hidden">
@@ -413,16 +413,16 @@
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex flex-wrap items-center gap-2">
             <button type="button" @click="openFacedCard(selectedEvacuee)" :disabled="facedLoading" data-faced-open
-                class="inline-flex items-center gap-1.5 text-sm text-brand-700 bg-white border border-brand-200 rounded-xl px-3 py-2 hover:border-brand-300 transition-colors disabled:opacity-50">
+                class="sk-btn sk-btn-soft">
                 <i data-lucide="printer" class="w-4 h-4"></i> FACED Card
             </button>
             <button x-show="can('sakuna_evacuees','transfer') && selectedEvacuee?.status === 'Processing'" @click="transferToCenter = ''; showTransferForm = true; showEvacueeDetail = false; $nextTick(() => window.renderIcons?.())"
                 class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors">
-                <i data-lucide="arrow-right-left" class="w-4 h-4"></i> Transfer Center
+                <i data-lucide="arrow-right-left" class="w-4 h-4"></i> Transfer center
             </button>
             <button x-show="can('sakuna_evacuees','check_out') && selectedEvacuee?.status === 'Processing'" @click="openCheckout(selectedEvacuee); showEvacueeDetail = false"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-100 border border-amber-200 rounded-2xl px-3 py-2 hover:bg-amber-200 transition-colors ml-auto">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Check Out
+                class="sk-btn ml-auto">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Check out
             </button>
         </div>
     </div>
@@ -431,21 +431,21 @@
 {{-- ── Evacuee Registration Modal ───────────────────────────────────────────────────────── --}}
 <div x-show="showEvacueeReg" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showEvacueeReg = false"
         x-trap="showEvacueeReg"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showEvacueeReg = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
-                <h3 class="font-semibold text-ink-body">Register Evacuee Household</h3>
+                <h3 class="font-semibold text-ink-body">Register evacuee household</h3>
                 <p class="text-xs text-ink-muted mt-0.5">Unregistered households are accepted — a disaster is not the moment to require an account.</p>
             </div>
-            <button aria-label="Close window" @click="showEvacueeReg = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showEvacueeReg = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
@@ -520,7 +520,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide">Members (optional — otherwise just the head is recorded). Mark the head with ◉.</label>
                     <button type="button" @click="addCheckInMember()" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Member
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add member
                     </button>
                 </div>
                 <datalist id="faced-education"><option>None</option><option>Elementary</option><option>High School</option><option>Senior High School</option><option>Vocational</option><option>College</option><option>Post-graduate</option></datalist>
@@ -562,14 +562,14 @@
 
         <div x-show="checkInDuplicate" x-cloak role="alert" class="mx-6 mb-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex flex-wrap items-center justify-between gap-2" data-checkin-duplicate>
             <p class="flex items-start gap-1.5"><i data-lucide="triangle-alert" class="w-4 h-4 shrink-0 mt-0.5"></i><span x-text="checkInDuplicate"></span></p>
-            <button type="button" :disabled="checkInSaving" @click="submitCheckIn(true)" class="text-xs font-semibold text-amber-900 bg-white border border-amber-300 rounded-2xl px-3 py-1.5 disabled:opacity-50">It's a different family — check in</button>
+            <button type="button" :disabled="checkInSaving" @click="submitCheckIn(true)" class="sk-btn sk-btn-sm">It's a different family — check in</button>
         </div>
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex items-center justify-between">
-            <button @click="showEvacueeReg = false" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-4 py-2 hover:border-slate-300 transition-colors">Cancel</button>
+            <button @click="showEvacueeReg = false" class="sk-btn">Cancel</button>
             <button :disabled="checkInSaving || !checkInForm.center || !checkInForm.head_name || !checkInForm.barangay" @click="submitCheckIn()"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-2xl px-4 py-2 transition-colors disabled:opacity-50">
+                class="sk-btn sk-btn-p">
                 <i data-lucide="circle-check" class="w-4 h-4"></i>
-                <span x-text="checkInSaving ? 'Checking in…' : 'Complete Check-In'"></span>
+                <span x-text="checkInSaving ? 'Checking in…' : 'Complete check-in'"></span>
             </button>
         </div>
     </div>
@@ -590,8 +590,8 @@
                     <p class="text-xs text-ink-muted truncate" x-text="[facedCard.ref, facedCard.head_name, (facedCard.members || []).length ? (facedCard.members.length + ((facedCard.members.length === 1) ? ' member' : ' members')) : null].filter(Boolean).join(' · ')"></p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" @click="printFacedCard()" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print</button>
-                    <button type="button" aria-label="Close window" @click="facedCard = null" class="w-8 h-8 rounded-xl grid place-items-center text-ink-muted hover:bg-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    <button type="button" @click="printFacedCard()" class="sk-btn sk-btn-p sk-btn-sm"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print</button>
+                    <button type="button" aria-label="Close window" @click="facedCard = null" class="sk-mclose"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
             </div>
             <div class="flex-1 min-h-0 overflow-y-auto bg-[#E9EEF6] p-3 sm:p-5">

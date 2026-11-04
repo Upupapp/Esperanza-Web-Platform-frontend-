@@ -354,7 +354,7 @@
                         @foreach(['all' => ['Lahat', 'All'], 'active' => ['Isinasagawa', 'In Progress'], 'done' => ['Kumpleto', 'Completed'], 'stopped' => ['Hindi Natuloy', 'Not Completed']] as $key => [$labelFil, $labelEn])
                             <button
                                 @click="tab = '{{ $key }}'"
-                                class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                                class="tap px-2.5 py-1.5 text-xs font-medium rounded-xl transition-colors whitespace-nowrap"
                                 :class="tab === '{{ $key }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                             ><x-ui.t :fil="$labelFil" :en="$labelEn" /></button>
                         @endforeach
@@ -1137,7 +1137,7 @@
                             "
                         >
                             <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>
-                            <span x-text="submitting ? ($store.lang.current === 'en' ? 'Submitting…' : 'Isinusumite…') : ($store.lang.current === 'en' ? (step < 4 ? 'Continue' : 'Submit Request') : (step < 4 ? 'Magpatuloy' : 'Isumite ang Kahilingan'))"></span>
+                            <span x-text="submitting ? ($store.lang.current === 'en' ? 'Submitting…' : 'Isinusumite…') : ($store.lang.current === 'en' ? (step < 4 ? 'Continue' : 'Submit request') : (step < 4 ? 'Magpatuloy' : 'Isumite ang kahilingan'))"></span>
                         </x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
@@ -1256,7 +1256,7 @@
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
                                             <span x-show="stepIndex(selectedRequest.status) <= i" x-text="i + 1"></span>
                                         </span>
-                                        <span class="text-[9px] max-w-[60px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="label"></span>
+                                        <span class="text-xs max-w-[76px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="label"></span>
                                     </div>
                                     <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
                                 </div>
@@ -1374,7 +1374,7 @@
                                     x-bind:disabled="resubmitting || !canResubmitRequirements"
                                     @click="resubmitRequirements()"
                                 >
-                                    <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Application' : 'Isumite Muli ang Aplikasyon')"></span>
+                                    <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit application' : 'Isumite muli ang aplikasyon')"></span>
                                 </x-ui.button>
                                 <p x-show="(selectedRequest?.missingRequired || []).length" x-cloak class="text-[11px] text-amber-700" x-text="($store.lang.current === 'en' ? 'Attach these first, then resubmit: ' : 'I-upload muna ang mga ito bago muling isumite: ') + (selectedRequest?.missingRequired || []).map(m => m.label).join(', ')"></p>
                             </div>

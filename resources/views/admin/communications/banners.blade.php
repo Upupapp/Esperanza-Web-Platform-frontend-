@@ -26,7 +26,7 @@
                 <input aria-label="Search banner titles" type="text" x-model="search" placeholder="Search banner titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
             </div>
             <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-            <x-ui.button x-show="can('create')" @click="openAdd()" icon="plus" size="sm" class="shrink-0">New Banner</x-ui.button>
+            <x-ui.button x-show="can('create')" @click="openAdd()" icon="plus" size="sm" class="shrink-0">New banner</x-ui.button>
         </div>
         <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
@@ -93,8 +93,8 @@
     <div x-data="{ get open() { return formOpen; }, set open(v) { v ? (formOpen = true) : requestClose(); } }">
     <x-ui.modal :bare="true" maxWidth="2xl">
         <div class="flex items-center justify-between px-5 py-3 border-b border-brand-600/10">
-            <h3 class="text-sm font-semibold text-ink" x-text="mode === 'add' ? 'New Banner' : 'Edit Banner'"></h3>
-            <button aria-label="Close" type="button" @click="requestClose()" class="text-ink-muted hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <h3 class="text-base font-extrabold text-ink" x-text="mode === 'add' ? 'New banner' : 'Edit banner'"></h3>
+            <button aria-label="Close" type="button" @click="requestClose()" class="w-9 h-9 -mr-1.5 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <div class="px-5 py-4 max-h-[72vh] overflow-y-auto scrollbar-thin">
         <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 items-start">

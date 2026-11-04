@@ -14,7 +14,7 @@
     <div class="flex items-center gap-1 surface-pressed-sm rounded-xl p-1 w-fit mb-3" role="tablist" :aria-label="$store.lang.current === 'en' ? 'Show documents from' : 'Ipakita ang mga dokumento mula sa'">
         <template x-for="f in ['all', 'dokyu', 'tulong']" :key="f">
             <button type="button" role="tab" :aria-selected="filter === f" @click="filter = f"
-                class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
+                class="tap px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
                 :class="filter === f ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                 x-text="(f === 'all' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : (f === 'dokyu' ? 'Dokyu' : 'Tulong')) + (state === 'loaded' ? ' (' + count(f) + ')' : '')"></button>
         </template>

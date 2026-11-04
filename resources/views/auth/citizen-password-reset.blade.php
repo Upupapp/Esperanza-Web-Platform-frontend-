@@ -56,7 +56,7 @@
                 <p class="text-xs text-rose-600" x-text="error"></p>
             </div>
             <x-ui.button type="submit" size="lg" class="w-full" x-bind:disabled="loading">
-                <span x-text="loading ? 'Sending…' : 'Send Code'"></span>
+                <span x-text="loading ? 'Sending…' : 'Send code'"></span>
             </x-ui.button>
         </form>
 
@@ -73,7 +73,7 @@
                 <p class="text-xs text-rose-600" x-text="error"></p>
             </div>
             <x-ui.button type="submit" size="lg" class="w-full" x-bind:disabled="loading">
-                <span x-text="loading ? 'Resetting…' : 'Reset Password'"></span>
+                <span x-text="loading ? 'Resetting…' : 'Reset password'"></span>
             </x-ui.button>
         </form>
 
@@ -83,7 +83,7 @@
             </div>
             <p class="text-sm font-medium text-ink mb-1"><x-ui.t fil="Na-reset na ang password" en="Password reset" /></p>
             <p class="text-xs text-ink-muted mb-4"><x-ui.t fil="Puwede ka nang mag-sign in gamit ang bagong password." en="You can now sign in with your new password." /></p>
-            <a href="{{ route('citizen.login') }}" class="text-sm font-medium text-brand-600 hover:underline"><x-ui.t fil="Bumalik sa Sign In" en="Back to Sign In" /></a>
+            <a href="{{ route('citizen.login') }}" class="text-sm font-medium text-brand-600 hover:underline"><x-ui.t fil="Bumalik sa Sign in" en="Back to Sign in" /></a>
         </div>
     </div>
 </x-layouts.guest>

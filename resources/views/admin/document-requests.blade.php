@@ -2359,7 +2359,7 @@
                 @click="backToProfile()"
                 class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline shrink-0"
             >
-                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Profile
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to profile
             </button>
         </div>
 
@@ -2767,7 +2767,7 @@
                                         <button type="button" x-show="mayAccept(req)" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
                                         <span x-show="!mayAccept(req)" class="text-[11px] text-ink-muted">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>
-                                        <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
+                                        <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for replacement</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
                                     </div>
@@ -2938,11 +2938,11 @@
                             <div class="grid grid-cols-2 gap-2 mt-2.5" x-show="!selected.release_evidence">
                                 <button type="button" @click="captureReleaseEvidence('camera')" class="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/40 py-3 text-ink-muted hover:text-brand-600 transition-colors">
                                     <i data-lucide="camera" class="w-4 h-4"></i>
-                                    <span class="text-[11px] font-medium">Take Photo</span>
+                                    <span class="text-[11px] font-medium">Take photo</span>
                                 </button>
                                 <button type="button" @click="captureReleaseEvidence('upload')" class="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/40 py-3 text-ink-muted hover:text-brand-600 transition-colors">
                                     <i data-lucide="upload" class="w-4 h-4"></i>
-                                    <span class="text-[11px] font-medium">Upload Photo</span>
+                                    <span class="text-[11px] font-medium">Upload photo</span>
                                 </button>
                             </div>
                         </div>
@@ -2982,7 +2982,7 @@
                             <template x-if="documentReady">
                                 <div class="mt-2.5">
                                     <p class="text-[11px] text-ink-muted leading-relaxed mb-2">Preview, print, or download the prepared document before handing it over.</p>
-                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="if (editingDocument) cancelDocumentEdits(); docPreviewOpen = true">View Document</x-ui.button>
+                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="if (editingDocument) cancelDocumentEdits(); docPreviewOpen = true">View document</x-ui.button>
                                 </div>
                             </template>
                             <p class="text-[11px] text-ink-muted mt-1 leading-relaxed" x-show="!documentReady">No prepared document on file for this request.</p>
@@ -3088,7 +3088,7 @@
                                 </span>
                             </x-ui.button>
                         </template>
-                        <x-ui.button size="sm" x-show="!primaryPermission || may(primaryPermission)" x-bind:disabled="processing || !!approveBlocked || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="approveBlocked || (selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null)">
+                        <x-ui.button size="sm" x-show="!primaryPermission || may(primaryPermission)" x-bind:disabled="processing || !!approveBlocked || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="approveBlocked || (selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload proof of release first' : null)">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="!processing"></i>
@@ -3115,7 +3115,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-3 dp-no-print" x-show="!editingDocument">
                             <p class="text-[11px] text-ink-muted leading-relaxed">Review the prepared document below, or edit its wording and formatting before printing or downloading.</p>
-                            <x-ui.button size="sm" variant="secondary" icon="pencil" x-show="mayEditDocument" @click="startEditingDocument()">Edit Document</x-ui.button>
+                            <x-ui.button size="sm" variant="secondary" icon="pencil" x-show="mayEditDocument" @click="startEditingDocument()">Edit document</x-ui.button>
                         </div>
 
                         <x-citizen.document-editor-zoom-controls />
@@ -3234,7 +3234,7 @@
                 <x-slot:footer>
                     {{-- While editing: keep or drop the changes. Closing the window drops them too. --}}
                     <x-ui.button size="sm" variant="secondary" x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel</x-ui.button>
-                    <x-ui.button size="sm" icon="check" x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save Changes</x-ui.button>
+                    <x-ui.button size="sm" icon="check" x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save changes</x-ui.button>
                     <p class="mr-auto text-[11px] leading-snug text-amber-700" x-show="!editingDocument && editedInWindow && editedInWindow === selected?.ref" x-cloak>Not saved: this edit is in this window only. Save again, or print or download it before you leave.</p>
                     <div class="mr-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-snug text-ink-muted" x-show="!editingDocument && selected?.prepared && editedInWindow !== selected?.ref" x-cloak>
                         <span x-text="'Edited by ' + (selected?.prepared?.by || 'an officer') + (selected?.prepared?.at ? ' on ' + new Date(selected.prepared.at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '') + '. Staff see this copy; the resident sees the template.'"></span>

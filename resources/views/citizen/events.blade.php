@@ -116,10 +116,10 @@
             <div class="flex items-center justify-between mb-3">
                 <p class="text-sm font-semibold text-ink" x-text="monthLabel"></p>
                 <div class="flex items-center gap-1">
-                    <button aria-label="Previous month" type="button" @click="prevMonth()" class="w-7 h-7 rounded-xl flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button aria-label="Previous month" type="button" @click="prevMonth()" class="tap w-7 h-7 rounded-xl flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-left" class="w-4 h-4"></i>
                     </button>
-                    <button aria-label="Next month" type="button" @click="nextMonth()" class="w-7 h-7 rounded-xl flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button aria-label="Next month" type="button" @click="nextMonth()" class="tap w-7 h-7 rounded-xl flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -241,7 +241,7 @@
                                         :class="isReminded(event) ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-white text-slate-700 border-slate-200 hover:bg-white/60 hover:border-slate-300'"
                                     >
                                         <i :data-lucide="isReminded(event) ? 'bell-ring' : 'bell'" class="w-3.5 h-3.5"></i>
-                                        <span x-text="isReminded(event) ? ($store.lang.current === 'en' ? 'Reminder On' : 'May Paalala') : ($store.lang.current === 'en' ? 'Remind Me' : 'Paalalahanan Ako')"></span>
+                                        <span x-text="isReminded(event) ? ($store.lang.current === 'en' ? 'Reminder on' : 'May paalala') : ($store.lang.current === 'en' ? 'Remind me' : 'Paalalahanan ako')"></span>
                                         <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                                     </button>
                                     <div

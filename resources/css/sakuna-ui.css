@@ -224,7 +224,7 @@
     .sk-tab:hover { color: var(--sk-text); }
     .sk-tab-on, .sk-tab-on:hover { background: #fff; color: var(--sk-blue-d); box-shadow: 0 1px 2px rgb(0 0 0 / .05); }
     @container sktabs (min-width: 1036px) { .sk-tabhost > nav { justify-content: normal; } .sk-tabhost .sk-tab { flex: 1 1 auto; padding: 6px 4px; } }
-    @container sktabs (min-width: 960px) and (max-width: 1035.98px) { .sk-tabhost > nav { justify-content: normal; gap: 2px; } .sk-tabhost .sk-tab { flex: 1 1 auto; padding: 6px 3px; font-size: 11.5px; } }
+    @container sktabs (min-width: 960px) and (max-width: 1035.98px) { .sk-tabhost > nav { justify-content: normal; gap: 2px; } .sk-tabhost .sk-tab { flex: 1 1 auto; padding: 6px 2px; font-size: 12px; } }
 
     /* Fields: pressed wells that turn white with a soft ring when in use. */
     .sk-sel, .sk-search input, .sk-daterange { border-color: transparent; border-radius: 16px; background-color: var(--sk-well); box-shadow: var(--shadow-pressed-sm); font-size: 12px; transition: background-color .16s, box-shadow .16s; }
@@ -322,3 +322,17 @@
 .sk .sk-tag { background: #E8EEF8; box-shadow: inset 0 0 0 1px #D6DFEE; color: #334155; }
 /* Filter selects stay compact; the chosen value still shows. */
 .sk .sk-toolbar .sk-sel { max-width: 190px; }
+/* The Reports filter row wraps on a narrow screen rather than hiding its exports. */
+@media (max-width: 1100px) { .sk .sk-toolbar-row { flex-wrap: wrap; overflow-x: visible; } }
+/* One window close button on every Sakuna window: 36px, the X at 18px. */
+.sk .sk-mclose { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: var(--sk-muted); flex-shrink: 0; background: transparent; transition: background-color .15s, color .15s; }
+.sk .sk-mclose:hover { background: #F1F5F9; color: var(--sk-text); }
+.sk .sk-mclose svg, .sk .sk-mclose i { width: 18px; height: 18px; }
+/* The confirm button of a cancel or close: navy, since red is kept for Critical and the longest wait. */
+.sk .sk-btn.sk-btn-navy { background: #12203F; border-color: #12203F; color: #fff; }
+.sk .sk-btn.sk-btn-navy:hover { background: #0B1730; }
+.sk .sk-btn.sk-btn-navy:disabled { opacity: .45; }
+/* Placeholders readable on white and on the pressed fields (AA, about 5:1). */
+.sk input::placeholder, .sk textarea::placeholder { color: #556074; opacity: 1; }
+/* Report cards are as tall as what they hold. */
+.sk .sk-g4 { align-items: start; }

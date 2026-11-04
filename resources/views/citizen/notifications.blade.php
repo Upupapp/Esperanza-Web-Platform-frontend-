@@ -76,16 +76,16 @@
         <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
-                    <button @click="tab = 'all'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'all' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Lahat" en="All" /></button>
-                    <button @click="tab = 'unread'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'unread' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                    <button @click="tab = 'all'" class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'all' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Lahat" en="All" /></button>
+                    <button @click="tab = 'unread'" class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'unread' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <x-ui.t fil="Hindi Pa Nababasa" en="Unread" />
                         <span class="text-[9px] font-semibold bg-brand-100 text-brand-700 rounded-full px-1.5 py-0.5" x-show="unreadTotal > 0" x-text="unreadTotal"></span>
                     </button>
-                    <button @click="tab = 'read'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'read' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Nabasa Na" en="Read" /></button>
-                    <button @click="tab = 'dokyu'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'dokyu' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                    <button @click="tab = 'read'" class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'read' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Nabasa Na" en="Read" /></button>
+                    <button @click="tab = 'dokyu'" class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'dokyu' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="file-text" class="w-3 h-3"></i><x-ui.t fil="Dokyu" en="Dokyu" />
                     </button>
-                    <button @click="tab = 'tulong'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'tulong' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                    <button @click="tab = 'tulong'" class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'tulong' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="hand-heart" class="w-3 h-3"></i><x-ui.t fil="Tulong" en="Tulong" />
                     </button>
                 </div>
@@ -94,7 +94,7 @@
                     class="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50 inline-flex items-center gap-1.5 shrink-0"
                 >
                     <i data-lucide="loader-circle" class="w-3 h-3 animate-spin" x-show="markingAll" x-cloak></i>
-                    <span x-text="markingAll ? ($store.lang.current === 'en' ? 'Marking…' : 'Minamarkahan…') : ($store.lang.current === 'en' ? 'Mark all as read' : 'Markahan Lahat na Nabasa')"></span>
+                    <span x-text="markingAll ? ($store.lang.current === 'en' ? 'Marking…' : 'Minamarkahan…') : ($store.lang.current === 'en' ? 'Mark all as read' : 'Markahan lahat na nabasa')"></span>
                 </button>
             </div>
             <p class="text-[11px] text-ink-muted" x-text="visible.length + ' ' + ($store.lang.current === 'en' ? 'shown' : 'ipinapakita')"></p>
@@ -126,7 +126,7 @@
                                 <button aria-label="Close"
                                     type="button" x-show="!n.pinned"
                                     @click.stop="$store.citizenNotifications.dismiss(n.id)"
-                                    class="opacity-0 group-hover:opacity-100 text-ink-faint hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
+                                    class="tap opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 text-ink-faint hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
                                 ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </template>

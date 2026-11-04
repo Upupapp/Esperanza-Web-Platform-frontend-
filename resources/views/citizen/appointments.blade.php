@@ -189,8 +189,8 @@
                     <button type="button" @click="loadMine()" :aria-label="$store.lang.current === 'en' ? 'Refresh' : 'I-refresh'" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-white/70 transition-colors"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
                 </div>
                 <div class="flex items-center gap-1 surface-pressed-sm rounded-2xl p-1 mt-3 w-fit" role="tablist">
-                    <button type="button" role="tab" :aria-selected="listTab === 'upcoming'" @click="listTab = 'upcoming'" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition-colors" :class="listTab === 'upcoming' ? 'bg-white/85 text-brand-600 shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" x-text="t('Upcoming', 'Paparating') + ' · ' + upcoming.length"></button>
-                    <button type="button" role="tab" :aria-selected="listTab === 'past'" @click="listTab = 'past'" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition-colors" :class="listTab === 'past' ? 'bg-white/85 text-brand-600 shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" x-text="t('Past', 'Nakaraan') + ' · ' + past.length"></button>
+                    <button type="button" role="tab" :aria-selected="listTab === 'upcoming'" @click="listTab = 'upcoming'" class="tap px-3 py-1.5 text-xs font-semibold rounded-xl transition-colors" :class="listTab === 'upcoming' ? 'bg-white/85 text-brand-600 shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" x-text="t('Upcoming', 'Paparating') + ' · ' + upcoming.length"></button>
+                    <button type="button" role="tab" :aria-selected="listTab === 'past'" @click="listTab = 'past'" class="tap px-3 py-1.5 text-xs font-semibold rounded-xl transition-colors" :class="listTab === 'past' ? 'bg-white/85 text-brand-600 shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" x-text="t('Past', 'Nakaraan') + ' · ' + past.length"></button>
                 </div>
 
                 <div x-show="mineLoading" class="space-y-2.5 mt-3" aria-busy="true">
