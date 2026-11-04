@@ -29,7 +29,7 @@
             <x-ui.button x-show="can('create')" @click="openAdd()" icon="plus" size="sm" class="shrink-0">New Banner</x-ui.button>
         </div>
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto">
+            <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                 <template x-for="s in ['All', 'Draft', 'Pending Review', 'Approved', 'Released', 'Archived']" :key="s">
                     <button type="button" @click="statusFilter = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="statusFilter === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s === 'All' ? 'All' : statusLabel(s)"></button>
                 </template>

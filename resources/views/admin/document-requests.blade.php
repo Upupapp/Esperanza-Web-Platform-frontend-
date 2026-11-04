@@ -2365,7 +2365,7 @@
 
         {{-- Requests | Document types (their own page since 2026-10-30, the
              editor that was Settings > Service Catalog) | Papeles. --}}
-        <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto mb-4">
+        <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full mb-4">
             <button
                 type="button" @click="view = 'requests'"
                 class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
@@ -2416,7 +2416,7 @@
                 @include('admin.partials.modal-request-import', ['importType' => 'dokyu'])
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+                <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                     @foreach($tabs as $key => $label)
                         <button
                             type="button" @click="tab = '{{ $key }}'"

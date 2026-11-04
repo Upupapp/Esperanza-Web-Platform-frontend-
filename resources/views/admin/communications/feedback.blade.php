@@ -11,7 +11,7 @@
 
     {{-- The queue's filters --}}
     <div class="surface-glass rounded-[26px] p-3 space-y-3">
-        <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto" role="group" aria-label="Tickets by status">
+        <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full" role="group" aria-label="Tickets by status">
             <template x-for="c in chips" :key="c.key">
                 <button type="button" @click="setStatus(c.key)" :aria-pressed="status === c.key" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5" :class="status === c.key ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                     <span x-text="c.label"></span>

@@ -115,7 +115,7 @@
                 </span>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+                <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                     <button type="button" @click="tab = 'all'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'all' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">All</button>
                     <button type="button" @click="tab = 'review'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'review' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">Pending Review</button>
                     <button type="button" @click="tab = 'paid'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'paid' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">Paid</button>

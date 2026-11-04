@@ -891,9 +891,9 @@
             <x-ui.stat-card layout="compact" @click="tab='data-quality';clearFilters()" class="cursor-pointer" label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="red"    :delay="200" sublabel="Needs attention" />
         </div>
 
-        {{-- Primary tab bar. max-w-full + overflow-x-auto: on a phone the tabs
-             scroll inside the bar instead of the whole page (scope round 2026-10-15). --}}
-        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full overflow-x-auto mb-5">
+        {{-- Primary tab bar. On a phone the tabs wrap onto a second line, so every
+             section stays in view (NAV-4: tabs wrap, never hide off screen). --}}
+        <div class="flex flex-wrap items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full mb-5">
             <button @click="tab='registry';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                     :class="tab==='registry'     ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
@@ -949,7 +949,7 @@
         <div x-show="tab === 'registry'">
             {{-- Unified toolbar: view switcher on top, search/filters/actions below --}}
             <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto">
+                <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                     <button @click="view='individuals';clearFilters()"
                             class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                             :class="view==='individuals' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">

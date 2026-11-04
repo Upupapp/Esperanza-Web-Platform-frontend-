@@ -1077,7 +1077,7 @@
                 </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+                <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                     @foreach($tabs as $key => $label)
                         <button
                             type="button" @click="tab = '{{ $key }}'"

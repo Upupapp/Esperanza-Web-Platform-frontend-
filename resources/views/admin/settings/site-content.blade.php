@@ -72,7 +72,7 @@
          2026-10-15); they load when first opened, in their own component
          (siteHelpEditor, resources/js/scope-admin-settings.js). --}}
     <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto scrollbar-thin">
+        <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full">
             @foreach(['privacy' => ['shield-check', 'Privacy Policy'], 'terms' => ['file-text', 'Terms & Conditions'], 'support' => ['life-buoy', 'Support Info'], 'faqs' => ['circle-help', 'FAQs'], 'tutorials' => ['circle-play', 'Tutorials']] as $docTab => [$docIcon, $docLabel])
                 <button type="button" @click="contentTab = '{{ $docTab }}'" class="shrink-0 whitespace-nowrap px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="contentTab === '{{ $docTab }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" :aria-current="contentTab === '{{ $docTab }}' ? 'true' : null"><i data-lucide="{{ $docIcon }}" class="w-3.5 h-3.5"></i>{{ $docLabel }}</button>
             @endforeach
