@@ -2147,7 +2147,6 @@ function balitaFeed() {
             return byTab && (!this.category || post.category === this.category);
         },
         get shown() { return this.posts.filter((p) => this.matches(p)); },
-        get recentPosts() { return this.posts.slice(0, 4); },
         get trendingPosts() { return this.posts.filter((p) => p.likes > 0).sort((a, b) => b.likes - a.likes).slice(0, 3); },
         emptyText() { return this.t('No Balita posts here yet.', 'Wala pang balita rito.'); },
 

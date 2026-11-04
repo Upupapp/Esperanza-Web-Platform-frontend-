@@ -942,7 +942,7 @@
 
             <div class="mt-4 rounded-xl border-0 surface-pressed p-4">
                 <p class="text-xs text-ink-muted leading-relaxed">
-                    <strong class="text-slate-700">Report downloads</strong> stay restricted to roles with an existing reporting responsibility (Municipal Administrator, Records Officer), plus Department Head gains it newly &mdash; scoped to their own department's data, not municipality-wide. Department Staff and Front Desk do not get report download, per the least-privilege principle: a user who can view operational requests doesn't automatically need export/report access.
+                    <strong class="text-slate-700">Reports:</strong> only the Municipal Administrator, the Records Officer and a Department Head (their own department) can download them. A dash means not allowed.
                 </p>
             </div>
         </div>

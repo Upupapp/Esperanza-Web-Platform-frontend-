@@ -24,7 +24,7 @@
         </div>
         <div class="{{ $ui['note'] }}">
             <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-            <p>The offices staff accounts are assigned to and services are handled by. Barangay halls are not listed: each barangay works as its own office. The head shown is the one named in the Government Directory.</p>
+            <p>The offices staff accounts are assigned to and services are handled by. Barangay halls are not listed: each barangay works as its own office. The head shown is the one named in Direktoryo, the contact list residents read. <a href="{{ route('admin.settings.directory') }}" x-show="$store.session.canPerm('comm_directory', 'view')" class="font-semibold text-brand-600 hover:underline whitespace-nowrap">Edit contact details in Direktoryo &rarr;</a></p>
         </div>
 
         <div x-show="loading" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /><x-ui.skeleton class="h-12 opacity-60" /></div>

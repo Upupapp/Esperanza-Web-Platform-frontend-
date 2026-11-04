@@ -12,7 +12,7 @@
         // (owner, 2026-10-21: they were Balita's Offices and Barangays tabs).
         'directory' => ['book-user', 'Direktoryo', '/admin/settings/directory'],
         'notifications' => ['bell', 'Notifications', null],
-        'security' => ['shield', 'Security', null],
+        'security' => ['shield', 'Security rules', null],
         'branding' => ['palette', 'Branding', '/admin/settings/branding'],
         'templates' => ['file-badge', 'Document Templates', '/admin/settings/templates'],
         'site-content' => ['file-text', 'Site Content', '/admin/settings/site-content'],
@@ -344,7 +344,7 @@
                                     <template x-for="t in themes" :key="t"><option :value="t" x-text="t"></option></template>
                                 </select>
                             </div>
-                            <x-ui.input name="municipality_name" label="Municipality Name" x-model="municipalityName" x-bind:disabled="!can('set_branding','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                            <x-ui.input name="municipality_name" label="Municipality Name" placeholder="Esperanza" hint="Shown in the sidebar and page titles as the name followed by LGU. Leave it empty to keep Esperanza." x-model="municipalityName" x-bind:disabled="!can('set_branding','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                             <p class="text-[11px] text-ink-muted" x-show="current?.version">Current version <span x-text="current?.version"></span><span x-show="current?.effective_date"> · effective <span x-text="current?.effective_date"></span></span></p>
                             <x-ui.button icon="check" x-bind:disabled="saving" @click="save()" x-show="can('set_branding','edit')" x-text="saving ? 'Publishing…' : 'Publish new version'"></x-ui.button>
                         </div>

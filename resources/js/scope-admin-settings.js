@@ -1111,7 +1111,7 @@ function departmentsTab() {
             return this.rows.filter((r) => (this.show === '' || (this.show === 'on' ? r.active : !r.active))
                 && (!q || [r.name, r.short, r.head, r.head_position].some((v) => String(v || '').toLowerCase().includes(q))));
         },
-        headLine(r) { return r.head ? r.head + (r.head_position ? ' · ' + r.head_position : '') : 'Not in the Government Directory'; },
+        headLine(r) { return r.head ? r.head + (r.head_position ? ' · ' + r.head_position : '') : 'Not in Direktoryo'; },
         create() {
             if (!this.canCreate) return;
             this.mode = 'create'; this.sel = null;

@@ -599,7 +599,7 @@
 
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                             <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit">
-                                @foreach(['all' => 'All', 'IMG' => 'Images', 'PDF' => 'PDF', 'DOCX' => 'DOCX'] as $key => $label)
+                                @foreach(['all' => 'All', 'IMG' => 'Images', 'PDF' => 'PDF'] as $key => $label)
                                     <button
                                         @click="fileTab = '{{ $key }}'"
                                         class="px-3 py-1.5 text-xs font-medium rounded-xl transition-colors whitespace-nowrap"

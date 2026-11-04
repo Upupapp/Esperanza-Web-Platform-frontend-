@@ -24,7 +24,7 @@
         </div>
         <div class="flex flex-wrap items-center justify-between gap-2">
             <p class="text-[11px] text-ink-muted" x-show="!loading && !failed" x-text="countLine"></p>
-            <p class="text-[11px] text-ink-muted flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i>Residents see this in Direktoryo, on the website and in the app.</p>
+            <p class="text-[11px] text-ink-muted flex flex-wrap items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i>Residents see this in Direktoryo, on the website and in the app.<a href="{{ route('admin.departments') }}" x-show="$store.session.canPerm('um_personnel', 'view')" class="font-semibold text-brand-600 hover:underline">The offices staff and services belong to are in Departments &rarr;</a></p>
         </div>
     </div>
 

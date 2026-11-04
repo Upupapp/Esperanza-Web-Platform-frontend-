@@ -62,6 +62,14 @@
         <x-ui.nav-item dense :href="route('citizen.emergency')" icon="siren" label="Sakuna" labelEn="Emergency" :active="$active === 'emergency'" />
         <x-ui.nav-item dense :href="route('citizen.directory')" icon="building-2" label="Direktoryo" labelEn="Directory" :active="$active === 'directory'" />
         <x-ui.nav-item dense :href="route('citizen.faqs')" icon="life-buoy" label="Suporta" labelEn="Help" :active="$active === 'help'" />
+        {{-- On a phone or tablet the drawer also reaches the account pages, which are
+             otherwise only behind the avatar in the top bar (owner, 2026-11-04). --}}
+        @unless($public)
+            <div class="lg:hidden pt-2 mt-2 border-t border-white/[.08] space-y-[2px]">
+                <x-ui.nav-item dense :href="route('citizen.profile')" icon="user" label="Aking Profile" labelEn="My Profile" :active="$active === 'profile'" />
+                <x-ui.nav-item dense :href="route('citizen.settings')" icon="settings" label="Mga Setting" labelEn="Settings" :active="$active === 'settings'" />
+            </div>
+        @endunless
     </nav>
 
     <div class="pt-1.5 shrink-0">
