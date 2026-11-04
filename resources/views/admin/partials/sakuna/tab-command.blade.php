@@ -194,26 +194,28 @@
         <section class="sk-card flex flex-col overflow-hidden" style="flex: 2 1 380px;" x-data="sakunaCommandMap" x-effect="draw()">
             <div class="sk-chead">
                 <h2 class="sk-ctitle">Active incident locations</h2>
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <select aria-label="Incident status on the map" x-model="statusFilter" class="sk-sel">
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 px-3.5 py-2 border-b border-[#EEF2F7]">
+                <div class="contents">
+                    <select aria-label="Incident status on the map" x-model="statusFilter" class="sk-sel" style="max-width: 150px;">
                         <option value="open">Open incidents</option>
                         <option value="all">All on the map (incl. resolved)</option>
                         <template x-for="st in mapStatuses" :key="st"><option :value="st" x-text="'Only ' + incidentStatusLabel(st)"></option></template>
                     </select>
-                    <select aria-label="Severity on the map" x-model="severityFilter" class="sk-sel">
+                    <select aria-label="Severity on the map" x-model="severityFilter" class="sk-sel" style="max-width: 130px;">
                         <option value="">All severities</option>
                         <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
                     </select>
-                    <select aria-label="Incident type on the map" x-model="typeFilter" class="sk-sel">
+                    <select aria-label="Incident type on the map" x-model="typeFilter" class="sk-sel" style="max-width: 120px;">
                         <option value="">All types</option>
                         <template x-for="ty in mapTypes" :key="ty"><option :value="ty" x-text="ty"></option></template>
                     </select>
-                    <label class="sk-chk cursor-pointer select-none">
+                    <label class="sk-chk cursor-pointer select-none whitespace-nowrap">
                         <input type="checkbox" x-model="showCentres">
-                        Evacuation centers
+                        Centers
                     </label>
-                    <button type="button" @click="fit()" class="sk-btn sk-btn-sm">
-                        <i data-lucide="scan"></i> Fit to records
+                    <button type="button" @click="fit()" class="sk-btn sk-btn-sm ml-auto shrink-0" title="Fit the map to the records shown" aria-label="Fit the map to the records shown">
+                        <i data-lucide="scan"></i> Fit
                     </button>
                 </div>
             </div>
@@ -280,8 +282,7 @@
     </div>{{-- /KPI strip --}}
 
     {{-- ── Status cards | recent activity ───────────────────────────────── --}}
-    <div class="flex flex-wrap gap-3 items-start">
-        <div class="grid gap-3 min-w-0 content-start" style="flex: 3 1 520px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+    <div class="grid gap-3 items-start" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
 
             {{-- Missing Persons (owner, 2026-10-30): counted as people, not
                  cases, from GET /sakuna/missing/summary; hidden where the role
@@ -369,14 +370,13 @@
                     <div x-show="commandBoard.resources.length === 0" class="sk-empty" style="padding: 14px;">No resources recorded.</div>
                 </div>
             </section>
-        </div>
 
-        <section class="sk-card flex flex-col overflow-hidden" style="flex: 2 1 300px;">
+        <section class="sk-card overflow-hidden">
             <div class="sk-chead">
                 <h2 class="sk-ctitle">Recent activity</h2>
-                <span class="sk-csub">Last 25 incident actions</span>
+                <span class="sk-csub">Latest incident steps</span>
             </div>
-            <ol class="px-3.5 overflow-y-auto max-h-[320px] flex-grow">
+            <ol class="px-3.5 overflow-y-auto max-h-[260px]">
                 <template x-for="(item, idx) in commandBoard.feed" :key="item.incident + '-' + item.at + '-' + idx">
                     <li class="flex gap-2.5 py-2 border-b border-[#EEF2F7] last:border-b-0">
                         <span class="w-1.5 h-1.5 mt-1.5 rounded-full bg-[#2563EB] shrink-0"></span>

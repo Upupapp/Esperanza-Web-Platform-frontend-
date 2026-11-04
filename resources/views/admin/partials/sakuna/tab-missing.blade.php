@@ -122,15 +122,15 @@
                     <input id="mp-q" type="search" x-model="f.q" @input.debounce.400ms="load(1)" placeholder="Name or case number…">
                 </div>
                 <select aria-label="Status" x-model="f.status" @change="load(1)" class="sk-sel">
-                    <option value="">Every status</option><option value="active">Still missing or unidentified</option><option value="found">Found</option>
+                    <option value="">All statuses</option><option value="active">Still missing or unidentified</option><option value="found">Found</option>
                     <option>Missing</option><option>Found safe</option><option>Found injured</option><option>Found deceased</option>
                     <option>Deceased</option><option>Unidentified</option><option>Identified</option><option>Closed</option>
                 </select>
                 <select aria-label="Kind" x-model="f.kind" @change="load(1)" class="sk-sel">
-                    <option value="">Every kind</option><option value="missing">Missing person</option><option value="deceased">Deceased person</option><option value="unidentified">Unidentified body</option>
+                    <option value="">All kinds</option><option value="missing">Missing person</option><option value="deceased">Deceased person</option><option value="unidentified">Unidentified body</option>
                 </select>
                 <select aria-label="Barangay" x-model="f.barangay" @change="load(1)" class="sk-sel">
-                    <option value="">Every barangay</option>
+                    <option value="">All barangays</option>
                     @foreach($barangays as $b)<option value="{{ is_array($b) ? $b['name'] : $b }}">{{ is_array($b) ? $b['name'] : $b }}</option>@endforeach
                 </select>
                 <div class="sk-search" style="flex: 0 1 150px; min-width: 120px;">

@@ -126,9 +126,10 @@
             </div>
             <div class="flex flex-wrap items-center justify-end gap-1 shrink-0" @click.stop>
                 <button type="button" x-show="can('sakuna_alerts','publish') && a.status === 'Draft'" @click="askPublishAlert(a)" class="sk-btn sk-btn-sm sk-btn-p"><i data-lucide="send"></i> Review and send</button>
-                <button type="button" x-show="can('sakuna_alerts','edit') && a.status === 'Draft'" @click="openEditAlert(a)" class="sk-btn sk-btn-sm">Edit</button>
+
                 <button type="button" x-show="can('sakuna_alerts','cancel') && a.status === 'Released'" @click="openCancelAlert(a)" class="sk-btn sk-btn-sm">Cancel alert</button>
-                <button type="button" @click="openAlertDetail(a)" class="sk-btn sk-btn-sm sk-btn-soft">View</button>
+                <button type="button" @click="openAlertDetail(a)" class="sk-btn sk-btn-sm sk-btn-soft"><i data-lucide="eye"></i> View</button>
+                <button type="button" x-show="can('sakuna_alerts','edit') && a.status === 'Draft'" @click="openEditAlert(a)" class="sk-btn sk-btn-sm"><i data-lucide="pencil"></i> Edit</button>
             </div>
         </div>
     </template>

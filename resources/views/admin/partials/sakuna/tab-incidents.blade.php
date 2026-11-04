@@ -17,6 +17,7 @@
 --}}
 
 <div x-data="{
+    moreFilters: false,
     elapsed(iso) {
         if (!iso) return '—';
         const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -107,7 +108,7 @@
         <input aria-label="Search by ID, type, or barangay" type="search" x-model="incidentSearch"
             placeholder="Search by ID, type, or barangay…">
     </div>
-    <select aria-label="Incident type filter" x-model="incidentTypeFilter" class="sk-sel">
+    <select x-show="moreFilters || incidentTypeFilter" aria-label="Incident type filter" x-model="incidentTypeFilter" class="sk-sel">
         <option value="">All types</option>
         <option>Flood</option><option>Landslide</option><option>Fire</option><option>Earthquake</option>
         <option>Vehicular Accident</option><option>Medical Emergency</option><option>Missing Person</option>
@@ -135,18 +136,21 @@
         <option value="none">Nobody assigned (open)</option>
         <option value="someone">Someone assigned</option>
     </select>
-    <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter" class="sk-sel">
+    <select x-show="moreFilters || incidentBarangayFilter" aria-label="Incident barangay filter" x-model="incidentBarangayFilter" class="sk-sel">
         <option value="">All barangays</option>
         @foreach($barangays as $brgy)
             <option>{{ $brgy }}</option>
         @endforeach
     </select>
     {{-- Reports residents sent from their Sakuna page, apart from the ones staff entered (2026-10-17). --}}
-    <select aria-label="Incident source filter" x-model="incidentSourceFilter" class="sk-sel">
+    <select x-show="moreFilters || incidentSourceFilter" aria-label="Incident source filter" x-model="incidentSourceFilter" class="sk-sel">
         <option value="">All sources</option>
         <option value="resident">Reported by residents</option>
         <option value="staff">Entered by staff</option>
     </select>
+    <button type="button" class="sk-btn sk-btn-sm" @click="moreFilters = !moreFilters" :aria-expanded="moreFilters ? 'true' : 'false'">
+        <i data-lucide="sliders-horizontal"></i><span x-text="moreFilters ? 'Fewer filters' : 'More filters'"></span>
+    </button>
     <button type="button" @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter=''; incidentAssignedFilter='';"
         class="sk-clear">Clear</button>
     <span class="sk-csub ml-auto whitespace-nowrap" x-text="filteredIncidents.length + (filteredIncidents.length === 1 ? ' incident' : ' incidents')"></span>
