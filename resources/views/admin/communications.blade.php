@@ -73,7 +73,7 @@
                     info_officer: 'Municipal Information Officer: you head the Municipal Information Office. You publish Balita, banners, occasions and events for the whole municipality, and review what your MIO Staff and the offices send. Your lead is the Municipal Administrator: save a draft and send it for review to get their second look.',
                     mio_staff: 'MIO Staff: you write Balita posts, banners, occasions and events and send them for review. Your MIO Head, the Municipal Information Officer, approves and publishes them; the bell tells you when something is published or sent back. You can change only your own work.',
                     department_head: 'Department Head: you approve and publish your office’s Balita posts; the Municipal Information Office can too.',
-                    mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts, such as disaster updates, and approve or delete what your staff send; the Municipal Information Office can too. An urgent warning belongs in Sakuna > Alerts, which also reaches residents on their phones.',
+                    mdrrmo_head: 'MDRRMO Head: you approve and publish the MDRRMO’s own Balita posts, such as disaster updates, and posts about missing persons; your MDRRMO Staff write them and send them for review. Other offices’ posts are for their own head or the Municipal Information Office. An urgent warning belongs in Sakuna > Alerts, which also reaches residents on their phones.',
                 }[this.$store.session.account?.roleKey] || '';
             },
             barangayNames: @js(config('esperanza.barangays')),

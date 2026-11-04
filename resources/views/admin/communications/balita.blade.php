@@ -81,7 +81,7 @@
              MIO Staff read their own note above the tabs instead (2026-11-02). --}}
         <p x-show="can('create') && !approver && $store.session.account?.roleKey !== 'mio_staff'" x-cloak class="rounded-[14px] bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
             <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-            <span>You can write Balita posts with photos and videos and send them for review, with a time for them to go out if you like. Your Department Head or the Municipal Information Office approves and publishes them. You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
+            <span>You can write Balita posts with photos and videos and send them for review, with a time for them to go out if you like. <span x-text="$store.session.account?.roleKey === 'mdrrmo_staff' ? 'Your MDRRMO Head approves and publishes them.' : 'Your Department Head or the Municipal Information Office approves and publishes them.'">Your Department Head or the Municipal Information Office approves and publishes them.</span> You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
         </p>
 
         {{-- Filters: one row (redesign 2026-10-26); the status is a pill like the others. --}}

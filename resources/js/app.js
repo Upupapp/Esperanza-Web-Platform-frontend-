@@ -334,7 +334,7 @@ function endSession() {
  * show immediately after login, independent of what that account can see.
  */
 // A role whose label is not its key in words (owner, 2026-10-21); the
-// MDRRMO's roles, made in Users -> Roles, keep their acronym (2026-10-28).
+// MDRRMO's roles, in the role contract since 2026-11-05, keep their acronym (2026-10-28).
 const ROLE_LABELS = { info_officer: 'Municipal Information Officer', mio_staff: 'MIO Staff', mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff' };
 
 function formatRoleLabel(roleKey) {

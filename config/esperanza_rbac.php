@@ -331,6 +331,59 @@ $roles = [
             'comm_events' => ['view', 'create', 'edit', 'review'],
         ],
     ],
+    // The MDRRMO's two roles (owner, 2026-11-05): in the contract now, with the
+    // grants they held on staging, where they were first made by hand. Held to
+    // their own office, like a department's. Hand-authored, so none of the
+    // loops below changes them.
+    [
+        'key' => 'mdrrmo_head', 'name' => 'MDRRMO Head', 'icon' => 'shield-alert',
+        'color' => 'text-amber-700 bg-amber-50', 'users' => 1, 'editable' => true,
+        'desc' => 'Heads the Municipal Disaster Risk Reduction and Management Office: runs Sakuna (incidents, evacuation, relief, resources, damage, public alerts and missing persons) and assigns its staff. Approves and publishes the MDRRMO\'s own Balita posts and posts about missing persons, and answers the office\'s feedback.',
+        'permissions' => [
+            'comm_feedback' => ['view', 'assign', 'edit'],
+            'comm_news' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'reject', 'archive'],
+            'const_barangay' => ['view'],
+            'const_data_quality' => ['view'],
+            'const_family' => ['view'],
+            'const_household' => ['view'],
+            'const_resident' => ['view'],
+            'sakuna_alerts' => ['view', 'create', 'edit', 'review', 'approve', 'publish', 'cancel', 'archive', 'export'],
+            'sakuna_centers' => ['view', 'create', 'edit', 'open', 'close', 'assign', 'export'],
+            'sakuna_command' => ['view', 'create', 'edit', 'dispatch', 'escalate', 'close', 'export'],
+            'sakuna_damage' => ['view', 'create', 'edit', 'validate', 'approve', 'export'],
+            'sakuna_evacuees' => ['view', 'create', 'edit', 'check_in', 'transfer', 'check_out', 'export'],
+            'sakuna_incidents' => ['view', 'create', 'edit', 'validate', 'assign', 'dispatch', 'escalate', 'resolve', 'close', 'export'],
+            'sakuna_missing' => ['view', 'create', 'edit', 'close'],
+            'sakuna_relief' => ['view', 'create', 'edit', 'approve', 'release', 'export'],
+            'sakuna_reports' => ['view', 'export', 'print'],
+            'sakuna_resources' => ['view', 'create', 'edit', 'assign', 'deploy', 'return', 'export'],
+            'sakuna_vulnerability' => ['view', 'create', 'edit', 'approve', 'export'],
+        ],
+    ],
+    [
+        'key' => 'mdrrmo_staff', 'name' => 'MDRRMO Staff', 'icon' => 'life-buoy',
+        'color' => 'text-amber-700 bg-amber-50', 'users' => 4, 'editable' => true,
+        'desc' => 'Municipal Disaster Risk Reduction and Management Office staff: record incidents, evacuees, relief, resources, damage and missing persons in Sakuna, and draft public alerts. Write Balita posts and send them for review; the MDRRMO Head approves and publishes them.',
+        'permissions' => [
+            'comm_news' => ['view', 'create', 'edit', 'review'],
+            'const_barangay' => ['view'],
+            'const_data_quality' => ['view'],
+            'const_family' => ['view'],
+            'const_household' => ['view'],
+            'const_resident' => ['view'],
+            'sakuna_alerts' => ['view', 'create', 'edit'],
+            'sakuna_centers' => ['view', 'create', 'edit'],
+            'sakuna_command' => ['view', 'create', 'edit'],
+            'sakuna_damage' => ['view', 'create', 'edit'],
+            'sakuna_evacuees' => ['view', 'create', 'edit', 'check_in', 'transfer', 'check_out'],
+            'sakuna_incidents' => ['view', 'create', 'edit', 'validate'],
+            'sakuna_missing' => ['view', 'create', 'edit', 'close'],
+            'sakuna_relief' => ['view', 'create', 'edit', 'release'],
+            'sakuna_reports' => ['view', 'export', 'print'],
+            'sakuna_resources' => ['view', 'create', 'edit'],
+            'sakuna_vulnerability' => ['view', 'create', 'edit'],
+        ],
+    ],
     [
         'key' => 'barangay_secretary', 'name' => 'Barangay Secretary', 'icon' => 'map-pinned',
         'color' => 'text-teal-700 bg-teal-50', 'users' => 20, 'editable' => true,
@@ -505,13 +558,14 @@ foreach ($roles as &$role) {
 unset($role);
 
 // ---------------------------------------------------------------
-// Missing Persons (owner, 2026-10-30): only the MDRRMO's roles (made in
-// Users -> Roles) and the Super Administrator create and update cases. Every
-// role that reads Sakuna incidents reads the cases; the Municipal
-// Administrator, whose 'sakuna' => 'full' preset would give it everything,
-// keeps view only.
+// Missing Persons (owner, 2026-10-30): only the MDRRMO's roles (above) and
+// the Super Administrator create and update cases. Who reads them (owner,
+// 2026-11-05): those three, the Municipal Administrator (whose
+// 'sakuna' => 'full' preset would give it everything; it keeps view only)
+// and the Municipal Information Officer. Department Head, Department Staff
+// and Front Desk no longer see the cases or the Command Center widget.
 // ---------------------------------------------------------------
-$missingPersonsViewers = ['municipal_admin', 'department_head', 'department_staff', 'front_desk', 'info_officer'];
+$missingPersonsViewers = ['municipal_admin', 'info_officer'];
 foreach ($roles as &$role) {
     if (in_array($role['key'], $missingPersonsViewers, true)) {
         $role['permissions'] = array_merge($role['permissions'], ['sakuna_missing' => ['view']]);
