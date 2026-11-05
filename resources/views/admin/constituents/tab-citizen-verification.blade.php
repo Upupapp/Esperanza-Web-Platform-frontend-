@@ -59,7 +59,7 @@
 
     {{-- ── SUMMARY STAT CARDS — Family ─────────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Family'" x-cloak>
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvFamilyCounts.unverified" icon="shield-x" color="red" :delay="0" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvFamilyCounts.unverified" icon="shield-x" color="orange" :delay="0" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvFamilyCounts.verified" icon="shield-check" color="green" :delay="150" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvFamilyCounts.rejected" icon="circle-x" color="red" :delay="225" />
@@ -67,7 +67,7 @@
 
     {{-- ── SUMMARY STAT CARDS — Household ──────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Household'" x-cloak>
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvHouseholdCounts.unverified" icon="shield-x" color="red" :delay="0" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvHouseholdCounts.unverified" icon="shield-x" color="orange" :delay="0" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvHouseholdCounts.verified" icon="shield-check" color="green" :delay="150" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvHouseholdCounts.rejected" icon="circle-x" color="red" :delay="225" />

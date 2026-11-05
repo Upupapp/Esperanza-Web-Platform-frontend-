@@ -46,20 +46,20 @@
 <div class="sk-pagebar">
     <div class="sk-stats" x-show="!damagesFailed" :class="damagesLoading ? 'animate-pulse opacity-60' : ''">
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-indigo"></span>Total assessments</span>
-            <span class="sk-sval tabular-nums" x-text="damagesList.length"></span>
+            <span class="sk-slab">Total assessments</span>
+            <span class="sk-sval tabular-nums" x-text="fig(damagesList.length, damagesLoading || damagesFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-amber"></span>Units affected</span>
-            <span class="sk-sval tabular-nums" x-text="damagesList.reduce((s,d) => s + (d.units_affected || 0), 0)"></span>
+            <span class="sk-slab">Units affected</span>
+            <span class="sk-sval tabular-nums" x-text="fig(damagesList.reduce((s,d) => s + (d.units_affected || 0), 0), damagesLoading || damagesFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-red"></span>Est. total damage</span>
-            <span class="sk-sval tabular-nums" x-text="'₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US')"></span>
+            <span class="sk-slab">Est. total damage</span>
+            <span class="sk-sval tabular-nums" x-text="fig('₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US'), damagesLoading || damagesFailed)"></span>
         </div>
     </div>
     <div class="sk-actions">
-        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About damage assessment: barangay-level damage reports, with optional photo evidence" title="Damage assessment: barangay-level damage reports, with optional photo evidence.">
+        <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About damage assessment" title="Damage assessment: barangay-level damage reports, with optional photo evidence.">
             <i data-lucide="info"></i>
         </button>
         <div class="sk-btngrp" role="group" aria-label="Export">
@@ -67,22 +67,23 @@
                 <i data-lucide="download"></i> Export CSV
             </button>
             <button type="button" class="sk-btn" @click="exportPDF(filteredDamage, 'damage-assessments.csv')">
-                Export PDF
+                <i data-lucide="file-text"></i> Export PDF
             </button>
         </div>
         <button type="button" x-show="can('sakuna_damage', 'create')" @click="openCreateAssessment()" class="sk-btn sk-btn-p">
-            <i data-lucide="plus"></i> New Assessment
+            <i data-lucide="plus"></i> New assessment
         </button>
     </div>
 </div>
 
 <div x-show="damagesLoading" class="sk-card h-72 animate-pulse"></div>
-<div x-show="damagesFailed" x-cloak><x-ui.error-state messageExpr="'Could not load damage assessments.'" retryExpr="loadDamage()" :retryable="true" /></div>
+<div x-show="damagesFailed" x-cloak><x-ui.error-state tone="neutral" icon="cloud-off" title="Not loaded" messageExpr="'Could not load damage assessments. ' + offlineWhy" retryExpr="loadDamage()" :retryable="true" /></div>
 
 <div x-show="!damagesLoading && !damagesFailed" x-cloak class="space-y-3">
 
 <section class="sk-card overflow-hidden">
     {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <h2 class="sr-only">Damage assessments</h2>
     <div class="sk-toolbar">
         <div class="sk-search" style="max-width: 340px;">
             <label for="damage-search" class="sr-only">Search by ref, barangay or sector</label>
@@ -106,7 +107,7 @@
 
     {{-- ── Assessment Table ─────────────────────────────────────────────────────────────── --}}
     <div class="sk-scroll" tabindex="0" role="region" aria-label="Damage assessments table (scrolls sideways)">
-        <table class="sk-tbl min-w-[820px]">
+        <table class="sk-tbl sk-tbl-act min-w-[820px]">
             <thead>
                 <tr>
                     <th>Ref</th>
@@ -116,7 +117,7 @@
                     <th class="sk-r">Est. damage</th>
                     <th class="text-center">Photos</th>
                     <th>Status</th>
-                    <th class="sk-r">Actions</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -126,15 +127,15 @@
                         <td class="whitespace-nowrap sk-b group-hover:text-[#1D4ED8] transition-colors" x-text="d.barangay"></td>
                         <td class="whitespace-nowrap"><span class="sk-tag" x-text="d.sector"></span></td>
                         <td class="sk-r whitespace-nowrap tabular-nums" x-text="d.units_affected || '—'"></td>
-                        <td class="sk-r whitespace-nowrap tabular-nums sk-b" x-text="d.estimated_cost ? '₱' + d.estimated_cost.toLocaleString('en-US') : '—'"></td>
+                        <td class="sk-r whitespace-nowrap tabular-nums sk-b" x-text="d.estimated_cost ? '₱' + d.estimated_cost.toLocaleString('en-PH') : '—'"></td>
                         <td class="whitespace-nowrap text-center sk-muted tabular-nums" x-text="d.photos || 0"></td>
                         <td class="whitespace-nowrap"><span :class="statusBadge(d.status)" class="sk-pill" x-text="d.status"></span></td>
-                        <td class="sk-r whitespace-nowrap" @click.stop>
-                            <button type="button" @click="openAssessmentDetail(d)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'View ' + d.ref" title="View Details">
-                                <i data-lucide="eye"></i>
+                        <td class="whitespace-nowrap" @click.stop>
+                            <button type="button" @click="openAssessmentDetail(d)" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'View ' + d.ref">
+                                <i data-lucide="eye"></i> View
                             </button>
-                            <button type="button" x-show="can('sakuna_damage','edit')" @click="openEditAssessment(d)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Edit ' + d.ref" title="Edit">
-                                <i data-lucide="pencil"></i>
+                            <button type="button" x-show="can('sakuna_damage','edit')" @click="openEditAssessment(d)" class="sk-btn sk-btn-sm" :aria-label="'Edit ' + d.ref">
+                                <i data-lucide="pencil"></i> Edit
                             </button>
                         </td>
                     </tr>
@@ -144,7 +145,7 @@
                         <div class="sk-empty" style="padding: 36px 16px;">
                             <i data-lucide="clipboard-list"></i>
                             <span>No assessments match your filters.</span>
-                            <button type="button" @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="sk-clear">Clear Filters</button>
+                            <button type="button" @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="sk-clear">Clear filters</button>
                         </div>
                     </td>
                 </tr>
@@ -158,14 +159,14 @@
 {{-- ── Assessment Detail Modal ─────────────────────────────────────────────────────────── --}}
 <div x-show="showAssessmentDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showAssessmentDetail = false"
         x-trap="showAssessmentDetail"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showAssessmentDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
@@ -175,26 +176,26 @@
                 </div>
                 <p class="text-xs text-ink-muted mt-0.5" x-text="(selectedAssessment?.sector ?? '') + ' · ' + (selectedAssessment?.barangay ?? '')"></p>
             </div>
-            <button aria-label="Close" @click="showAssessmentDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showAssessmentDetail = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Units Affected</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAssessment?.units_affected || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Estimated Cost</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAssessment?.estimated_cost ? '₱' + selectedAssessment.estimated_cost.toLocaleString('en-US') : '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Estimated Cost</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAssessment?.estimated_cost ? '₱' + selectedAssessment.estimated_cost.toLocaleString('en-PH') : '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Related Incident</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAssessment?.incident_ref || '—'"></p></div>
                 </div>
             </div>
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Notes</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Notes</h4>
                 <p class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3" x-text="selectedAssessment?.notes || 'No notes recorded.'"></p>
             </div>
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5"></i> Photo Evidence</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5"></i> Photo Evidence</h4>
                 <div class="grid grid-cols-3 gap-2">
                     <template x-for="(p, idx) in (selectedAssessment?.photos || [])" :key="idx">
                         <a :href="p.url" target="_blank" rel="noopener" class="block aspect-square rounded-2xl overflow-hidden border border-brand-600/10 bg-slate-50 hover:opacity-90 transition-opacity" :title="p.caption">
@@ -208,7 +209,7 @@
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex items-center gap-2">
             <button x-show="can('sakuna_damage','edit')" @click="showAssessmentDetail = false; openEditAssessment(selectedAssessment)"
-                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors">
+                class="sk-btn">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Edit
             </button>
         </div>
@@ -218,18 +219,18 @@
 {{-- ── New / Edit Assessment Modal ─────────────────────────────────────────────────────── --}}
 <div x-show="showCreateAssessment" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showCreateAssessment = false"
         x-trap="showCreateAssessment"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showCreateAssessment = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
-            <h3 class="font-semibold text-ink-body" x-text="damageFormMode === 'create' ? 'New Damage Assessment' : 'Edit Assessment'"></h3>
-            <button aria-label="Close" @click="showCreateAssessment = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 class="font-semibold text-ink-body" x-text="damageFormMode === 'create' ? 'New damage assessment' : 'Edit assessment'"></h3>
+            <button aria-label="Close window" @click="showCreateAssessment = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -283,11 +284,11 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
-            <button @click="showCreateAssessment = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">Cancel</button>
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
+            <button @click="showCreateAssessment = false" class="sk-btn">Cancel</button>
             <button :disabled="damageSaving || !damageForm.barangay || !damageForm.sector" @click="saveDamage()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
-                <span x-text="damageSaving ? 'Saving…' : (damageFormMode === 'create' ? 'Record Assessment' : 'Save Changes')"></span>
+                class="sk-btn sk-btn-p">
+                <span x-text="damageSaving ? 'Saving…' : (damageFormMode === 'create' ? 'Record assessment' : 'Save changes')"></span>
             </button>
         </div>
     </div>

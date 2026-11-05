@@ -81,7 +81,7 @@
              MIO Staff read their own note above the tabs instead (2026-11-02). --}}
         <p x-show="can('create') && !approver && $store.session.account?.roleKey !== 'mio_staff'" x-cloak class="rounded-[14px] bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
             <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-            <span>You can write Balita posts with photos and videos and send them for review, with a time for them to go out if you like. Your Department Head or the Municipal Information Office approves and publishes them. You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
+            <span>You can write Balita posts with photos and videos and send them for review, with a time for them to go out if you like. <span x-text="$store.session.account?.roleKey === 'mdrrmo_staff' ? 'Your MDRRMO Head approves and publishes them.' : 'Your Department Head or the Municipal Information Office approves and publishes them.'">Your Department Head or the Municipal Information Office approves and publishes them.</span> You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
         </p>
 
         {{-- Filters: one row (redesign 2026-10-26); the status is a pill like the others. --}}
@@ -286,7 +286,7 @@
             <p x-show="!media.busy && dirty" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>Unsaved changes</p>
             <div class="flex items-center gap-2">
                 <x-ui.button variant="secondary" class="shrink-0" x-bind:class="editing && editing.status === 'Pending Review' && !approver ? 'flex-1' : ''" x-bind:disabled="processing || !formReady" @click="save('draft')"><span x-text="editing ? 'Save changes' : 'Save draft'">Save draft</span></x-ui.button>
-                <x-ui.button class="flex-1" x-show="!editing || editing.status !== 'Pending Review' || approver" x-bind:disabled="processing || !formReady" @click="save('send')"><span class="inline-flex items-center gap-2"><span x-show="!form.schedule"><i data-lucide="send" class="w-4 h-4"></i></span><span x-show="form.schedule" x-cloak><i data-lucide="calendar-clock" class="w-4 h-4"></i></span><span x-text="primaryLabel">Publish Now</span></span></x-ui.button>
+                <x-ui.button class="flex-1" x-show="!editing || editing.status !== 'Pending Review' || approver" x-bind:disabled="processing || !formReady" @click="save('send')"><span class="inline-flex items-center gap-2"><span x-show="!form.schedule"><i data-lucide="send" class="w-4 h-4"></i></span><span x-show="form.schedule" x-cloak><i data-lucide="calendar-clock" class="w-4 h-4"></i></span><span x-text="primaryLabel">Publish now</span></span></x-ui.button>
             </div>
             <p class="text-xs text-ink-muted text-center" x-text="form.schedule ? 'Residents are notified when it goes out at its time. Posts stay in Balita until archived.' : 'Residents are notified when it goes out. Posts stay in Balita until archived.'"></p>
         </div>
@@ -323,7 +323,7 @@
         <x-slot:footer>
             <x-ui.button variant="secondary" size="sm" icon="pencil" x-show="selected && canEdit(selected)" @click="openEdit(selected)">Edit</x-ui.button>
             <x-ui.button variant="danger" size="sm" x-show="selected && canMove(selected, 'Rejected')" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Send back</x-ui.button>
-            <x-ui.button size="sm" icon="check" x-show="selected && canMove(selected, 'Approved')" x-bind:disabled="processing" @click="approveAndPublish()"><span x-text="selected && hasFutureTime(selected) ? 'Approve' : 'Approve & Publish'">Approve &amp; Publish</span></x-ui.button>
+            <x-ui.button size="sm" icon="check" x-show="selected && canMove(selected, 'Approved')" x-bind:disabled="processing" @click="approveAndPublish()"><span x-text="selected && hasFutureTime(selected) ? 'Approve' : 'Approve & publish'">Approve &amp; Publish</span></x-ui.button>
         </x-slot:footer>
     </x-ui.modal>
     </div>

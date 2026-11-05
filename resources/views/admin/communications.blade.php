@@ -73,7 +73,7 @@
                     info_officer: 'Municipal Information Officer: you head the Municipal Information Office. You publish Balita, banners, occasions and events for the whole municipality, and review what your MIO Staff and the offices send. Your lead is the Municipal Administrator: save a draft and send it for review to get their second look.',
                     mio_staff: 'MIO Staff: you write Balita posts, banners, occasions and events and send them for review. Your MIO Head, the Municipal Information Officer, approves and publishes them; the bell tells you when something is published or sent back. You can change only your own work.',
                     department_head: 'Department Head: you approve and publish your office’s Balita posts; the Municipal Information Office can too.',
-                    mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts, such as disaster updates, and approve or delete what your staff send; the Municipal Information Office can too. An urgent warning belongs in Sakuna > Alerts, which also reaches residents on their phones.',
+                    mdrrmo_head: 'MDRRMO Head: you approve and publish the MDRRMO’s own Balita posts, such as disaster updates, and posts about missing persons; your MDRRMO Staff write them and send them for review. Other offices’ posts are for their own head or the Municipal Information Office. An urgent warning belongs in Sakuna > Alerts, which also reaches residents on their phones.',
                 }[this.$store.session.account?.roleKey] || '';
             },
             barangayNames: @js(config('esperanza.barangays')),
@@ -97,7 +97,7 @@
 
         {{-- max-w-full: the tabs scroll inside the bar on a phone instead of
              widening the page (scope round 2026-10-15). --}}
-        <div role="tablist" aria-label="Communications sections" class="flex items-center gap-1 bg-white rounded-[14px] border border-slate-200 px-2 max-w-full mb-4 overflow-x-auto [scrollbar-width:none]">
+        <div role="tablist" aria-label="Communications sections" class="flex flex-wrap items-center gap-1 bg-white rounded-[14px] border border-slate-200 px-2 max-w-full mb-4">
             <button x-show="tabAllowed('balita')" @click="go('balita')" role="tab" :aria-selected="tab === 'balita' ? 'true' : 'false'" class="shrink-0 h-[52px] px-4 border-b-[3px] text-sm transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none focus-visible:bg-slate-100" :class="tab === 'balita' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-ink-muted font-medium hover:bg-slate-100 hover:text-ink'"><i data-lucide="megaphone" class="w-[18px] h-[18px]"></i>Balita</button>
             <button x-show="tabAllowed('banners')" @click="go('banners')" role="tab" :aria-selected="tab === 'banners' ? 'true' : 'false'" class="shrink-0 h-[52px] px-4 border-b-[3px] text-sm transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none focus-visible:bg-slate-100" :class="tab === 'banners' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-ink-muted font-medium hover:bg-slate-100 hover:text-ink'"><i data-lucide="gallery-horizontal" class="w-[18px] h-[18px]"></i>Banners &amp; Occasions</button>
             <button x-show="tabAllowed('events')" @click="go('events')" role="tab" :aria-selected="tab === 'events' ? 'true' : 'false'" class="shrink-0 h-[52px] px-4 border-b-[3px] text-sm transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none focus-visible:bg-slate-100" :class="tab === 'events' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-ink-muted font-medium hover:bg-slate-100 hover:text-ink'"><i data-lucide="calendar-days" class="w-[18px] h-[18px]"></i>Events</button>
@@ -149,7 +149,7 @@
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-                    <x-ui.button x-show="can('create')" @click="openNew()" icon="plus" size="sm" class="shrink-0">New Event</x-ui.button>
+                    <x-ui.button x-show="can('create')" @click="openNew()" icon="plus" size="sm" class="shrink-0">New event</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
@@ -200,9 +200,9 @@
                             <button x-show="e.status === 'Pending Review' && canMove(e, 'Approved')" @click="openReview(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
                             <button x-show="canEdit(e)" @click="openEdit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                             <button x-show="canDesk(e)" @click="openDesk(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-indigo-600 hover:bg-indigo-50/60 transition-colors whitespace-nowrap"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>Registrations</button>
-                            <button x-show="e.status === 'Draft' && canMove(e, 'Pending Review')" @click="submit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
+                            <button x-show="e.status === 'Draft' && canMove(e, 'Pending Review')" @click="submit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for review</button>
                             <button x-show="e.status === 'Approved' && canMove(e, 'Released')" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
-                            <button x-show="isCancel(e) && canMove(e, 'Archived')" @click="openCancel(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-red-600 hover:bg-red-50/60 transition-colors"><i data-lucide="calendar-x" class="w-3.5 h-3.5"></i>Cancel Event</button>
+                            <button x-show="isCancel(e) && canMove(e, 'Archived')" @click="openCancel(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-red-600 hover:bg-red-50/60 transition-colors"><i data-lucide="calendar-x" class="w-3.5 h-3.5"></i>Cancel event</button>
                             <button x-show="!isCancel(e) && ['Draft', 'Approved', 'Released', 'Rejected'].includes(e.status) && canMove(e, 'Archived')" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
                             <button x-show="canDelete(e)" @click="deleteEvent(e)" :disabled="processing" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-rose-700 hover:bg-rose-50/60 transition-colors disabled:opacity-50"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Delete</button>
                         </div>
@@ -262,7 +262,7 @@
                             </button>
                             <button type="button" @click="form.audience = 'Barangay'" :aria-pressed="form.audience === 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
-                                <p class="text-xs font-semibold text-ink">Specific Barangay</p>
+                                <p class="text-xs font-semibold text-ink">Specific barangay</p>
                                 <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it and is told</p>
                             </button>
                         </div>
@@ -292,8 +292,8 @@
                 </div>
 
                 <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
-                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing || media.busy" @click="saveEvent(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
-                    <x-ui.button size="sm" icon="send" x-show="!editing || !['Pending Review', 'Released'].includes(editing.status)" x-bind:disabled="processing || media.busy" @click="saveEvent(true)"><span x-text="!editing ? 'Submit for Review' : (editing.status === 'Rejected' ? 'Save and Resubmit' : 'Save and Submit for Review')">Submit for Review</span></x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing || media.busy" @click="saveEvent(false)"><span x-text="editing ? 'Save changes' : 'Save as draft'">Save as draft</span></x-ui.button>
+                    <x-ui.button size="sm" icon="send" x-show="!editing || !['Pending Review', 'Released'].includes(editing.status)" x-bind:disabled="processing || media.busy" @click="saveEvent(true)"><span x-text="!editing ? 'Submit for review' : (editing.status === 'Rejected' ? 'Save and resubmit' : 'Save and submit for review')">Submit for review</span></x-ui.button>
                 </div>
             </x-ui.modal>
 
@@ -332,7 +332,7 @@
                 </template>
 
                 <x-slot:footer>
-                    <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Request Changes</x-ui.button>
+                    <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Request changes</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="approveAndPublish()">Approve &amp; Publish</x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
@@ -351,8 +351,8 @@
                     </div>
                 </template>
                 <x-slot:footer>
-                    <x-ui.button variant="secondary" size="sm" @click="cancelOpen = false">Keep It</x-ui.button>
-                    <x-ui.button variant="danger" size="sm" icon="calendar-x" x-bind:disabled="processing" @click="confirmCancel()">Cancel Event</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" @click="cancelOpen = false">Keep it</x-ui.button>
+                    <x-ui.button variant="danger" size="sm" icon="calendar-x" x-bind:disabled="processing" @click="confirmCancel()">Cancel event</x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
             </div>
@@ -379,7 +379,7 @@
                 },
             }"
         >
-            <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto mb-4" role="group" aria-label="Banners and occasions">
+            <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full mb-4" role="group" aria-label="Banners and occasions">
                 <button type="button" @click="show('banners')" :aria-pressed="view === 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="view === 'banners' ? 'bg-white text-ink shadow-sm font-semibold' : 'text-ink-muted hover:text-slate-700'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
                 <button type="button" @click="show('occasions')" :aria-pressed="view === 'occasions'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="view === 'occasions' ? 'bg-white text-ink shadow-sm font-semibold' : 'text-ink-muted hover:text-slate-700'"><i data-lucide="party-popper" class="w-3.5 h-3.5"></i>Occasions &amp; Pop-ups</button>
             </div>
@@ -481,7 +481,7 @@
                     <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
                 </select>
                 <button @click="showAdd = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3.5 py-2 shadow-card transition-colors ml-auto">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Entry
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add entry
                 </button>
             </div>
 
@@ -515,8 +515,8 @@
                 role="dialog" aria-modal="true" @keydown.escape.window="showAdd = false">
                 <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-2xl shadow-float w-full max-w-lg">
                     <div class="flex items-center justify-between px-5 py-4 border-b border-brand-600/10">
-                        <h3 class="text-sm font-semibold text-ink">Log Blotter Entry</h3>
-                        <button aria-label="Close" @click="showAdd = false" class="text-ink-muted hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <h3 class="text-base font-extrabold text-ink">Log blotter entry</h3>
+                        <button aria-label="Close" @click="showAdd = false" class="w-9 h-9 -mr-1.5 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
                         <div>
@@ -542,7 +542,7 @@
                     </div>
                     <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-brand-600/10 bg-slate-50/60">
                         <x-ui.button variant="secondary" size="sm" @click="showAdd = false">Cancel</x-ui.button>
-                        <x-ui.button size="sm" x-bind:disabled="processing" @click="addEntry()">Log Entry</x-ui.button>
+                        <x-ui.button size="sm" x-bind:disabled="processing" @click="addEntry()">Log entry</x-ui.button>
                     </div>
                 </div>
             </div>

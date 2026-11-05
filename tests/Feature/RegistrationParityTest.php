@@ -70,8 +70,8 @@ class RegistrationParityTest extends TestCase
         $this->assertStringContainsString('await this.$store.citizenSession.login(this.signInIdentifier(), this.form.password);', $view);
         // Didit, or "do it later" from My Profile.
         $this->assertStringContainsString("\$api.post('/citizen/verification/session', { platform: 'web' })", $view);
-        $this->assertStringContainsString("'Verify My Identity'", $view);
-        $this->assertStringContainsString("'Continue to App'", $view);
+        $this->assertStringContainsString("'Verify my identity'", $view);
+        $this->assertStringContainsString("'Continue to app'", $view);
         // Own capture: the ID and the selfie go with the new session.
         $this->assertStringContainsString("\$api.post('/citizen/verification/id', form)", $view);
     }

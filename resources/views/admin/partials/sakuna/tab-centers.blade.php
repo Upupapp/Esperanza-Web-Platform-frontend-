@@ -45,28 +45,28 @@
 <div class="sk-pagebar">
     <div class="sk-stats" x-show="!centersFailed" :class="centersLoading ? 'animate-pulse opacity-60' : ''">
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-green"></span>Open</span>
-            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status === 'Processing').length"></span>
+            <span class="sk-slab">Open</span>
+            <span class="sk-sval tabular-nums" x-text="fig(centersList.filter(c => c.status === 'Processing').length, centersLoading || centersFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Near/over capacity</span>
-            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status === 'Processing' && c.pct >= 75).length"></span>
+            <span class="sk-slab"><span class="sk-dot sk-t-amber" x-show="centersList.some(c => c.status === 'Processing' && c.pct >= 75)"></span>Near/over capacity</span>
+            <span class="sk-sval tabular-nums" x-text="fig(centersList.filter(c => c.status === 'Processing' && c.pct >= 75).length, centersLoading || centersFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-slate"></span>Not open</span>
-            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status !== 'Processing').length"></span>
+            <span class="sk-slab">Not open</span>
+            <span class="sk-sval tabular-nums" x-text="fig(centersList.filter(c => c.status !== 'Processing').length, centersLoading || centersFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-blue"></span>Total capacity (open)</span>
-            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status === 'Processing').reduce((s,c) => s + c.capacity, 0).toLocaleString()"></span>
+            <span class="sk-slab">Total capacity (open)</span>
+            <span class="sk-sval tabular-nums" x-text="fig(centersList.filter(c => c.status === 'Processing').reduce((s,c) => s + c.capacity, 0).toLocaleString(), centersLoading || centersFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Current occupants</span>
-            <span class="sk-sval tabular-nums" x-text="centersList.reduce((s,c) => s + c.individuals, 0).toLocaleString()"></span>
+            <span class="sk-slab">Current occupants</span>
+            <span class="sk-sval tabular-nums" x-text="fig(centersList.reduce((s,c) => s + c.individuals, 0).toLocaleString(), centersLoading || centersFailed)"></span>
         </div>
     </div>
     <div class="sk-actions">
-        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About evacuation centers: register facilities and manage occupancy and open/close status" title="Register facilities and manage occupancy and open/close status.">
+        <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About evacuation centers" title="Register facilities and manage occupancy and open/close status.">
             <i data-lucide="info"></i>
         </button>
         <div class="sk-btngrp" role="group" aria-label="Export">
@@ -74,17 +74,17 @@
                 <i data-lucide="download"></i> Export CSV
             </button>
             <button type="button" class="sk-btn" @click="exportPDF(filteredCenters, 'evacuation-centers-export.csv')">
-                Export PDF
+                <i data-lucide="file-text"></i> Export PDF
             </button>
         </div>
-        <button type="button" x-show="can('sakuna_centers', 'create')" @click="openCreateCenter()" class="sk-btn sk-btn-p">
-            <i data-lucide="plus"></i> Add Center
+        <button type="button" x-show="can('sakuna_centers', 'create')" @click="openCreateCenter()" :disabled="onLastCopy" :title="onLastCopy ? 'Waits for the connection' : ''" class="sk-btn sk-btn-p disabled:opacity-50">
+            <i data-lucide="plus"></i> Add center
         </button>
     </div>
 </div>
 
 <div x-show="centersLoading" class="sk-card h-80 animate-pulse"></div>
-<div x-show="centersFailed" x-cloak><x-ui.error-state messageExpr="'Could not load evacuation centers.'" retryExpr="loadCenters()" :retryable="true" /></div>
+<div x-show="centersFailed" x-cloak><x-ui.error-state tone="neutral" icon="cloud-off" title="Not loaded" messageExpr="'Could not load evacuation centers. ' + offlineWhy" retryExpr="loadCenters()" :retryable="true" /></div>
 
 <div x-show="!centersLoading && !centersFailed" x-cloak class="space-y-3">
 
@@ -121,56 +121,48 @@
         </div>
     </div>
 
+    <h2 class="sr-only">Evacuation centers</h2>
     {{-- ── Centers Grid View ────────────────────────────────────────────────────────────── --}}
     <div x-show="viewMode === 'grid'" class="grid gap-3 p-3 bg-[#F8FAFD]" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
         <template x-for="c in filteredCenters" :key="c.ref">
-            <article class="sk-card p-3 flex flex-col gap-2.5">
+            <article class="sk-tile p-3 flex flex-col gap-2.5">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
-                        <h3 class="sk-b text-[13px] leading-snug" x-text="c.name"></h3>
-                        <p class="sk-sub" x-text="c.barangay + ' · Capacity ' + c.capacity.toLocaleString()"></p>
+                        <h3 class="sk-b text-[13px] leading-snug text-balance" x-text="c.name"></h3>
+                        <p class="sk-sub" x-text="c.barangay + (c.status === 'Processing' ? ' · ' + c.families + (c.families === 1 ? ' family' : ' families') : ' · room for ' + c.capacity.toLocaleString())"></p>
                     </div>
-                    <span :class="statusBadge(c.status)" class="sk-pill flex-shrink-0" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span>
+                    <span :class="stayPill(c.status)" class="sk-pill flex-shrink-0" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span>
                 </div>
 
                 <div class="space-y-1" x-show="c.status === 'Processing'">
-                    <div class="flex justify-between text-[11.5px] sk-muted">
-                        <span>Occupancy</span>
-                        <span :class="c.pct >= 90 ? 'text-rose-600 font-semibold' : (c.pct >= 75 ? 'text-amber-600 font-medium' : 'text-slate-600')" x-text="c.pct + '%'"></span>
+                    <div class="flex justify-between gap-2 text-xs">
+                        <span class="text-ink-body tabular-nums"><strong x-text="c.individuals.toLocaleString()"></strong> <span class="sk-muted" x-text="'of ' + c.capacity.toLocaleString() + ' people'"></span></span>
+                        <span class="tabular-nums" :class="(c.capacity - c.individuals) > 0 ? 'sk-muted' : 'text-amber-800 font-semibold'" x-text="(c.capacity - c.individuals) > 0 ? (c.capacity - c.individuals).toLocaleString() + ' free' : 'Full'"></span>
                     </div>
                     <div class="h-[5px] rounded-full bg-[#E9EEF6] overflow-hidden">
                         <div class="h-full rounded-full transition-all" :class="occupancyBar(c.pct)" :style="'width:' + c.pct + '%'"></div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 text-center bg-[#F8FAFD] rounded-lg py-1.5">
-                    <div><p class="sk-b text-[15px] tabular-nums" x-text="c.families"></p><p class="sk-ssub">Families</p></div>
-                    <div><p class="sk-b text-[15px] tabular-nums" :class="(c.capacity - c.individuals) > 0 ? '!text-emerald-700' : '!text-rose-600'" x-text="(c.capacity - c.individuals).toLocaleString()"></p><p class="sk-ssub">Available</p></div>
-                    <div><p class="sk-b text-[15px] tabular-nums" x-text="c.status === 'Processing' ? c.individuals.toLocaleString() + ' / ' + c.capacity.toLocaleString() : '—'"></p><p class="sk-ssub">Occupancy</p></div>
-                </div>
-
-                <div class="flex flex-col gap-1 text-[11.5px]">
+                <div class="flex flex-col gap-1 text-xs">
                     <span class="sk-muted inline-flex items-center gap-1" x-show="c.address"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span x-text="c.address"></span></span>
                     {{-- On the residents' map, or not yet (registered before the map, 2026-10-26). --}}
-                    <span class="flex items-center justify-between gap-1.5">
-                        <span class="inline-flex items-center gap-1 font-medium" :class="hasMapPin(c) ? 'text-emerald-700' : 'text-[#C2410C]'">
-                            <i :data-lucide="hasMapPin(c) ? 'map-pin-check' : 'map-pin-off'" class="w-3 h-3"></i>
-                            <span x-text="hasMapPin(c) ? 'On the map' : 'No map location yet'"></span>
-                        </span>
-                        <button type="button" x-show="hasMapPin(c)" @click="openCenterDetail(c)" class="sk-link" style="font-size: 11.5px;">View on map</button>
-                        <button type="button" x-show="!hasMapPin(c) && can('sakuna_centers','edit')" @click="openEditCenter(c)" class="sk-link" style="font-size: 11.5px;">Add location</button>
+                    <button type="button" x-show="hasMapPin(c)" @click="openCenterDetail(c)" class="sk-link self-start" style="font-size: 12px;"><i data-lucide="map-pin-check"></i> View on map</button>
+                    <span x-show="!hasMapPin(c)" class="flex items-center justify-between gap-1.5">
+                        <span class="inline-flex items-center gap-1 font-medium text-[#C2410C]"><i data-lucide="map-pin-off" class="w-3 h-3"></i> No map location yet</span>
+                        <button type="button" x-show="can('sakuna_centers','edit')" @click="openEditCenter(c)" class="sk-link" style="font-size: 12px;">Add location</button>
                     </span>
                 </div>
 
-                <div class="flex gap-1.5 mt-auto">
+                <div class="flex flex-wrap gap-1.5 mt-auto">
                     <button type="button" @click="openCenterDetail(c)" class="sk-btn sk-btn-sm sk-btn-soft flex-1">
                         <i data-lucide="eye"></i> View details
                     </button>
                     <button type="button" x-show="can('sakuna_centers','open') && c.status !== 'Processing'" @click="pendingCenterAction = c; showOpenCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm sk-btn-ok flex-1">
                         <i data-lucide="door-open"></i> Open
                     </button>
-                    <button type="button" x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm flex-1">
-                        <i data-lucide="circle-x"></i> Close
+                    <button type="button" x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm sk-btn-ghost !text-slate-600 flex-1">
+                        <i data-lucide="circle-x"></i> Close center
                     </button>
                 </div>
             </article>
@@ -181,8 +173,8 @@
     </div>
 
     {{-- ── Centers Table View ───────────────────────────────────────────────────────────── --}}
-    <div x-show="viewMode === 'table'" x-cloak class="sk-scroll" tabindex="0" role="region" aria-label="Evacuation centres table (scrolls sideways)">
-        <table class="sk-tbl min-w-[860px]">
+    <div x-show="viewMode === 'table'" x-cloak class="sk-scroll" tabindex="0" role="region" aria-label="Evacuation centers table (scrolls sideways)">
+        <table class="sk-tbl sk-tbl-act min-w-[860px]">
             <thead>
                 <tr>
                     <th>Center</th>
@@ -192,18 +184,18 @@
                     <th class="sk-r">Families</th>
                     <th class="sk-r">Available</th>
                     <th>Location</th>
-                    <th class="sk-r">Actions</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <template x-for="c in filteredCenters" :key="c.ref">
-                    <tr>
+                    <tr @click="openCenterDetail(c)" tabindex="0" @keydown.enter.prevent="openCenterDetail(c)">
                         <td>
                             <div class="sk-b" x-text="c.name"></div>
                             <div class="sk-sub" x-text="c.address || ''"></div>
                         </td>
                         <td class="whitespace-nowrap" x-text="c.barangay"></td>
-                        <td class="whitespace-nowrap"><span :class="statusBadge(c.status)" class="sk-pill" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span></td>
+                        <td class="whitespace-nowrap"><span :class="stayPill(c.status)" class="sk-pill" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span></td>
                         <td class="whitespace-nowrap">
                             <div class="flex items-center gap-2">
                                 <div class="w-20 h-[5px] rounded-full bg-[#E9EEF6] overflow-hidden">
@@ -213,12 +205,12 @@
                             </div>
                         </td>
                         <td class="sk-r tabular-nums" x-text="c.families"></td>
-                        <td class="sk-r tabular-nums" :class="(c.capacity - c.individuals) > 0 ? 'text-emerald-700' : 'text-rose-600'" x-text="(c.capacity - c.individuals).toLocaleString()"></td>
+                        <td class="sk-r tabular-nums" :class="(c.capacity - c.individuals) > 0 ? 'text-emerald-700' : 'text-amber-800'" x-text="(c.capacity - c.individuals).toLocaleString()"></td>
                         <td class="whitespace-nowrap">
                             <span x-show="hasMapPin(c)" class="text-emerald-700">On the map</span>
-                            <span x-show="!hasMapPin(c)"><span class="text-[#C2410C]">No map location yet</span><template x-if="can('sakuna_centers','edit')"><span> · <button type="button" @click="openEditCenter(c)" class="sk-link" style="font-size: 12px;">Add</button></span></template></span>
+                            <span x-show="!hasMapPin(c)"><span class="text-[#C2410C]">No map location yet</span><template x-if="can('sakuna_centers','edit')"><span> · <button type="button" @click.stop="openEditCenter(c)" class="sk-link" style="font-size: 12px;">Add</button></span></template></span>
                         </td>
-                        <td class="sk-r whitespace-nowrap">
+                        <td class="whitespace-nowrap" @click.stop>
                             <button type="button" @click="openCenterDetail(c)" class="sk-btn sk-btn-sm sk-btn-soft">
                                 <i data-lucide="eye"></i> View
                             </button>
@@ -226,7 +218,7 @@
                                 <i data-lucide="door-open"></i> Open
                             </button>
                             <button type="button" x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm">
-                                <i data-lucide="circle-x"></i> Close
+                                <i data-lucide="circle-x"></i> Close center
                             </button>
                         </td>
                     </tr>
@@ -273,7 +265,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span :class="statusBadge(selectedCenter?.status ?? '')" x-text="selectedCenter?.status === 'Processing' ? 'Open' : (selectedCenter?.status === 'Archived' ? 'Closed' : 'Registered')"></span>
-                <button aria-label="Close" @click="showCenterDetail = false" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors">
+                <button aria-label="Close window" @click="showCenterDetail = false" class="sk-mclose flex-shrink-0">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -291,7 +283,7 @@
         <div x-show="centerTab === 'overview'" class="p-6 space-y-5">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="bg-slate-50 rounded-xl p-4 space-y-2.5">
-                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Facility</h4>
+                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Facility</h4>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between"><span class="text-ink-muted">Ref</span><span class="font-mono font-medium text-ink-body" x-text="selectedCenter?.ref || '—'"></span></div>
                         <div class="flex justify-between"><span class="text-ink-muted">Barangay</span><span class="font-medium text-ink-body" x-text="selectedCenter?.barangay || '—'"></span></div>
@@ -300,7 +292,7 @@
                     </div>
                 </div>
                 <div class="bg-slate-50 rounded-xl p-4 space-y-2.5">
-                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Capacity & Occupancy</h4>
+                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Capacity & Occupancy</h4>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between"><span class="text-ink-muted">Capacity</span><span class="font-medium text-ink-body" x-text="selectedCenter?.capacity ?? '—'"></span></div>
                         <div class="flex justify-between"><span class="text-ink-muted">Current Occupants</span><span class="font-medium text-ink-body" x-text="selectedCenter?.individuals ?? 0"></span></div>
@@ -313,11 +305,11 @@
             </div>
             {{-- Where it is (2026-10-26): what residents see on their map. --}}
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-2">Map Location</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-2">Map Location</h4>
                 <div x-show="hasMapPin(selectedCenter)">
                     <div x-data="sakunaPinView({ point: () => ({ lat: selectedCenter?.lat, lng: selectedCenter?.lng }), tone: 'centre' })" x-effect="show()">
-                        <div x-ref="map" class="sakuna-map h-56 w-full rounded-xl overflow-hidden border border-slate-200" role="img" aria-label="Map showing where the centre is"></div>
-                        <p x-show="viewState === 'failed'" x-cloak class="text-[11px] text-amber-800 font-semibold mt-1.5">The map could not load. The coordinates above are still the saved ones.</p>
+                        <div x-ref="map" class="sakuna-map h-56 w-full rounded-xl overflow-hidden border border-slate-200" role="img" aria-label="Map showing where the center is"></div>
+                        <p x-show="viewState === 'failed'" x-cloak class="text-xs text-amber-800 font-semibold mt-1.5">The map could not load. The coordinates above are still the saved ones.</p>
                     </div>
                     <div class="flex flex-wrap gap-x-4 mt-2 text-xs">
                         <a :href="hasMapPin(selectedCenter) ? window.sakunaGeo.osmUrl(selectedCenter.lat, selectedCenter.lng) : '#'" target="_blank" rel="noopener" class="font-semibold text-brand-600 hover:underline">Open in OpenStreetMap</a>
@@ -325,15 +317,15 @@
                     </div>
                 </div>
                 <div x-show="!hasMapPin(selectedCenter)" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
-                    <p class="font-semibold">This centre is not on the map yet.</p>
-                    <p class="mt-0.5">Residents still see it in their list, but not on the map or as a nearest centre. Edit it to pin where it is.</p>
+                    <p class="font-semibold">This center is not on the map yet.</p>
+                    <p class="mt-0.5">Residents still see it in their list, but not on the map or as a nearest center. Edit it to pin where it is.</p>
                 </div>
             </div>
         </div>
 
         {{-- Tab: Services --}}
         <div x-show="centerTab === 'services'" class="p-6">
-            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Services On File</h4>
+            <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Services On File</h4>
             <div class="flex flex-wrap gap-1.5">
                 <template x-for="s in (selectedCenter?.services || [])" :key="s">
                     <span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200" x-text="s"></span>
@@ -344,7 +336,7 @@
 
         {{-- Tab: Occupants (real, fetched from GET /sakuna/evacuees?center=) --}}
         <div x-show="centerTab === 'occupants'" class="p-6 space-y-3">
-            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Checked-In Families</h4>
+            <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Checked-In Families</h4>
             <div class="divide-y divide-brand-600/[.08] border border-brand-600/10 rounded-xl overflow-hidden">
                 <template x-for="f in centerEvacuees" :key="f.ref">
                     <div class="flex items-center justify-between px-4 py-2.5">
@@ -358,18 +350,16 @@
                 <div x-show="centerEvacuees.length === 0" class="px-4 py-8 text-center text-xs text-ink-muted">No families currently checked in here.</div>
             </div>
             <div class="flex justify-end">
-                <button @click="setTab('evacuees')" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-4 py-2 rounded-2xl transition-colors">
-                    <i data-lucide="users" class="w-4 h-4"></i> Manage Evacuees
+                <button @click="setTab('evacuees')" class="sk-btn sk-btn-soft">
+                    <i data-lucide="users" class="w-4 h-4"></i> Manage evacuees
                 </button>
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl sticky bottom-0">
-            <button x-show="can('sakuna_centers','edit')" @click="openEditCenter(selectedCenter); showCenterDetail = false"
-                class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded-xl transition-colors">
+        <div x-show="can('sakuna_centers','edit')" class="flex flex-wrap items-center justify-end gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl sticky bottom-0">
+            <button @click="openEditCenter(selectedCenter); showCenterDetail = false" class="sk-btn sk-btn-sm">
                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
             </button>
-            <button @click="showCenterDetail = false" class="text-sm text-ink-muted hover:text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors">Close</button>
         </div>
     </div>
 </div>
@@ -393,7 +383,7 @@
 
         <div class="flex items-center gap-3 mb-4">
             <span class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0"><i data-lucide="door-open" class="w-5 h-5 text-emerald-600"></i></span>
-            <h3 class="text-base font-semibold text-ink-body">Open Evacuation Center</h3>
+            <h3 class="text-base font-semibold text-ink-body">Open evacuation center</h3>
         </div>
 
         <p class="text-sm text-slate-600 leading-relaxed mb-5">
@@ -401,9 +391,9 @@
         </p>
 
         <div class="flex items-center justify-end gap-3">
-            <button @click="showOpenCenterConfirm = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
-            <button @click="confirmOpenCenter()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-5 py-2 rounded-2xl transition-colors">
-                <i data-lucide="check" class="w-4 h-4"></i> Confirm Open
+            <button @click="showOpenCenterConfirm = false" class="sk-btn">Cancel</button>
+            <button @click="confirmOpenCenter()" class="sk-btn sk-btn-p">
+                <i data-lucide="check" class="w-4 h-4"></i> Confirm open
             </button>
         </div>
     </div>
@@ -428,7 +418,7 @@
 
         <div class="flex items-center gap-3 mb-4">
             <span class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><i data-lucide="circle-x" class="w-5 h-5 text-rose-600"></i></span>
-            <h3 class="text-base font-semibold text-ink-body">Close Evacuation Center</h3>
+            <h3 class="text-base font-semibold text-ink-body">Close evacuation center</h3>
         </div>
 
         <p class="text-sm text-slate-600 leading-relaxed mb-4">
@@ -442,11 +432,10 @@
         </label>
 
         <div class="flex items-center justify-end gap-3">
-            <button @click="showCloseCenterConfirm = false; closeCenterConfirmed = false;" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
-            <button :disabled="!closeCenterConfirmed" :class="closeCenterConfirmed ? 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer' : 'bg-slate-100 text-ink-muted cursor-not-allowed'"
-                @click="if (closeCenterConfirmed) { confirmCloseCenter(); closeCenterConfirmed = false; }"
-                class="inline-flex items-center gap-1.5 text-sm font-medium px-5 py-2 rounded-2xl transition-colors">
-                <i data-lucide="circle-x" class="w-4 h-4"></i> Confirm Close
+            <button @click="showCloseCenterConfirm = false; closeCenterConfirmed = false;" class="sk-btn">Cancel</button>
+            <button :disabled="!closeCenterConfirmed" @click="if (closeCenterConfirmed) { confirmCloseCenter(); closeCenterConfirmed = false; }"
+                class="sk-btn sk-btn-navy">
+                <i data-lucide="circle-x" class="w-4 h-4"></i> Close center
             </button>
         </div>
     </div>
@@ -473,11 +462,11 @@
             <div class="flex items-center gap-3">
                 <span class="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center"><i data-lucide="building-2" class="w-5 h-5 text-brand-600"></i></span>
                 <div>
-                    <h3 class="text-base font-semibold text-ink-body" x-text="centerFormMode === 'create' ? 'Register Evacuation Center' : 'Edit Center — ' + centerForm.ref"></h3>
+                    <h3 class="text-base font-semibold text-ink-body" x-text="centerFormMode === 'create' ? 'Register evacuation center' : 'Edit center — ' + centerForm.ref"></h3>
                     <p class="text-xs text-ink-muted">Facility name, barangay, capacity and its place on the map, plus optional services.</p>
                 </div>
             </div>
-            <button aria-label="Close" @click="showCreateCenter = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button aria-label="Close window" @click="showCreateCenter = false" class="sk-mclose"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
         <div class="px-6 py-5 space-y-4">
@@ -523,12 +512,12 @@
         </div>
 
         <div class="flex items-center gap-3 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl">
-            <button @click="showCreateCenter = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
-            <p x-show="centerNeedsPin && centerForm.name && centerForm.barangay && centerForm.capacity !== ''" class="text-[11px] font-semibold text-rose-700 ml-auto text-right">Pin the centre on the map to register it.</p>
+            <button @click="showCreateCenter = false" class="sk-btn">Cancel</button>
+            <p x-show="centerNeedsPin && centerForm.name && centerForm.barangay && centerForm.capacity !== ''" class="text-xs font-semibold text-rose-700 ml-auto text-right">Pin the center on the map to register it.</p>
             <button :disabled="centerSaving || !centerForm.name || !centerForm.barangay || centerForm.capacity === '' || centerNeedsPin" @click="saveCenter()"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-2xl transition-colors ml-auto disabled:opacity-50">
+                class="sk-btn sk-btn-p ml-auto">
                 <i data-lucide="save" class="w-4 h-4"></i>
-                <span x-text="centerSaving ? 'Saving…' : (centerFormMode === 'create' ? 'Register Center' : 'Save Changes')"></span>
+                <span x-text="centerSaving ? 'Saving…' : (centerFormMode === 'create' ? 'Register center' : 'Save changes')"></span>
             </button>
         </div>
     </div>

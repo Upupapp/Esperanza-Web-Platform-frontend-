@@ -72,7 +72,7 @@
     <button
         type="button"
         @click="open = true"
-        class="inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-brand-600 transition-colors"
+        class="tap inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-brand-600 transition-colors"
     ><i data-lucide="circle-question-mark" class="w-3.5 h-3.5"></i><x-ui.t fil="Ano ang ibig sabihin ng mga status na ito?" en="What do these statuses mean?" /></button>
 
     <x-ui.modal title="Gabay sa Status" titleEn="Status Guide" maxWidth="sm">

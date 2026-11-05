@@ -252,14 +252,14 @@
                         :href="'tel:' + ($store.barangay.mine?.contact || '').replace(/[^0-9+]/g, '')"
                         x-show="$store.barangay.mine?.contact"
                         :title="$store.barangay.mine?.contact"
-                        class="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors shrink-0"
+                        class="tap w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors shrink-0"
                     >
                         <i data-lucide="phone" class="w-3 h-3"></i>
                     </a>
 
                     <a
                         href="{{ route('citizen.directory') }}"
-                        class="shrink-0 inline-flex items-center gap-0.5 text-[11px] font-medium text-white/70 hover:text-white transition-colors"
+                        class="tap shrink-0 inline-flex items-center gap-0.5 text-[11px] font-medium text-white/70 hover:text-white transition-colors"
                     >
                         <x-ui.t fil="Tingnan" en="View" />
                         <i data-lucide="chevron-right" class="w-3 h-3"></i>
@@ -340,7 +340,7 @@
             <!-- Middle row: my requests + announcements -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start mb-5">
 
-                <x-ui.card padded="false" class="lg:col-span-2">
+                <x-ui.card :padded="false" class="lg:col-span-2">
 
                     <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
                         <h3 class="text-lg font-extrabold text-ink">
@@ -349,7 +349,7 @@
 
                         <a
                             href="{{ route('citizen.document-requests') }}"
-                            class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
+                            class="tap text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
                         >
                             <x-ui.t fil="Tingnan Lahat" en="View All" />
                         </a>
@@ -374,15 +374,15 @@
                             </a>
                         </template>
 
-                        <p class="px-4 py-6 text-center text-xs text-ink-muted" x-show="!requests.length">
-                            <x-ui.t fil="Wala ka pang kahilingan." en="You have no requests yet." />
-                        </p>
+                        <x-ui.empty-state icon="file-text" x-show="!requests.length">
+                            <x-slot:title><x-ui.t fil="Wala ka pang kahilingan." en="You have no requests yet." /></x-slot:title>
+                        </x-ui.empty-state>
 
                     </div>
 
                 </x-ui.card>
 
-                <x-ui.card padded="false">
+                <x-ui.card :padded="false">
 
                     <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
                         <h3 class="text-lg font-extrabold text-ink">
@@ -391,7 +391,7 @@
 
                         <a
                             href="{{ route('citizen.announcements') }}"
-                            class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
+                            class="tap text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
                         >
                             <x-ui.t fil="Tingnan Lahat" en="View All" />
                         </a>
@@ -462,7 +462,7 @@
                                     <button
                                         type="button"
                                         @click="toggleBalitaLike(post)"
-                                        class="flex items-center gap-1 text-[10.5px] font-medium transition-colors"
+                                        class="tap flex items-center gap-1 text-[10.5px] font-medium transition-colors"
                                         :class="post.liked ? 'text-rose-600' : 'text-ink-muted hover:text-slate-600'"
                                     >
                                         <i
@@ -490,9 +490,9 @@
 
                         </template>
 
-                        <p class="px-4 py-6 text-center text-xs text-ink-muted" x-show="!balitaPreview.length">
-                            <x-ui.t fil="Wala pang balita." en="No announcements yet." />
-                        </p>
+                        <x-ui.empty-state icon="megaphone" x-show="!balitaPreview.length">
+                            <x-slot:title><x-ui.t fil="Wala pang balita." en="No announcements yet." /></x-slot:title>
+                        </x-ui.empty-state>
 
                     </div>
 
@@ -501,7 +501,7 @@
             </div>
 
             <!-- Upcoming events -->
-            <x-ui.card padded="false">
+            <x-ui.card :padded="false">
 
                 <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
                     <h3 class="text-lg font-extrabold text-ink">
@@ -510,7 +510,7 @@
 
                     <a
                         href="{{ route('citizen.events') }}"
-                        class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
+                        class="tap text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
                     >
                         <x-ui.t fil="Tingnan Lahat" en="View All" />
                     </a>
@@ -535,9 +535,9 @@
                         </a>
                     </template>
 
-                    <p class="col-span-3 py-6 text-center text-xs text-ink-muted" x-show="!events.length">
-                        <x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." />
-                    </p>
+                    <x-ui.empty-state icon="calendar" class="col-span-3" x-show="!events.length">
+                        <x-slot:title><x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." /></x-slot:title>
+                    </x-ui.empty-state>
 
                 </div>
 

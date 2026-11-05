@@ -422,16 +422,16 @@
     }
 
     /* compact variant (6-up grids): diagonal gradient so the faded object sits in the light corner */
-    .slab-diag { background: linear-gradient(135deg, var(--slab-1) 0%, var(--slab-1) 50%, var(--slab-2) 100%); }
+    .slab-diag { background: linear-gradient(135deg, var(--slab-1) 0%, var(--slab-1) 55%, var(--slab-2) 100%); }
     .slab-diag::before { background: radial-gradient(140px 80px at 10% 0%, rgb(255 255 255 / .05), transparent 70%); }
 
-    /* tones — all text is white; every sub colour passes 4.5:1 on the left 45% of the gradient */
-    .slab-brand  { --slab-1:#2F62F5; --slab-2:#7C9FFF; --slab-text:#fff;    --slab-sub:#DCE5FF; --slab-shadow: rgb(29 71 214 / .30); }
-    .slab-sky    { --slab-1:#1565D0; --slab-2:#7CC4FF; --slab-text:#fff;    --slab-sub:#D9ECFF; --slab-shadow: rgb(21 101 208 / .30); }
+    /* tones — all text is white; every sub colour passes 4.5:1 on the solid part of the gradient (lifted 2026-11-04) */
+    .slab-brand  { --slab-1:#2F62F5; --slab-2:#7C9FFF; --slab-text:#fff;    --slab-sub:#FDFEFF; --slab-shadow: rgb(29 71 214 / .30); }
+    .slab-sky    { --slab-1:#1565D0; --slab-2:#7CC4FF; --slab-text:#fff;    --slab-sub:#F2F8FF; --slab-shadow: rgb(21 101 208 / .30); }
     .slab-deep   { --slab-1:#1836A8; --slab-2:#5B7FE6; --slab-text:#fff;    --slab-sub:#D6DEFA; --slab-shadow: rgb(24 54 168 / .32); }
     .slab-navy   { --slab-1:#142B66; --slab-2:#3F63C0; --slab-text:#fff;    --slab-sub:#BFCBEB; --slab-shadow: rgb(20 43 102 / .35); }
-    .slab-violet { --slab-1:#5B4FE0; --slab-2:#A39CF4; --slab-text:#fff;    --slab-sub:#E6E3FF; --slab-shadow: rgb(91 79 224 / .30); }
-    .slab-teal   { --slab-1:#0A6F8F; --slab-2:#4FBAD6; --slab-text:#fff;    --slab-sub:#DDF4FA; --slab-shadow: rgb(10 111 143 / .30); }
+    .slab-violet { --slab-1:#5B4FE0; --slab-2:#A39CF4; --slab-text:#fff;    --slab-sub:#F0EEFF; --slab-shadow: rgb(91 79 224 / .30); }
+    .slab-teal   { --slab-1:#0A6F8F; --slab-2:#4FBAD6; --slab-text:#fff;    --slab-sub:#E2F6FB; --slab-shadow: rgb(10 111 143 / .30); }
     .slab-gold   { --slab-1:#7F5E00; --slab-2:#E0B400; --slab-text:#fff;    --slab-sub:#FFF0BF; --slab-shadow: rgb(127 94 0 / .35); }
     .slab-amber  { --slab-1:#8C4500; --slab-2:#F08A1D; --slab-text:#fff;    --slab-sub:#FFE3C2; --slab-shadow: rgb(140 69 0 / .35); }
     .slab-rose   { --slab-1:#BE123C; --slab-2:#F27A93; --slab-text:#fff;    --slab-sub:#FFDDE5; --slab-shadow: rgb(190 18 60 / .30); }
@@ -606,6 +606,13 @@ body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area):not(.html2can
 }
 body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-print-area):not(.html2canvas-container) {
     display: none !important;
+}
+
+/* Tap targets (UI pass 2026-11-04): on a touch screen a small control gets an
+   invisible hit area of at least 44 x 44px, centred on it. It looks the same. */
+@media (pointer: coarse) {
+    .tap { position: relative; }
+    .tap::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
 }
 
 @media print {
@@ -1830,4 +1837,63 @@ select:not([multiple]):not([size]):not(.appearance-none):not(.doc-toolbar-select
    only the spare room after it is given back, so the labels fit. */
 .sk .sk-toolbar-row select.sk-sel:not([multiple]):not([size]) {
     padding-right: 2.125rem;
+}
+
+/* The FACED card (Sakuna > Evacuees, owner 2026-11-03): on screen a sheet as
+   tall as its content inside a scrolling viewer, not a fixed A4 with blank
+   space below; printed, the shared .doc-paper rules make it the A4 page,
+   and a large family carries on to a second page instead of being cut. */
+.doc-paper.faced-sheet {
+    width: 100%;
+    max-width: 940px;
+    min-height: 0;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgb(11 23 48 / .12), 0 0 0 1px rgb(11 23 48 / .05);
+}
+.faced-sheet .faced-h {
+    margin-top: 14px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-size: .92em;
+}
+.faced-sheet .faced-kv { width: 100%; margin-top: 4px; table-layout: fixed; }
+.faced-sheet .faced-kv td { padding: 3px 8px 3px 0; vertical-align: top; }
+.faced-sheet .faced-kv td:nth-child(odd) { width: 19%; color: #374151; }
+.faced-sheet .faced-kv td:nth-child(even) { width: 31%; border-bottom: 1px solid #cbd5e1; }
+.faced-sheet .faced-kv td[colspan] { width: auto; }
+.faced-sheet .faced-grid { width: 100%; margin-top: 6px; border-collapse: collapse; }
+.faced-sheet .faced-grid th, .faced-sheet .faced-grid td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
+.faced-sheet .faced-grid th { background: #f1f5f9; font-weight: 700; font-size: .92em; line-height: 1.2; }
+.faced-sheet .faced-grid thead { display: table-header-group; }
+.faced-sheet .faced-grid tr { break-inside: avoid; }
+.faced-sheet .faced-signs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 44px;
+    text-align: center;
+    break-inside: avoid;
+}
+.faced-sheet .faced-signs p { border-top: 1px solid #000; padding-top: 4px; font-size: .92em; }
+@media (max-width: 640px) {
+    .faced-sheet .faced-signs { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 40px; }
+}
+body.dp-printing .doc-paper.faced-sheet {
+    font-size: 11px !important;
+    max-width: none !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+}
+/* Printed on the reports' named page: a 12mm margin on every sheet, so a
+   long card's second page does not start at the paper's edge, and "Page x of y". */
+@media print {
+    body.dp-printing #dp-print-area.faced-sheet {
+        page: rep-portrait;
+        position: static !important;
+        width: auto !important;
+        min-height: 0 !important;
+    }
 }

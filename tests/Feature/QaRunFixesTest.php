@@ -270,7 +270,8 @@ class QaRunFixesTest extends TestCase
     /**
      * 2026-10-30 (owner): Missing Persons in Sakuna. Its own permission
      * (sakuna_missing: the MDRRMO's roles and the Super Administrator write;
-     * the Municipal Administrator reads only), a tab with filters, the case
+     * the Municipal Administrator and the Information Officer read only, owner
+     * 2026-11-05), a tab with filters, the case
      * lifecycle and a record form, the Command Center widget, and the
      * incident's own list of the people recorded under it.
      */
@@ -416,8 +417,8 @@ class QaRunFixesTest extends TestCase
     }
 
     /**
-     * 2026-10-28: the MDRRMO's roles, made in Users -> Roles, read "MDRRMO
-     * Head" rather than "Mdrrmo Head", are office-restricted like a
+     * 2026-10-28: the MDRRMO's roles (in the role contract since 2026-11-05)
+     * read "MDRRMO Head" rather than "Mdrrmo Head", are office-restricted like a
      * department (backend Scope.php), and the Head is told what Balita is for.
      */
     public function test_mdrrmo_roles_are_named_and_kept_to_their_office(): void
@@ -425,7 +426,7 @@ class QaRunFixesTest extends TestCase
         $app = $this->source('resources/js/app.js');
         $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff'", $app);
         $this->assertStringContainsString("['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff', 'mio_staff'].includes(this.account.roleKey)", $app);
-        $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts", $this->source('resources/views/admin/communications.blade.php'));
+        $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head: you approve and publish the MDRRMO’s own Balita posts", $this->source('resources/views/admin/communications.blade.php'));
 
         // The Municipal Information Office as a department (2026-11-02): MIO
         // Staff write and send for review, held to their own office, with

@@ -328,7 +328,7 @@
 
                 {{-- Summary preview --}}
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-2.5">Household Summary</h4>
+                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2.5">Household Summary</h4>
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                         <div><dt class="text-ink-muted">Barangay</dt><dd class="font-semibold text-ink truncate" x-text="form.barangay || '—'"></dd></div>
                         <div><dt class="text-ink-muted">Head</dt><dd class="font-semibold text-ink truncate" x-text="form.head_name || '—'"></dd></div>
@@ -381,7 +381,7 @@
             >
                 <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting"></i>
                 <i data-lucide="save" class="w-4 h-4" x-show="!submitting"></i>
-                <span x-text="submitting ? 'Saving…' : 'Save Household'"></span>
+                <span x-text="submitting ? 'Saving…' : 'Save household'"></span>
             </button>
         </div>
 

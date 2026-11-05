@@ -76,7 +76,7 @@ function layout(doc, columns, body, width) {
 const madeNow = () => new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' });
 
 /** A landscape A4 document under the LGU header; st.y is where content starts. */
-async function startDoc(title, subtitleText) {
+async function startDoc(title, subtitleText, office = '') {
     const JsPdf = await loadJsPdf();
     const doc = new JsPdf({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const page = { w: doc.internal.pageSize.getWidth(), h: doc.internal.pageSize.getHeight() };
@@ -86,6 +86,12 @@ async function startDoc(title, subtitleText) {
     doc.setFontSize(8);
     doc.setTextColor(90);
     doc.text('Republic of the Philippines  •  Province of Masbate  •  Municipality of Esperanza', page.w / 2, st.y + 2, { align: 'center' });
+    if (office) {
+        st.y += 4;
+        doc.setFont('helvetica', 'bold');
+        doc.text(clean(office), page.w / 2, st.y + 2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+    }
     st.y += 7;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
@@ -192,6 +198,234 @@ export async function tablePdf(rows, options = {}) {
     finish(st, title, filename);
 }
 
+// ------------------------------------------------- The management report
+// (Sakuna situation report, owner 2026-11-03): the period and filters, the
+// executive summary, the key figures and the charts come before the tables.
+// Charts are drawn as vector shapes, so they print sharp at any size.
+
+const rgb = (hex) => [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16));
+const short = (n, money) => {
+    const v = Number(n || 0);
+    const a = Math.abs(v);
+    const s = a >= 1e9 ? (v / 1e9).toFixed(a >= 1e10 ? 0 : 1) + 'B' : a >= 1e6 ? (v / 1e6).toFixed(a >= 1e7 ? 0 : 1) + 'M' : a >= 1e4 ? (v / 1e3).toFixed(0) + 'K' : v.toLocaleString('en-PH');
+    return (money ? 'PHP ' : '') + s.replace(/\.0([KMB])$/, '$1');
+};
+/** A round axis top and step: 4 or 5 gridlines at 1, 2, 2.5 or 5 times a power of ten. */
+function niceScale(max) {
+    if (max <= 0) return { top: 1, step: 1 };
+    if (max <= 5) return { top: Math.max(1, Math.ceil(max)), step: 1 };
+    const raw = max / 4;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((x) => x >= raw);
+    return { top: Math.ceil(max / step) * step, step };
+}
+
+function newPageIf(st, need) {
+    if (st.y + need > st.page.h - st.margin - 6) {
+        st.doc.addPage();
+        st.y = st.margin;
+        return true;
+    }
+    return false;
+}
+
+function sectionHeading(st, textValue) {
+    const { doc, margin } = st;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(11, 23, 48);
+    doc.text(clean(textValue), margin, st.y + 3);
+    st.y += 6.5;
+}
+
+/** The reporting period and every filter, in a light box. */
+function drawFilters(st, lines) {
+    if (!lines || !lines.length) return;
+    const { doc, margin, width } = st;
+    const cols = 3;
+    const rows = Math.ceil(lines.length / cols);
+    const h = rows * 4.6 + 4;
+    doc.setFillColor(241, 245, 251);
+    doc.setDrawColor(214, 223, 238);
+    doc.roundedRect(margin, st.y, width, h, 1.5, 1.5, 'FD');
+    const cw = width / cols;
+    lines.forEach(([k, v], i) => {
+        const x = margin + 3 + (i % cols) * cw;
+        const y = st.y + 4.6 + Math.floor(i / cols) * 4.6;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(70, 80, 100);
+        const label = clean(k) + ':';
+        doc.text(label, x, y);
+        const lw = doc.getTextWidth(label) + 1.5;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(20);
+        doc.text(doc.splitTextToSize(clean(v), cw - 6 - lw)[0] || '', x + lw, y);
+    });
+    st.y += h + 3;
+}
+
+/** The headline figures as tiles, four to a row. */
+function drawKpis(st, kpis) {
+    if (!kpis || !kpis.length) return;
+    const { doc, margin, width } = st;
+    newPageIf(st, 46);
+    sectionHeading(st, 'Key figures');
+    const per = 4;
+    const gap = 3;
+    const w = (width - gap * (per - 1)) / per;
+    const h = 17;
+    kpis.forEach((k, i) => {
+        const x = margin + (i % per) * (w + gap);
+        const y = st.y + Math.floor(i / per) * (h + gap);
+        doc.setFillColor(255);
+        doc.setDrawColor(214, 223, 238);
+        doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
+        doc.setFillColor(30, 58, 138);
+        doc.rect(x, y + 2, 1.1, h - 4, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(80, 90, 110);
+        doc.text(clean(k.label), x + 4, y + 4.8);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(11, 23, 48);
+        doc.text(clean(k.value), x + 4, y + 11.2);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(100, 110, 128);
+        doc.text(clean(k.note || ''), x + 4, y + 15);
+    });
+    st.y += Math.ceil(kpis.length / per) * (h + gap) + 2;
+}
+
+/** One chart in the box (x, y, w, h). */
+function drawChart(doc, x, y, w, h, c) {
+    const money = c.format === 'money';
+    doc.setDrawColor(214, 223, 238);
+    doc.setFillColor(255);
+    doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(11, 23, 48);
+    doc.text(clean(c.title), x + 3, y + 5);
+    let top = y + 8;
+    if (c.note) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(110);
+        doc.text(clean(c.note), x + 3, top + 1);
+        top += 3;
+    }
+    // The legend, when there is more than one series.
+    if (c.series.length > 1) {
+        let lx = x + w - 3;
+        doc.setFontSize(7);
+        [...c.series].reverse().forEach((sr) => {
+            const tw = doc.getTextWidth(clean(sr.name));
+            lx -= tw;
+            doc.setTextColor(60);
+            doc.text(clean(sr.name), lx, y + 5);
+            lx -= 3.5;
+            doc.setFillColor(...rgb(sr.color));
+            doc.rect(lx, y + 2.9, 2.5, 2.5, 'F');
+            lx -= 3;
+        });
+    }
+    const max = Math.max(...c.series.flatMap((sr) => sr.values.map(Number)));
+    const { top: axisTop, step } = niceScale(max);
+    const n = c.categories.length;
+    const ns = c.series.length;
+    doc.setFont('helvetica', 'normal');
+    if (c.kind === 'bar') {
+        // Horizontal bars: names on the left, values along the bottom.
+        doc.setFontSize(7);
+        const labelW = Math.min(w * 0.36, Math.max(...c.categories.map((t) => doc.getTextWidth(clean(t)))) + 2);
+        const px = x + 3 + labelW;
+        const pw = w - labelW - 14;
+        const py = top + 2;
+        const ph = y + h - 8 - py;
+        for (let v = 0; v <= axisTop + 1e-9; v += step) {
+            const gx = px + (v / axisTop) * pw;
+            doc.setDrawColor(232, 237, 245);
+            doc.line(gx, py, gx, py + ph);
+            doc.setTextColor(120);
+            doc.text(short(v, money), gx, py + ph + 3.5, { align: 'center' });
+        }
+        const band = ph / n;
+        const bh = Math.min(5.5, (band * 0.72) / ns);
+        c.categories.forEach((cat, i) => {
+            const cy = py + i * band + (band - bh * ns) / 2;
+            doc.setTextColor(40);
+            const name = doc.splitTextToSize(clean(cat), labelW - 1)[0];
+            doc.text(name, px - 1.5, cy + (bh * ns) / 2 + 1.1, { align: 'right' });
+            c.series.forEach((sr, k) => {
+                const v = Number(sr.values[i] || 0);
+                const bw = (v / axisTop) * pw;
+                doc.setFillColor(...rgb((sr.colors && sr.colors[i]) || sr.color));
+                if (bw > 0) doc.rect(px, cy + k * bh, bw, bh * 0.9, 'F');
+                doc.setTextColor(50);
+                doc.text(short(v, money), px + bw + 1, cy + k * bh + bh * 0.62);
+            });
+        });
+    } else {
+        // Columns: values up the left, names along the bottom.
+        doc.setFontSize(7);
+        const labelW = Math.max(...Array.from({ length: Math.floor(axisTop / step) + 1 }, (_, i) => doc.getTextWidth(short(i * step, money))));
+        const px = x + 4 + labelW;
+        const pw = w - labelW - 8;
+        const py = top + 3;
+        const ph = y + h - 9 - py;
+        for (let v = 0; v <= axisTop + 1e-9; v += step) {
+            const gy = py + ph - (v / axisTop) * ph;
+            doc.setDrawColor(232, 237, 245);
+            doc.line(px, gy, px + pw, gy);
+            doc.setTextColor(120);
+            doc.text(short(v, money), px - 1.5, gy + 1, { align: 'right' });
+        }
+        const band = pw / n;
+        const bw = Math.min(9, (band * 0.7) / ns);
+        const every = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(pw / 12))));
+        // Every bar's value when there are few; on a long daily run, the bars that have one.
+        const labelled = c.series.flatMap((sr) => sr.values).filter((v) => Number(v) > 0).length <= 16;
+        c.categories.forEach((cat, i) => {
+            const cx = px + i * band + (band - bw * ns) / 2;
+            c.series.forEach((sr, k) => {
+                const v = Number(sr.values[i] || 0);
+                const bh = (v / axisTop) * ph;
+                doc.setFillColor(...rgb((sr.colors && sr.colors[i]) || sr.color));
+                if (bh > 0) doc.rect(cx + k * bw, py + ph - bh, bw * 0.92, bh, 'F');
+                if (v > 0 && labelled) {
+                    doc.setTextColor(50);
+                    doc.text(short(v, money), cx + k * bw + bw / 2, py + ph - bh - 1, { align: 'center' });
+                }
+            });
+            if ((n - 1 - i) % every === 0) {
+                doc.setTextColor(80);
+                doc.text(doc.splitTextToSize(clean(cat), Math.max(band * every, 10))[0], px + i * band + band / 2, py + ph + 3.5, { align: 'center' });
+            }
+        });
+    }
+}
+
+/** The charts, two to a row; a row keeps together on one page. */
+function drawCharts(st, charts) {
+    if (!charts || !charts.length) return;
+    const { margin, width } = st;
+    const gap = 5;
+    const w = (width - gap) / 2;
+    const heightOf = (c) => (c.kind === 'bar' ? Math.min(92, Math.max(58, 22 + c.categories.length * c.series.length * 6.2)) : 62);
+    newPageIf(st, 70);
+    sectionHeading(st, 'Charts');
+    for (let i = 0; i < charts.length; i += 2) {
+        const pair = charts.slice(i, i + 2);
+        const h = Math.max(...pair.map(heightOf));
+        newPageIf(st, h + 2);
+        pair.forEach((c, k) => drawChart(st.doc, margin + k * (w + gap), st.y, w, h, c));
+        st.y += h + gap;
+    }
+}
+
 /**
  * Several tables in one document (the Sakuna situation report, 2026-10-30):
  * the header once, then each section's heading, its note and its table.
@@ -199,9 +433,19 @@ export async function tablePdf(rows, options = {}) {
  * section with no rows says "None recorded." instead of an empty table.
  */
 export async function reportPdf(sections, options = {}) {
-    const { filename = 'report.pdf', title = 'Report', subtitle = '' } = options;
-    const st = await startDoc(title, (subtitle ? subtitle + '  •  ' : '') + 'Made ' + madeNow());
+    const { filename = 'report.pdf', title = 'Report', subtitle = '', office = '', filters = [], summary = [], kpis = [], charts = [] } = options;
+    const st = await startDoc(title, (subtitle ? subtitle + '  •  ' : '') + 'Made ' + madeNow(), office);
     const { doc, page, margin, width } = st;
+    // The management report's front matter, then the tables on a fresh page.
+    drawFilters(st, filters);
+    drawSummary(st, summary);
+    drawKpis(st, kpis);
+    drawCharts(st, charts);
+    if (summary.length || kpis.length || charts.length) {
+        doc.addPage();
+        st.y = margin;
+        sectionHeading(st, 'Detailed statistics and supporting tables');
+    }
     sections.forEach((s) => {
         if (st.y > page.h - margin - 32) {
             doc.addPage();

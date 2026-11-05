@@ -147,7 +147,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Left column --}}
                         <x-ui.card class="p-4">
-                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Location & Identification</h4>
+                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Location & Identification</h4>
                             <dl class="space-y-2.5">
                                 <div class="flex justify-between items-start gap-2">
                                     <dt class="text-xs text-ink-muted">Address</dt>
@@ -179,7 +179,7 @@
                         {{-- Right column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Dwelling & Tenure</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Dwelling & Tenure</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-ink-muted">Dwelling Type</dt>
@@ -269,7 +269,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <x-ui.button variant="secondary" size="sm" @click="editing = false">Cancel</x-ui.button>
-                                <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="saveEdit()" x-text="saving ? 'Saving…' : 'Save Changes'"></x-ui.button>
+                                <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="saveEdit()" x-text="saving ? 'Saving…' : 'Save changes'"></x-ui.button>
                             </div>
                         </div>
                     </template>
@@ -446,7 +446,7 @@
 
             {{-- ── Modal Footer ── --}}
             <div class="flex-shrink-0 px-6 py-4 border-t border-brand-600/10 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
-                <x-ui.button size="sm" icon="pencil" x-show="can('const_household','edit')" @click="startEdit()">Edit Household</x-ui.button>
+                <x-ui.button size="sm" icon="pencil" x-show="can('const_household','edit')" @click="startEdit()">Edit household</x-ui.button>
             </div>
 
         </div>

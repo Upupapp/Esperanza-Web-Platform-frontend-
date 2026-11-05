@@ -115,7 +115,7 @@
             >
                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="dqScanning" x-cloak></i>
                 <i data-lucide="radar" class="w-3.5 h-3.5" x-show="!dqScanning"></i>
-                <span x-text="dqScanning ? 'Scanning…' : 'Run Scan'"></span>
+                <span x-text="dqScanning ? 'Scanning…' : 'Run scan'"></span>
             </button>
 
         </div>
@@ -162,7 +162,7 @@
                         <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Assigned To</th>
                         <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Created</th>
                         <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
-                        <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-brand-600/[.08] bg-white">
@@ -244,8 +244,8 @@
                             </td>
 
                             {{-- Actions --}}
-                            <td class="px-4 py-3 text-right whitespace-nowrap" @click.stop>
-                                <div class="flex items-center justify-end gap-1.5">
+                            <td class="px-4 py-3 text-left whitespace-nowrap" @click.stop>
+                                <div class="flex items-center justify-start gap-1.5">
                                     {{-- Review button --}}
                                     <button
                                         @click="openDQIssue(issue)"

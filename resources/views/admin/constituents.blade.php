@@ -218,6 +218,8 @@
         // The open resident's documents and assistance received, filed on the
         // portal or imported from an office's records (2026-10-12).
         residentRequests: { ref: '', rows: [], loading: false, failed: false },
+        // One Tulong case's notes, opened from that list (owner, 2026-11-05).
+        caseNotes: { ref: '', rows: [], loading: false, failed: false, denied: false },
         selectedDQIssue:      null,
         lifecycleAction:      '',
         addIndividualStep: 1,
@@ -724,6 +726,7 @@
             this.showIndividualDetail = true;
             this.$nextTick(() => window.renderIcons?.());
             this.loadResidentRequests(r.ref);
+            this.caseNotes = { ref: '', rows: [], loading: false, failed: false, denied: false };
             // The list row is intentionally lean (no tags/household/family/
             // sensitive fields) -- the detail endpoint has the rest.
             try {
@@ -764,6 +767,29 @@
             const q = ref ? 'ref=' + encodeURIComponent(ref) : 'citizen=' + encodeURIComponent(r.name);
             window.location.href = '/admin/assistance-requests?' + q;
         },
+        // A Tulong case's notes, read-only, in the resident's window (owner,
+        // 2026-11-05: no separate services list; the notes of the tulong the
+        // resident received). Loaded only when opened, newest first as the
+        // server sends them; a voided note shows as voided. A confidential
+        // type's notes stay with its office (the server keeps them so).
+        // Notes are written only inside the Tulong case.
+        noteModes: { office: 'At the office', home_visit: 'Home visit', field: 'In the field', online: 'Online or by phone' },
+        get mayReadCaseNotes() { return this.$store.session.canPerm('tulong_records', 'view'); },
+        toggleCaseNotes(ref) {
+            if (this.caseNotes.ref === ref) { this.caseNotes = { ref: '', rows: [], loading: false, failed: false, denied: false }; return; }
+            this.loadCaseNotes(ref);
+        },
+        async loadCaseNotes(ref) {
+            this.caseNotes = { ref, rows: [], loading: true, failed: false, denied: false };
+            try {
+                const res = await $api.get('/admin/services-rendered', { params: { request_ref: ref, include_voided: 1, per_page: 50 }, silent: true });
+                if (this.caseNotes.ref === ref) this.caseNotes = { ...this.caseNotes, rows: res.data || [], loading: false };
+            } catch (err) {
+                if (this.caseNotes.ref === ref) this.caseNotes = { ...this.caseNotes, loading: false, denied: !!err?.isForbidden, failed: !err?.isForbidden };
+            }
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        noteDay(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
         openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.loadMembers('family', f.ref);     this.$nextTick(()=>window.renderIcons?.()); },
         openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.loadMembers('household', h.ref);  this.$nextTick(()=>window.renderIcons?.()); },
         // What the page already has shows at once; the server's list replaces it.
@@ -849,22 +875,22 @@
             <div class="flex items-center gap-2 relative" x-show="can('const_resident','create') || can('const_family','create') || can('const_household','create')">
                 <button @click="showAddMenu=!showAddMenu" @click.outside="showAddMenu=false"
                         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold clay-blue hover:brightness-95 transition-all">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Record
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>Add record
                     <i data-lucide="chevron-down" class="w-3 h-3 opacity-70 transition-transform" :class="showAddMenu&&'rotate-180'"></i>
                 </button>
                 <div x-show="showAddMenu" x-transition.origin.top.right x-cloak
                      class="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl border border-slate-200 shadow-lg z-30 overflow-hidden">
                     <button x-show="can('const_resident','create')" @click="addIndividualStep=1;showAddIndividual=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
-                        <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New Resident
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New resident
                     </button>
                     <button x-show="can('const_family','create')" @click="addFamilyStep=1;showAddFamily=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
-                        <i data-lucide="users" class="w-3.5 h-3.5 text-purple-500"></i>New Family
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-purple-500"></i>New family
                     </button>
                     <button x-show="can('const_household','create')" @click="addHouseholdStep=1;showAddHousehold=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
-                        <i data-lucide="house" class="w-3.5 h-3.5 text-emerald-500"></i>New Household
+                        <i data-lucide="house" class="w-3.5 h-3.5 text-emerald-500"></i>New household
                     </button>
                     {{-- The LGU's own resident lists, in bulk (owner, 2026-10-09). --}}
                     <div x-show="can('const_resident','create')" class="border-t border-slate-100">
@@ -888,12 +914,12 @@
             <x-ui.stat-card layout="compact" @click="tab='registry';view='families';clearFilters()" class="cursor-pointer" label="Recorded Families"    valueBind="activeStats.families"   icon="users-round"    color="purple" :delay="80"  />
             <x-ui.stat-card layout="compact" @click="tab='registry';view='individuals';clearFilters();verificationFilter='Verified'" class="cursor-pointer" label="Records Confirmed"    valueBind="activeStats.verified"   icon="badge-check"    color="gold"   :delay="120" sublabel="Registry record checked" />
             <x-ui.stat-card layout="compact" @click="tab='registry';view='individuals';clearFilters();verificationFilter='For Validation'" class="cursor-pointer" label="Profiles to Review"   valueBind="activeStats.pending"    icon="clock"          color="orange" :delay="160" sublabel="Sent in by residents" />
-            <x-ui.stat-card layout="compact" @click="tab='data-quality';clearFilters()" class="cursor-pointer" label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="red"    :delay="200" sublabel="Needs attention" />
+            <x-ui.stat-card layout="compact" @click="tab='data-quality';clearFilters()" class="cursor-pointer" label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="orange" :delay="200" sublabel="Needs attention" />
         </div>
 
-        {{-- Primary tab bar. max-w-full + overflow-x-auto: on a phone the tabs
-             scroll inside the bar instead of the whole page (scope round 2026-10-15). --}}
-        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full overflow-x-auto mb-5">
+        {{-- Primary tab bar. On a phone the tabs wrap onto a second line, so every
+             section stays in view (NAV-4: tabs wrap, never hide off screen). --}}
+        <div class="flex flex-wrap items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full mb-5">
             <button @click="tab='registry';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                     :class="tab==='registry'     ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
@@ -949,7 +975,7 @@
         <div x-show="tab === 'registry'">
             {{-- Unified toolbar: view switcher on top, search/filters/actions below --}}
             <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto">
+                <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                     <button @click="view='individuals';clearFilters()"
                             class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                             :class="view==='individuals' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">

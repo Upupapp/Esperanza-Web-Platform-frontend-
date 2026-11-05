@@ -34,7 +34,7 @@
     :active="$isDokyu ? 'document-requests' : 'assistance-requests'"
 >
     <div class="animate-fade-up">
-        <nav class="flex items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full overflow-x-auto mb-4" aria-label="{{ $isDokyu ? 'Dokyu' : 'Tulong' }} views">
+        <nav class="flex flex-wrap items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full mb-4" aria-label="{{ $isDokyu ? 'Dokyu' : 'Tulong' }} views">
             @foreach($views as [$viewLabel, $viewIcon, $viewHref, $viewPerm])
                 @if($viewHref === null)
                     <span aria-current="page" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap bg-white text-brand-700 shadow-sm"><i data-lucide="{{ $viewIcon }}" class="w-3.5 h-3.5"></i>{{ $viewLabel }}</span>

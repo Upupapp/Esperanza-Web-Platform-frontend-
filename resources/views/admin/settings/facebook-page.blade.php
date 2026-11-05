@@ -123,7 +123,7 @@
                 </div>
                 <p x-show="connectError" role="alert" class="text-xs text-rose-700" x-text="connectError"></p>
                 <div class="flex flex-wrap items-center gap-2">
-                    <x-ui.button type="submit" size="sm" icon="plug-zap" x-bind:disabled="connecting || !formReady"><span x-text="connecting ? 'Checking with Facebook…' : (state === 'none' ? 'Connect Page' : 'Save and reconnect')"></span></x-ui.button>
+                    <x-ui.button type="submit" size="sm" icon="plug-zap" x-bind:disabled="connecting || !formReady"><span x-text="connecting ? 'Checking with Facebook…' : (state === 'none' ? 'Connect page' : 'Save and reconnect')"></span></x-ui.button>
                     <x-ui.button size="sm" variant="secondary" x-show="state !== 'none'" @click="closeForm()">Cancel</x-ui.button>
                 </div>
             </form>

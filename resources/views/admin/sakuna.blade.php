@@ -63,7 +63,7 @@
 
 <x-layouts.admin
     title="Sakuna"
-    subtitle="Disaster risk, emergency operations, evacuation, relief, and recovery management."
+    subtitle="Disaster risk, response and relief."
     active="sakuna"
 >
 
@@ -83,21 +83,81 @@
         // The status bar reads the live board (GET /admin/sakuna/command-center):
         // the alerts in effect and the incidents still open. It used to show a
         // fixed Red Alert and a July 2026 monsoon that never happened.
-        // Activate EOC still sets a display-only status on this screen.
-        opStatusOverride: '',
         headerBoard: null,
         headerFailed: false,
+        // Never a false all-clear (critique 2026-11-03): until the board has
+        // loaded the status is unknown, not Normal, and a board that could not
+        // be refreshed stays on screen marked with the time it was true.
+        headerLoadedAt: 0,
+        headerNow: Date.now(),
+        headerRefreshing: false,
+        get headerState() {
+            if (!this.headerBoard) return this.headerFailed ? 'failed' : 'loading';
+            if (this.headerFailed || this.headerNow - this.headerLoadedAt > 5 * 60000) return 'stale';
+            return 'live';
+        },
+        get headerUpdatedLabel() {
+            const state = this.headerState;
+            if (state === 'loading') return 'Loading the live board…';
+            if (state === 'failed') return 'Live board not available. Retry';
+            const at = new Date(this.headerBoard.generated_at || this.headerLoadedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            if (this.headerFailed) return 'Could not refresh. Last updated ' + at;
+            const mins = Math.floor((this.headerNow - this.headerLoadedAt) / 60000);
+            if (state === 'stale') return 'Last updated ' + at + ', ' + mins + ' min ago';
+            return mins < 1 ? 'Updated just now' : 'Updated ' + mins + ' min ago';
+        },
+        // A weak connection keeps what was last seen (critique 2026-11-03, second
+        // run). Each list is kept in this browser tab only (sessionStorage, per
+        // account, gone when the tab closes and cleared at sign-out). Evacuees and
+        // missing persons too since the seventh run (owner, 2026-11-03): in a
+        // brownout, who is in which centre and who is missing matter most.
+        // When a refresh fails, the last copy shows, marked with its time.
+        staleSince: {},
+        copyKey(name) { return 'sakuna-copy:' + (this.$store.session.account?.employee_id || this.$store.session.account?.id || 'anon') + ':' + name; },
+        saveCopy(name, data) {
+            try { sessionStorage.setItem(this.copyKey(name), JSON.stringify({ at: Date.now(), data })); } catch { /* storage full or blocked: nothing kept */ }
+            if (this.staleSince[name]) this.staleSince = { ...this.staleSince, [name]: 0 };
+        },
+        lastCopy(name) {
+            try { return JSON.parse(sessionStorage.getItem(this.copyKey(name)) || 'null'); } catch { return null; }
+        },
+        useCopy(name) {
+            const copy = this.lastCopy(name);
+            if (copy) this.staleSince = { ...this.staleSince, [name]: copy.at };
+            return copy;
+        },
+        get offlineWhy() { return navigator.onLine === false ? 'This computer is offline.' : 'The server did not answer.'; },
+        // The tab's own list and how to fetch it again, for the last-copy note.
+        get tabCopy() {
+            return ({ 'command-center': ['board', () => this.loadCommandCenter()], incidents: ['incidents', () => this.loadIncidentsList()],
+                'evacuation-centers': ['centers', () => this.loadCenters()], alerts: ['alerts', () => this.loadAlerts()],
+                evacuees: ['evacuees', () => this.loadEvacuees()], resources: ['resources', () => this.loadResources()],
+                relief: ['relief', () => this.loadRelief()],
+                'missing-persons': ['missing', () => window.dispatchEvent(new CustomEvent('sakuna-missing-reload'))] })[this.activeTab] || null;
+        },
+        // The Command Center's figures and queue say when they were true once
+        // the live board could not be refreshed (critique 2026-11-03, third run).
+        get boardAsOf() {
+            const at = this.staleSince.board || (this.headerState === 'stale' ? this.headerLoadedAt : 0);
+            if (!at) return '';
+            const mins = Math.max(0, Math.round((this.headerNow - at) / 60000));
+            return new Date(at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + (mins ? ', ' + mins + ' min ago' : '');
+        },
+        // Showing a last copy: steps that change a record wait for the connection.
+        get onLastCopy() { return !!(this.tabCopy && this.staleSince[this.tabCopy[0]]); },
+        // A figure while its list is loading or failed is unknown, not zero.
+        fig(value, unknown) { return unknown ? '—' : value; },
         get liveStatus() {
-            const c = this.headerBoard?.counts;
-            if (!c) return 'Normal';
+            if (this.headerState === 'loading') return 'Checking…';
+            if (this.headerState === 'failed') return 'Status unknown';
+            const c = this.headerBoard.counts || {};
             if (c.alerts_live > 0) return 'Alert in effect';
             if (c.incidents_open > 0) return 'Monitoring';
             return 'Normal';
         },
-        get opStatus() { return this.opStatusOverride || this.liveStatus; },
         get activeEventLabel() {
-            if (this.headerFailed) return 'Live board not available';
             const b = this.headerBoard;
+            if (this.headerFailed && !b) return 'Live board not available';
             if (!b) return 'Loading…';
             const alert = (b.alerts || [])[0];
             if (alert) return alert.title?.en || alert.title?.fil || alert.ref;
@@ -121,25 +181,50 @@
                 return;
             }
             if (!this.$store.session.canPerm('sakuna_command', 'view')) { this.headerFailed = true; return; }
-            this.headerFailed = false;
+            if (this.headerRefreshing) return;
+            this.headerRefreshing = true;
+            if (!this.headerBoard) {
+                const copy = this.lastCopy('board');
+                if (copy) { this.headerBoard = copy.data; this.headerLoadedAt = copy.at; this.headerNow = Date.now(); }
+            }
             try {
-                this.headerBoard = (await $api.get('/admin/sakuna/command-center')).data || {};
-            } catch { this.headerFailed = true; }
+                const board = (await $api.get('/admin/sakuna/command-center')).data || {};
+                this.headerBoard = board;
+                this.headerLoadedAt = this.headerNow = Date.now();
+                this.headerFailed = false;
+                this.saveCopy('board', board);
+                // The Command Center reads the same board: keep its figures and map current too.
+                if (this.activeTab === 'command-center' && this.commandBoard && !this.commandLoading) this.commandBoard = board;
+            } catch { this.headerFailed = true; } finally { this.headerRefreshing = false; }
+        },
+        // Refresh on its own (critique 2026-11-03): every minute while the page
+        // is in view, when it comes back into view, and when the connection returns.
+        startHeaderRefresh() {
+            setInterval(() => { this.headerNow = Date.now(); }, 30000);
+            setInterval(() => { if (document.visibilityState === 'visible') this.loadHeader(); }, 60000);
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { this.headerNow = Date.now(); this.loadHeader(); } });
+            window.addEventListener('online', () => this.loadHeader());
         },
         selectedBarangay: '',
-        ready: false,
         returnToProfile: null,
         // Arrived from a resident's profile via Open in Sakuna — land on the
         // Incidents tab pre-filtered to their exact report, and offer a way
         // straight back to the profile that started the trip.
         init() {
             this.landOnAllowedTab();
+            this.probeMissing();
             this.loadHeader();
+            this.startHeaderRefresh();
             const params = new URLSearchParams(window.location.search);
             const ref = params.get('ref');
             if (ref) {
                 this.setTab('incidents');
                 this.incidentSearch = ref;
+            }
+            // A Needs action chip opens Incidents showing what it counted.
+            if (this.activeTab === 'incidents') {
+                if (params.get('filter_status')) this.incidentStatusFilter = params.get('filter_status');
+                if (['none', 'someone'].includes(params.get('filter_assigned'))) this.incidentAssignedFilter = params.get('filter_assigned');
             }
             const stored = sessionStorage.getItem('returnToProfile');
             if (stored) {
@@ -160,6 +245,7 @@
         incidentStatusFilter: '',
         incidentBarangayFilter: '',
         incidentSourceFilter: '',
+        incidentAssignedFilter: '',
         selectedIncident: null,
         showIncidentDetail: false,
         showCreateIncident: false,
@@ -176,7 +262,11 @@
             try {
                 const res = await $api.getAll('/admin/sakuna/incidents');
                 this.incidentsList = res.data || [];
-            } catch { this.incidentsFailed = true; } finally { this.incidentsLoading = false; }
+                this.saveCopy('incidents', this.incidentsList);
+            } catch {
+                const copy = this.useCopy('incidents');
+                if (copy) this.incidentsList = copy.data; else this.incidentsFailed = true;
+            } finally { this.incidentsLoading = false; }
         },
         resetIncidentForm() {
             this.incidentForm = { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '', lat: null, lng: null };
@@ -328,8 +418,12 @@
             try {
                 const res = await $api.getAll('/admin/sakuna/centers');
                 this.centersList = res.data || [];
-            } catch { this.centersFailed = true; } finally { this.centersLoading = false; }
-            // A centre opened from the Command Center's map (?center=REF).
+                this.saveCopy('centers', this.centersList);
+            } catch {
+                const copy = this.useCopy('centers');
+                if (copy) this.centersList = copy.data; else this.centersFailed = true;
+            } finally { this.centersLoading = false; }
+            // A center opened from the Command Center's map (?center=REF).
             const ref = new URLSearchParams(window.location.search).get('center');
             const hit = ref && this.centersList.find((c) => c.ref === ref);
             if (hit) this.openCenterDetail(hit);
@@ -355,7 +449,7 @@
                 ? this.centerForm.services.filter(x => x !== s)
                 : [...this.centerForm.services, s];
         },
-        // A new centre is registered on the map (2026-10-26); one from before
+        // A new center is registered on the map (2026-10-26); one from before
         // the map can be saved without a pin and pinned later.
         get centerNeedsPin() { return this.centerFormMode === 'create' && !this.hasMapPin(this.centerForm); },
         async saveCenter() {
@@ -444,7 +538,11 @@
                 ]);
                 this.evacueesList = ev.data || [];
                 this.evacueeCentersOpen = (centers.data || []).filter(c => c.status === 'Processing');
-            } catch { this.evacueesFailed = true; } finally { this.evacueesLoading = false; }
+                this.saveCopy('evacuees', { list: this.evacueesList, centers: this.evacueeCentersOpen });
+            } catch {
+                const copy = this.useCopy('evacuees');
+                if (copy) { this.evacueesList = copy.data.list || []; this.evacueeCentersOpen = copy.data.centers || []; } else this.evacueesFailed = true;
+            } finally { this.evacueesLoading = false; }
         },
         resetCheckInForm() {
             this.checkInForm = { center: '', head_name: '', barangay: '', sitio: '', purok: '', hh_code: '', family_id: null, members: [], faced_serial: '', contact: '', monthly_income: '', house_ownership: '', shelter_damage: '', is_4ps: false, is_ip: false, ip_ethnicity: '' };
@@ -635,7 +733,11 @@
                 ]);
                 this.resourcesList = res.data || [];
                 this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived'].includes(i.status));
-            } catch { this.resourcesFailed = true; } finally { this.resourcesLoading = false; }
+                this.saveCopy('resources', { list: this.resourcesList, incidents: this.resourceIncidentsOpen });
+            } catch {
+                const copy = this.useCopy('resources');
+                if (copy) { this.resourcesList = copy.data.list || []; this.resourceIncidentsOpen = copy.data.incidents || []; } else this.resourcesFailed = true;
+            } finally { this.resourcesLoading = false; }
         },
         // category has no fixed vocabulary on the backend (a plain string
         // column) -- offered as suggestions from what is actually in use
@@ -718,6 +820,7 @@
         reliefOperationFilter: '',
         reliefStatusFilter: '',
         reliefList: [],
+        reliefViewing: null,
         reliefLoading: true,
         reliefFailed: false,
         showCreateDistribution: false,
@@ -733,7 +836,11 @@
             try {
                 const res = await $api.getAll('/admin/sakuna/relief');
                 this.reliefList = res.data || [];
-            } catch { this.reliefFailed = true; } finally { this.reliefLoading = false; }
+                this.saveCopy('relief', this.reliefList);
+            } catch {
+                const copy = this.useCopy('relief');
+                if (copy) this.reliefList = copy.data || []; else this.reliefFailed = true;
+            } finally { this.reliefLoading = false; }
         },
         reliefOperations() {
             return [...new Set(this.reliefList.map(d => d.operation).filter(Boolean))].sort();
@@ -792,7 +899,7 @@
             if (!ev) return;
             this.distributionForm.beneficiary_name = ev.head_name;
             // A barangay officer records the relief their barangay gives, also
-            // to a family from elsewhere staying at their centre (2026-10-27).
+            // to a family from elsewhere staying at their center (2026-10-27).
             this.distributionForm.barangay = this.$store.session.inScope(ev.barangay) ? ev.barangay : this.$store.session.account.scope;
             this.distributionForm.center = this.reliefCenterFor(ev);
         },
@@ -855,6 +962,14 @@
             this.damageFormMode = 'edit';
             this.showCreateAssessment = true;
             this.$nextTick(() => window.renderIcons?.());
+            // The list row carries neither (working test 2026-11-03): fetched, and
+            // filled only while the form is still this assessment's and untouched.
+            $api.get('/admin/sakuna/damage/' + d.ref).then((res) => {
+                if (this.damageForm.ref !== d.ref) return;
+                if (!this.damageForm.notes && res.data?.notes) this.damageForm.notes = res.data.notes;
+                const inc = (this.damageIncidentsOpen || []).find((i) => i.ref === res.data?.incident_ref);
+                if (inc && !this.damageForm.incident_id) this.damageForm.incident_id = inc.id;
+            }).catch(() => {});
         },
         // PHP never populates a multipart body's fields on a true PUT request
         // (only POST) -- sent as POST with Laravel's own _method override on
@@ -929,7 +1044,11 @@
             try {
                 const res = await $api.getAll('/admin/sakuna/alerts');
                 this.alertsList = res.data || [];
-            } catch { this.alertsFailed = true; } finally { this.alertsLoading = false; }
+                this.saveCopy('alerts', this.alertsList);
+            } catch {
+                const copy = this.useCopy('alerts');
+                if (copy) this.alertsList = copy.data; else this.alertsFailed = true;
+            } finally { this.alertsLoading = false; }
         },
         // type has no fixed vocabulary on the backend (a plain string column)
         // -- offered as suggestions from what is actually in use, the same
@@ -938,7 +1057,49 @@
             return [...new Set(this.alertsList.map(a => a.type).filter(Boolean))].sort();
         },
         resetAlertForm() {
-            this.alertForm = { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'], expires_at: '' };
+            this.alertForm = { ref: null, type: '', level: 'Advisory', audience: '', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'], expires_at: '' };
+        },
+        // Critique 2026-11-03 (second run): who an alert reaches is chosen, never
+        // implied by leaving the barangays empty, and a written draft is never
+        // thrown away by Escape or a stray click without asking.
+        alertFormSnapshot: '',
+        alertDiscardAsk: false,
+        get alertFormDirty() { return JSON.stringify(this.alertForm) !== this.alertFormSnapshot; },
+        get alertFormReady() {
+            const f = this.alertForm;
+            return !!(f.type && f.level && f.title_fil && f.title_en && f.body_fil && f.body_en && f.channels.length
+                && (f.audience === 'all' || (f.audience === 'barangays' && f.target_barangays.length)));
+        },
+        get alertFormMissing() {
+            const f = this.alertForm, miss = [];
+            if (!f.type) miss.push('the type');
+            if (!f.title_fil || !f.title_en) miss.push(!f.title_fil && !f.title_en ? 'both titles' : (!f.title_fil ? 'the Filipino title' : 'the English title'));
+            if (!f.body_fil || !f.body_en) miss.push(!f.body_fil && !f.body_en ? 'both messages' : (!f.body_fil ? 'the Filipino message' : 'the English message'));
+            if (!f.audience) miss.push('who receives it');
+            else if (f.audience === 'barangays' && !f.target_barangays.length) miss.push('at least one barangay');
+            if (!f.channels.length) miss.push('a channel');
+            return miss;
+        },
+        // A new alert's draft is kept on this computer while it is written, so a
+        // dropped connection or a closed tab does not lose both languages.
+        alertDraftKey() { return 'sakuna-alert-draft:' + (this.$store.session.account?.id || 'anon'); },
+        keepAlertDraft() {
+            if (!this.showCreateAlert || this.alertFormMode !== 'create') return;
+            try { if (this.alertFormDirty) localStorage.setItem(this.alertDraftKey(), JSON.stringify(this.alertForm)); } catch { /* storage blocked */ }
+        },
+        dropAlertDraft() { try { localStorage.removeItem(this.alertDraftKey()); } catch { /* storage blocked */ } },
+        alertDraftRestored: false,
+        get alertOffline() { return navigator.onLine === false || this.headerState === 'failed'; },
+        // The form opens with the cursor in its first field, not on Close.
+        focusAlertForm() { setTimeout(() => document.getElementById('alert-type')?.focus(), 120); },
+        closeAlertForm(force = false) {
+            if (!force && this.alertFormDirty && !this.alertSaving) { this.alertDiscardAsk = true; return; }
+            if (force && this.alertFormMode === 'create') this.dropAlertDraft();
+            this.alertDiscardAsk = false;
+            this.showCreateAlert = false;
+        },
+        alertReachLabel(a) {
+            return (a?.barangays && a.barangays.length) ? 'Residents of ' + a.barangays.join(', ') : 'Residents of every barangay (whole municipality)';
         },
         // An alert can end by itself (2026-10-17): the form holds local time
         // for the datetime-local input; the server gets an ISO instant.
@@ -958,14 +1119,25 @@
         openCreateAlert() {
             this.resetAlertForm();
             this.alertFormMode = 'create';
+            this.alertFormSnapshot = JSON.stringify(this.alertForm);
+            this.alertDraftRestored = false;
+            try {
+                const draft = JSON.parse(localStorage.getItem(this.alertDraftKey()) || 'null');
+                if (draft) { this.alertForm = { ...this.alertForm, ...draft, ref: null }; this.alertDraftRestored = true; }
+            } catch { /* no draft */ }
+            this.alertDiscardAsk = false;
             this.showCreateAlert = true;
             this.$nextTick(() => window.renderIcons?.());
+            this.focusAlertForm();
         },
         openEditAlert(a) {
-            this.alertForm = { ref: a.ref, type: a.type, level: a.level, title_fil: a.title?.fil || '', title_en: a.title?.en || '', body_fil: a.body?.fil || '', body_en: a.body?.en || '', target_barangays: [...(a.barangays || [])], channels: [...(a.channels || ['in_app'])], expires_at: this.localInput(a.expires_at) };
+            this.alertForm = { ref: a.ref, type: a.type, level: a.level, audience: (a.barangays || []).length ? 'barangays' : 'all', title_fil: a.title?.fil || '', title_en: a.title?.en || '', body_fil: a.body?.fil || '', body_en: a.body?.en || '', target_barangays: [...(a.barangays || [])], channels: [...(a.channels || ['in_app'])], expires_at: this.localInput(a.expires_at) };
             this.alertFormMode = 'edit';
+            this.alertFormSnapshot = JSON.stringify(this.alertForm);
+            this.alertDiscardAsk = false;
             this.showCreateAlert = true;
             this.$nextTick(() => window.renderIcons?.());
+            this.focusAlertForm();
         },
         toggleAlertFormBarangay(b) {
             this.alertForm.target_barangays = this.alertForm.target_barangays.includes(b)
@@ -978,9 +1150,9 @@
                 : [...this.alertForm.channels, c];
         },
         async saveAlert() {
-            if (this.alertSaving || !this.alertForm.type || !this.alertForm.level || !this.alertForm.title_fil || !this.alertForm.title_en || !this.alertForm.body_fil || !this.alertForm.body_en) return;
+            if (this.alertSaving || !this.alertFormReady) return;
             this.alertSaving = true;
-            const payload = { type: this.alertForm.type, level: this.alertForm.level, title_fil: this.alertForm.title_fil, title_en: this.alertForm.title_en, body_fil: this.alertForm.body_fil, body_en: this.alertForm.body_en, target_barangays: this.alertForm.target_barangays, channels: this.alertForm.channels, expires_at: this.alertForm.expires_at ? new Date(this.alertForm.expires_at).toISOString() : null };
+            const payload = { type: this.alertForm.type, level: this.alertForm.level, title_fil: this.alertForm.title_fil, title_en: this.alertForm.title_en, body_fil: this.alertForm.body_fil, body_en: this.alertForm.body_en, target_barangays: this.alertForm.audience === 'all' ? [] : this.alertForm.target_barangays, channels: this.alertForm.channels, expires_at: this.alertForm.expires_at ? new Date(this.alertForm.expires_at).toISOString() : null };
             try {
                 const res = this.alertFormMode === 'create'
                     ? await $api.post('/admin/sakuna/alerts', payload)
@@ -988,11 +1160,12 @@
                 const idx = this.alertsList.findIndex(a => a.ref === res.data.ref);
                 if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data }; else this.alertsList.unshift(res.data);
                 if (this.selectedAlert?.ref === res.data.ref) this.selectedAlert = { ...this.selectedAlert, ...res.data };
-                this.showCreateAlert = false;
+                this.closeAlertForm(true);
                 this.toast(this.alertFormMode === 'create' ? res.data.ref + ' drafted.' : 'Alert updated.', 'success');
+                if (this.alertSendAfterSave) this.askPublishAlert({ ...res.data, body: { fil: payload.body_fil, en: payload.body_en } });
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not save this alert.', 'error');
-            } finally { this.alertSaving = false; }
+            } finally { this.alertSaving = false; this.alertSendAfterSave = false; }
         },
         // The list row has no body text; the detail fetch adds the real
         // bilingual message, never read back by anything before this.
@@ -1007,6 +1180,42 @@
         },
         // Recipients are materialised at publish time -- the same real
         // rows a cancellation later has to reach exactly.
+        // Sending a public alert is reviewed first (critique 2026-11-03): who it
+        // reaches, through which channels, both texts and the end, then one
+        // explicit send. The count is known only once it is sent.
+        publishTarget: null,
+        showPublishConfirm: false,
+        publishSaving: false,
+        alertSendAfterSave: false,
+        channelLabel(c) { return { in_app: 'In-app and phone push', sms: 'SMS', email: 'Email' }[c] || c; },
+        // The levels the alerts carry: the standard five, then any other level on record (e.g. Orange).
+        alertLevels() {
+            const std = ['Information', 'Advisory', 'Watch', 'Warning', 'Critical'];
+            return [...std, ...new Set(this.alertsList.map(a => a.level).filter(l => l && !std.includes(l)))];
+        },
+        async askPublishAlert(a) {
+            if (!a || this.publishSaving) return;
+            this.showAlertDetail = false;
+            this.publishTarget = a;
+            this.showPublishConfirm = true;
+            this.$nextTick(() => window.renderIcons?.());
+            if (a.body?.en) return;
+            try {
+                const res = await $api.get('/admin/sakuna/alerts/' + a.ref);
+                if (this.publishTarget?.ref === a.ref) this.publishTarget = { ...a, ...res.data };
+            } catch { /* the review still shows the titles, places and channels */ }
+        },
+        async confirmPublishAlert() {
+            if (!this.publishTarget || this.publishSaving) return;
+            this.publishSaving = true;
+            try {
+                await this.publishAlert(this.publishTarget);
+            } finally {
+                this.publishSaving = false;
+                this.showPublishConfirm = false;
+                this.publishTarget = null;
+            }
+        },
         async publishAlert(a) {
             try {
                 const res = await $api.post('/admin/sakuna/alerts/' + a.ref + '/publish', {});
@@ -1039,7 +1248,6 @@
         },
 
         // Command center state
-        showEOCConfirm: false,
         // Shaped with real empty defaults, not null: the content wrapper below
         // is only display:none while loading, not removed from the DOM, so
         // Alpine still evaluates its bindings against this before the fetch
@@ -1051,10 +1259,96 @@
         commandLoading: true,
         commandFailed: false,
         priorityIncidents: [],
+        commandIncidents: [],
+        commandOpenCount: 0,
+        infoTip: null,
+        // A table that scrolls sideways is a Tab stop, so the keyboard can
+        // scroll it; one that fits is not (critique 2026-11-03, eighth run).
+        watchScrollers() {
+            if (!window.ResizeObserver) return;
+            const fit = (el) => {
+                if (el.dataset.label === undefined) el.dataset.label = (el.getAttribute('aria-label') || '').replace(/ \(scrolls sideways\)$/, '');
+                const scrolls = el.scrollWidth > el.clientWidth + 1;
+                el.tabIndex = scrolls ? 0 : -1;
+                el.setAttribute('aria-label', el.dataset.label + (scrolls ? ' (scrolls sideways)' : ''));
+            };
+            const ro = new ResizeObserver((entries) => entries.forEach((e) => fit(e.target.closest('.sk-scroll'))));
+            document.querySelectorAll('.sk-scroll[role=region]').forEach((el) => {
+                ro.observe(el);
+                if (el.firstElementChild) ro.observe(el.firstElementChild);
+                fit(el);
+            });
+        },
+        // False while offline with no copy of the incidents: the queue and the
+        // Needs action counts are then unknown, never nothing waiting.
+        commandIncidentsKnown: true,
+        missingUnknown: false,
+        // People still missing, from the Missing Persons summary; null where the
+        // role may not read cases or the feature is off.
+        missingSummary: null,
+        // What needs someone now (critique 2026-11-03, second run): the open
+        // incidents nobody has validated or taken, the one waiting longest, and
+        // the centers filling up. Counted from the records, never estimated.
+        get needsAction() {
+            const open = this.commandIncidents.filter(i => this.$store.session.inScope(i.barangay));
+            const waiting = open.filter(i => i.status === 'Submitted').sort((a, b) => new Date(a.reported) - new Date(b.reported));
+            return {
+                toValidate: waiting.length,
+                unassigned: open.filter(i => !i.assigned_name).length,
+                // The same incident the queue tags Longest (critique, ninth run).
+                oldest: open.find(i => i.ref === this.longestWaitingRef) || null,
+                fullCentres: (this.commandBoard?.centers || []).filter(c => c.pct >= 75),
+            };
+        },
+        incidentTypeIcon(type) {
+            const map = {
+                'Flood': 'waves', 'Landslide': 'triangle-alert', 'Fire': 'flame', 'Earthquake': 'activity',
+                'Vehicular Accident': 'car', 'Medical Emergency': 'heart-pulse', 'Missing Person': 'search',
+                'Stranded Resident': 'anchor', 'Fallen Tree': 'tree-pine', 'Downed Power Line': 'zap',
+                'Road Obstruction': 'cone', 'Damaged Bridge': 'construction', 'Rescue Request': 'life-buoy',
+                'Drowning or Water Rescue': 'anchor', 'Agricultural Damage': 'wheat', 'Structural Damage': 'building-2',
+                'Water Interruption': 'droplets', 'Power Interruption': 'zap-off', 'Public Health Emergency': 'shield-alert',
+            };
+            return map[type] || 'alert-circle';
+        },
+        waitedLabel(iso) {
+            if (!iso) return '—';
+            const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+            if (mins < 60) return mins + 'm';
+            if (mins < 1440) return Math.round(mins / 60) + 'h';
+            return Math.round(mins / 1440) + 'd';
+        },
+        // Red means one thing (critique 2026-11-03, third run): the single open
+        // incident that has waited longest for someone to validate or take it.
+        // Others waiting more than 4 hours are amber (owner, 2026-11-03: after a
+        // few hours of a typhoon every wait passed an hour); one in hand stays neutral.
+        isWaiting(inc) {
+            return !!inc?.reported && !['Completed', 'Archived', 'Rejected'].includes(inc.status) && (inc.status === 'Submitted' || !inc.assigned_name);
+        },
+        get longestWaitingRef() {
+            const list = (this.commandIncidents.length ? this.commandIncidents : (this.incidentsList || []))
+                .filter(i => this.isWaiting(i) && this.$store.session.inScope(i.barangay));
+            if (!list.length) return null;
+            return list.reduce((a, b) => (new Date(b.reported) < new Date(a.reported) ? b : a)).ref;
+        },
+        waitTone(inc) {
+            if (!inc?.reported || ['Completed', 'Archived', 'Rejected'].includes(inc.status)) return 'sk-muted';
+            if (!this.isWaiting(inc)) return '';
+            const h = (Date.now() - new Date(inc.reported).getTime()) / 3600000;
+            if (h < 4) return '';
+            return inc.ref === this.longestWaitingRef ? 'sk-wait-red' : 'sk-wait-amber';
+        },
         personnel: [],
         showEscalateForm: false,
         showAssignForm: false,
         escalateSeverity: 'High',
+        // Escalate only raises (critique 2026-11-03, ninth run): the severities
+        // above the incident's own, nearest first; none for a Critical one.
+        escalateChoices() {
+            const order = ['Low', 'Medium', 'High', 'Critical'];
+            const at = order.indexOf(this.selectedIncident?.severity);
+            return order.slice(at + 1);
+        },
         escalateNote: '',
         assignTo: '',
 
@@ -1086,26 +1380,58 @@
                     this.$store.session.canPerm('sakuna_incidents', 'assign') ? $api.get('/admin/sakuna/assignees').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.commandBoard = board.data;
-                const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-                this.priorityIncidents = (incidents.data || [])
-                    .filter(i => i.status !== 'Archived')
-                    .sort((a, b) => (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9))
-                    .slice(0, 6);
+                this.saveCopy('board', board.data);
+                // The hotlines ride along, so they are on hand if the next load fails.
+                if (this.$store.session.canPerm('sakuna_alerts', 'view')) $api.get('/admin/sakuna/hotlines').then((r) => this.saveCopy('hotlines', r.data || [])).catch(() => {});
+                this.setCommandIncidents(incidents.data || []);
+                if (this.allowed('sakuna_incidents')) this.saveCopy('incidents', incidents.data || []);
+                this.commandIncidentsKnown = true;
                 this.personnel = personnel.data || [];
-            } catch { this.commandFailed = true; } finally { this.commandLoading = false; }
+            } catch {
+                // The last board and incidents, marked with their time, rather than nothing.
+                // With no copy of the incidents, the queue and counts are unknown, not zero
+                // (critique 2026-11-03, eighth run).
+                const copy = this.useCopy('board');
+                if (copy) {
+                    this.commandBoard = copy.data;
+                    const incidents = this.lastCopy('incidents');
+                    this.commandIncidentsKnown = !!incidents || !this.allowed('sakuna_incidents');
+                    this.setCommandIncidents(incidents?.data || []);
+                } else this.commandFailed = true;
+            } finally { this.commandLoading = false; }
+        },
+        // The queue (critique 2026-11-03, seventh run): the same open incidents
+        // the Needs action strip counts, most severe first and, within a
+        // severity, the one waiting longest first, as on the Incidents tab.
+        // The count is taken before the list is cut to six.
+        setCommandIncidents(list) {
+            const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+            const at = (i) => new Date(i.reported || 0).getTime();
+            this.commandIncidents = list.filter(i => !['Completed', 'Archived', 'Rejected'].includes(i.status));
+            const open = this.commandIncidents.filter(i => this.$store.session.inScope(i.barangay));
+            this.commandOpenCount = open.length;
+            this.priorityIncidents = [...open]
+                .sort((a, b) => ((rank[a.severity] ?? 9) - (rank[b.severity] ?? 9))
+                    || (this.isWaiting(b) - this.isWaiting(a))
+                    || (at(a) - at(b)))
+                .slice(0, 6);
         },
         async openIncidentDetail(row) {
             this.selectedIncident = row;
             this.showIncidentDetail = true;
+            this.incidentConfirmVerb = '';
             this.showEscalateForm = false;
             this.showAssignForm = false;
+            this.assignSearch = '';
+            this.assignShowOthers = false;
             this.incidentLocationEditing = false;
+            this.incidentDetailFailed = false;
             this.$nextTick(() => window.renderIcons?.());
             // The list row is lean; the detail fetch adds description/timeline.
             try {
                 const res = await $api.get('/admin/sakuna/incidents/' + row.ref);
                 this.selectedIncident = { ...row, ...res.data };
-            } catch { /* keep the list row's fields if the detail fetch fails */ }
+            } catch { this.incidentDetailFailed = true; /* the list row's fields stay */ }
         },
         // Pin an incident on the map, move its pin or take it off (2026-10-26):
         // PUT /sakuna/incidents/{ref}/location, sakuna_incidents.edit. For the
@@ -1147,14 +1473,72 @@
         // One method for every verb in the chain (validate/assign/dispatch/
         // escalate/resolve/close) -- the verb IS the permission on the backend
         // too, so this mirrors that exactly rather than having six near-copies.
+        // The incident window's steps (critique 2026-11-03): one next step as
+        // the primary button, the rest in a menu, and marking resolved or
+        // closing confirmed first because it ends the work on the incident.
+        incidentConfirmVerb: '',
+        incidentDetailFailed: false,
+        // Assigning (critique 2026-11-03, fourth run): the people who can take
+        // the incident, MDRRMO first, grouped by role, searchable, each with the
+        // open incidents already on their hands.
+        assignSearch: '',
+        assignShowOthers: false,
+        openLoad(p) {
+            const list = this.commandIncidents.length ? this.commandIncidents : (this.incidentsList || []);
+            return list.filter(i => i.assigned_name === p.name && !['Completed', 'Archived', 'Rejected'].includes(i.status)).length;
+        },
+        // list: the people in scope for this incident (the window filters them).
+        assignGroups(list) {
+            const q = this.assignSearch.trim().toLowerCase();
+            const people = (list || []).filter(p => !q || [p.name, p.employee_id, p.role].some(v => String(v || '').toLowerCase().includes(q)));
+            const groups = {};
+            people.forEach(p => { (groups[p.role || 'Other'] ||= []).push(p); });
+            const rank = (r) => (/mdrrmo/i.test(r) ? 0 : 1);
+            return Object.keys(groups).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+                .map(role => ({ role, people: groups[role].sort((a, b) => this.openLoad(a) - this.openLoad(b) || a.name.localeCompare(b.name)) }));
+        },
+        incidentActing: false,
+        incidentVerbLabel(v) {
+            return { validate: 'Validate', dispatch: 'Dispatch', resolve: 'Mark resolved', close: 'Close incident', assign: 'Assign', escalate: 'Escalate' }[v] || v;
+        },
+        nextIncidentVerb(inc) {
+            return ['validate', 'dispatch', 'resolve', 'close'].find(v => inc?.available_verbs?.includes(v)) || '';
+        },
+        otherIncidentVerbs(inc) {
+            const next = this.nextIncidentVerb(inc);
+            return ['validate', 'dispatch', 'resolve', 'close'].filter(v => v !== next && inc?.available_verbs?.includes(v));
+        },
+        // From a list row: open the incident with Validate ready, never validate unseen.
+        async openIncidentToValidate(inc) {
+            await this.openIncidentDetail(inc);
+            setTimeout(() => document.getElementById('incident-next-step')?.focus(), 250);
+        },
+        askIncidentVerb(inc, verb) {
+            if (['resolve', 'close'].includes(verb)) { this.incidentConfirmVerb = verb; return; }
+            this.runIncidentVerb(inc, verb);
+        },
+        async runIncidentVerb(inc, verb) {
+            if (this.incidentActing || !inc) return;
+            this.incidentActing = true;
+            try { await this.actIncidentVerb(inc, verb); } finally { this.incidentActing = false; this.incidentConfirmVerb = ''; }
+        },
         async actIncidentVerb(inc, verb, payload = {}) {
             try {
                 const res = await $api.post('/admin/sakuna/incidents/' + inc.ref + '/' + verb, payload);
                 Object.assign(inc, res.data);
                 if (this.selectedIncident?.ref === inc.ref) this.selectedIncident = { ...this.selectedIncident, ...res.data };
+                // The window works on a copy after its first step: the list rows
+                // and the Command Center queue follow every step too (working
+                // test 2026-11-03: a row stayed Validated after Close).
+                [this.incidentsList, this.commandIncidents].forEach((list) => {
+                    const row = (list || []).find((r) => r.ref === inc.ref);
+                    if (row && row !== inc) Object.assign(row, res.data);
+                });
+                if (this.commandIncidents.length) this.setCommandIncidents(this.commandIncidents);
                 this.showEscalateForm = false;
                 this.showAssignForm = false;
-                this.toast(inc.ref + ' ' + verb + 'd.', 'success');
+                const done = { validate: 'validated', assign: 'assigned', dispatch: 'dispatched', escalate: 'escalated', resolve: 'marked resolved', close: 'closed' }[verb] || verb;
+                this.toast(inc.ref + ' ' + done + '.', 'success');
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not ' + verb + ' this incident.', 'error');
             }
@@ -1225,6 +1609,11 @@
         // Only this tab's partial exists in the document now, so switching tabs
         // is a navigation. The query string is preserved deliberately: arriving
         // from a resident profile carries ?ref=, and init() re-enters here.
+        // Incidents with a filter already chosen (critique 2026-11-03, eighth run).
+        openIncidentsFiltered(filters) {
+            if (!this.tabAllowed('incidents') || !this.tabUrls.incidents) return;
+            window.location.href = this.tabUrls.incidents + '?' + new URLSearchParams(filters);
+        },
         setTab(tab) {
             if (!this.tabAllowed(tab)) return;
             if (tab === this.activeTab) {
@@ -1233,24 +1622,30 @@
             }
             const url = this.tabUrls[tab];
             if (url) {
-                window.location.href = url + window.location.search;
+                // A tab's own settings (a chip's filter, an incident to record a
+                // person under, a centre to open) do not follow to other tabs.
+                const params = new URLSearchParams(window.location.search);
+                const own = { incidents: ['filter_status', 'filter_assigned', 'ref'], alerts: ['compose'], 'missing-persons': ['incident'], 'evacuation-centers': ['center'] };
+                Object.entries(own).forEach(([t, keys]) => { if (t !== tab) keys.forEach((k) => params.delete(k)); });
+                window.location.href = url + (params.toString() ? '?' + params : '');
                 return;
             }
             this.activeTab = tab;
             this.$nextTick(() => window.renderIcons?.());
         },
 
+        // A center's or a family's stay: open / checked in is green, closed /
+        // checked out slate, anything else blue (fifth critique run).
+        stayPill(status) { return status === 'Processing' ? 'sk-p-green' : (['Archived', 'Completed'].includes(status) ? 'sk-p-slate' : 'sk-p-blue'); },
+        // The pill colour a public alert level wears, wherever it appears.
+        alertLevelPill(level) {
+            return ({ Critical: 'sk-p-red', Red: 'sk-p-red', Warning: 'sk-p-orange', Orange: 'sk-p-orange',
+                Watch: 'sk-p-amber', Yellow: 'sk-p-amber', Advisory: 'sk-p-teal', Information: 'sk-p-blue' })[level] || 'sk-p-slate';
+        },
         opStatusColor() {
-            const map = {
-                'Normal': 'sk-p-green',
-                'Alert in effect': 'sk-p-red',
-                'Monitoring': 'sk-p-blue',
-                'Blue Alert': 'sk-p-navy',
-                'Red Alert': 'sk-p-red',
-                'Emergency Operations Activated': 'sk-p-red',
-                'Recovery Operations': 'sk-p-amber',
-            };
-            return map[this.opStatus] || 'sk-p-slate';
+            if (this.liveStatus === 'Alert in effect') return this.alertLevelPill(this.headerBoard?.alerts?.[0]?.level);
+            if (this.liveStatus === 'Normal') return 'sk-p-green';
+            return 'sk-p-slate';
         },
 
         severityBadge(sev) {
@@ -1264,57 +1659,21 @@
         },
 
         statusBadge(st) {
+            // The statuses Sakuna's records carry (critique 2026-11-03, seventh
+            // run: the old invented vocabulary is gone). Anything else is slate.
             const map = {
-                'New': 'bg-sky-100 text-sky-700',
-                'For Validation': 'bg-indigo-100 text-indigo-700',
-                'Validated': 'bg-blue-100 text-blue-700',
-                'Assigned': 'bg-violet-100 text-violet-700',
-                'Dispatched': 'bg-purple-100 text-purple-700',
-                'En Route': 'bg-fuchsia-100 text-fuchsia-700',
-                'On Scene': 'bg-orange-100 text-orange-700',
-                'Contained': 'bg-teal-100 text-teal-700',
-                'Resolved': 'bg-emerald-100 text-emerald-700',
-                'Closed': 'bg-slate-100 text-ink-muted',
-                'Referred': 'bg-pink-100 text-pink-700',
-                'Open': 'bg-emerald-100 text-emerald-700',
-                'Standby': 'bg-blue-100 text-blue-700',
-                'Preparing': 'bg-amber-100 text-amber-700',
-                'Near Capacity': 'bg-orange-100 text-orange-700',
-                'Full': 'bg-rose-100 text-rose-700',
-                'Temporarily Unavailable': 'bg-slate-100 text-ink-muted',
-                'Under Inspection': 'bg-indigo-100 text-indigo-700',
-                'Available': 'bg-emerald-100 text-emerald-700',
-                'Deployed': 'bg-orange-100 text-orange-700',
-                'Returning': 'bg-teal-100 text-teal-700',
-                'Under Maintenance': 'bg-slate-100 text-ink-muted',
-                'Out of Service': 'bg-rose-100 text-rose-700',
-                'Checked In': 'bg-emerald-100 text-emerald-700',
-                'Temporarily Out': 'bg-amber-100 text-amber-700',
-                'Transferred': 'bg-blue-100 text-blue-700',
-                'Returned Home': 'bg-slate-100 text-ink-muted',
-                'Referred to Hospital': 'bg-pink-100 text-pink-700',
                 'Draft': 'bg-slate-100 text-slate-600',
                 'Submitted': 'bg-blue-100 text-blue-700',
-                'For Validation': 'bg-indigo-100 text-indigo-700',
-                'For Approval': 'bg-violet-100 text-violet-700',
+                'Under Verification': 'bg-indigo-100 text-indigo-700',
+                'Assigned': 'bg-violet-100 text-violet-700',
+                'Processing': 'bg-orange-100 text-orange-700',
                 'Approved': 'bg-emerald-100 text-emerald-700',
-                'Returned for Revision': 'bg-amber-100 text-amber-700',
-                'Consolidated': 'bg-teal-100 text-teal-700',
-                'Published': 'bg-emerald-100 text-emerald-700',
-                'Scheduled': 'bg-blue-100 text-blue-700',
-                'Expired': 'bg-slate-100 text-ink-muted',
+                'Released': 'bg-emerald-100 text-emerald-700',
+                'Completed': 'bg-emerald-100 text-emerald-700',
                 'Cancelled': 'bg-rose-100 text-rose-700',
                 'Archived': 'bg-slate-100 text-ink-muted',
-                // Real values reachable on SakunaIncident/SakunaCenter/
-                // SakunaEvacueeFamily that the map above never carried --
-                // added when Command Center/Incidents/Centers were wired to
-                // the real API rather than the fake vocabularies above.
-                'Under Verification': 'bg-indigo-100 text-indigo-700',
-                'Processing': 'bg-orange-100 text-orange-700',
-                'Completed': 'bg-emerald-100 text-emerald-700',
-                // The real value AlertService::publish() sets -- distinct
-                // from the fake vocabulary's own unrelated 'Published' above.
-                'Released': 'bg-emerald-100 text-emerald-700',
+                'Open': 'bg-emerald-100 text-emerald-700',
+                'Closed': 'bg-slate-100 text-ink-muted',
             };
             return (map[st] || 'bg-slate-100 text-slate-600') + ' px-2.5 py-0.5 rounded-full text-xs font-medium';
         },
@@ -1336,6 +1695,10 @@
                 'Watch': 'bg-amber-100 text-amber-700 border border-amber-200',
                 'Warning': 'bg-orange-100 text-orange-700 border border-orange-200',
                 'Critical': 'bg-rose-100 text-rose-700 border border-rose-200',
+                // PAGASA-style colour levels, when an alert carries one.
+                'Yellow': 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+                'Orange': 'bg-orange-100 text-orange-800 border border-orange-300',
+                'Red': 'bg-rose-100 text-rose-800 border border-rose-300',
             };
             return (map[level] || 'bg-slate-100 text-slate-600') + ' px-2.5 py-0.5 rounded-full text-xs font-medium';
         },
@@ -1371,6 +1734,29 @@
         },
         allowed(submodule) { return this.can(submodule, 'view'); },
         tabAllowed(tab) { return this.allowed(this.tabSubs[tab]); },
+        // Missing Persons switched off on this server (owner, 2026-11-05;
+        // production has it off): the server answers FEATURE_OFF. Learned once
+        // for the page, from the first request that meets it; then its tab, the
+        // Command Center's card and chip, and the report's case-kind filter hide.
+        missingOff: false,
+        // The one-incident report window is open (_incident-report-print).
+        incidentReportOpen: false,
+        markMissingOff() {
+            if (this.missingOff) return;
+            this.missingOff = true;
+            this.missingSummary = null;
+            this.missingUnknown = false;
+            window.dispatchEvent(new CustomEvent('sakuna-missing-off'));
+        },
+        // The tab bar shows a tab the role may view, Missing Persons only while it is on.
+        tabShown(tab) { return this.tabAllowed(tab) && !(tab === 'missing-persons' && this.missingOff); },
+        // The Command Center and Missing Persons tabs ask Missing Persons
+        // themselves; any other tab asks once, quietly.
+        async probeMissing() {
+            await this.$store.session.whenReady();
+            if (['command-center', 'missing-persons'].includes(this.activeTab) || !this.can('sakuna_missing', 'view')) return;
+            try { await $api.get('/admin/sakuna/missing/summary', { silent: true }); } catch (e) { if (e?.code === 'FEATURE_OFF') this.markMissingOff(); }
+        },
         get permsReady() { return this.$store.session.permsReady; },
         get activeAllowed() { return this.permsReady && this.tabAllowed(this.activeTab); },
         get firstAllowedTab() { return Object.keys(this.tabSubs).find((t) => this.tabAllowed(t)) || null; },
@@ -1424,29 +1810,37 @@
         },
     }"
     x-init="
-        setTimeout(() => { ready = true; $nextTick(() => window.renderIcons?.()); }, 600);
+        setTimeout(() => window.renderIcons?.(), 600);
+        $nextTick(() => watchScrollers());
     "
+    @click="const b = $event.target.closest('[data-info]'); if (b) { const r = b.getBoundingClientRect(); infoTip = infoTip && infoTip.text === b.title ? null : { text: b.title, top: r.bottom + 6, left: Math.max(16, Math.min(r.left - 140, window.innerWidth - 336)) }; } else if (infoTip) infoTip = null;"
+    @keydown.escape.window="infoTip = null" @scroll.window="infoTip = null"
     class="sk space-y-3 max-w-[1480px]"
 >
+    {{-- What an (i) button says, on a press as well as a hover (critique, eighth run). --}}
+    <div x-show="infoTip" x-cloak role="status" class="fixed z-50 w-80 max-w-[calc(100vw-32px)] rounded-xl bg-navy-900 text-white text-[13px] leading-snug px-3 py-2 shadow-float"
+        :style="infoTip ? 'top:' + infoTip.top + 'px; left:' + infoTip.left + 'px' : ''" x-text="infoTip?.text || ''"></div>
     {{-- ── Sakuna header (owner's Sakuna Redesign, 2026-11-02) ────────────────
          One white band: the live status and the emergency actions, then the
          tab row. The tabs stay links (each tab is its own page) and wrap
          rather than scroll, so no tab is ever off screen (live test NAV-4). --}}
     <header class="sk-card">
         <div class="flex flex-wrap items-center gap-2 px-4 pt-2.5 pb-1">
-            <span :class="opStatusColor()" class="sk-pill" style="padding: 3px 9px;" :title="opStatusOverride ? 'Set on this screen only; nobody was notified' : 'From the public alerts in effect and the incidents still open'">
+            <span x-show="!headerBoard?.alerts?.length" :class="opStatusColor()" class="sk-pill" style="padding: 3px 9px;" title="From the public alerts in effect and the incidents still open">
                 <i data-lucide="shield-alert" class="w-3 h-3"></i>
-                <span x-text="opStatus"></span>
+                <span x-text="liveStatus"></span>
             </span>
 
-            <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" :class="headerBoard?.alerts?.length || headerBoard?.counts?.incidents_open ? 'sk-p-red' : 'sk-p-slate'" class="sk-pill hover:brightness-95" style="padding: 3px 9px;" title="Open the alerts or incidents behind this">
-                <span class="sk-dot"></span>
-                <span x-text="activeEventLabel" class="max-w-48 truncate"></span>
+            <button type="button" x-show="headerBoard && activeTab !== 'command-center' && (tabAllowed('alerts') || tabAllowed('incidents'))" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" :class="headerBoard?.alerts?.length ? alertLevelPill(headerBoard.alerts[0].level) : 'sk-p-slate'" class="sk-pill hover:brightness-95" style="padding: 3px 9px;" title="Open the alerts or incidents behind this">
+                <span class="sk-dot shrink-0"></span>
+                <span x-text="headerBoard?.alerts?.length ? headerBoard.alerts[0].level + ' · ' + activeEventLabel : activeEventLabel" class="text-left whitespace-normal"></span>
             </button>
 
-            <button type="button" @click="loadHeader()" class="inline-flex items-center gap-1 text-xs text-[#5F6B80] hover:text-slate-800 transition-colors" title="Refresh">
-                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                <span x-text="headerBoard?.generated_at ? 'Updated ' + new Date(headerBoard.generated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not updated yet'"></span>
+            <button type="button" @click="loadHeader()" :disabled="headerRefreshing"
+                class="sk-updated" :class="'sk-updated-' + headerState" title="Refresh now. The board also refreshes every minute.">
+                <i data-lucide="refresh-cw" x-show="headerState === 'live' || headerState === 'loading'" class="w-3.5 h-3.5" :class="headerRefreshing ? 'animate-spin' : ''"></i>
+                <i data-lucide="cloud-off" x-show="headerState === 'stale' || headerState === 'failed'" x-cloak class="w-3.5 h-3.5"></i>
+                <span x-text="headerUpdatedLabel"></span>
             </button>
 
             <div class="ml-auto flex items-center gap-2">
@@ -1454,11 +1848,8 @@
                      (live test 2026-10-07, NAV-4). --}}
                 <button x-show="permsReady && can('sakuna_alerts', 'create')" x-cloak
                     @click="activeTab === 'alerts' ? openCreateAlert() : (window.location.href = tabUrls['alerts'] + '?compose=1')"
-                    class="sk-btn sk-btn-amber">
-                    <i data-lucide="bell-ring"></i> Send alert
-                </button>
-                <button x-show="can('sakuna_command', 'escalate')" @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-red">
-                    <i data-lucide="siren"></i> Activate EOC
+                    class="sk-btn sk-btn-amber" title="Write a public alert; you review it before it is sent">
+                    <i data-lucide="bell-ring"></i> New alert
                 </button>
             </div>
         </div>
@@ -1469,7 +1860,7 @@
             @foreach($tabs as $t)
                 <a
                     href="{{ $tabUrls[$t['key']] }}"
-                    x-show="permsReady && tabAllowed('{{ $t['key'] }}')" x-cloak
+                    x-show="permsReady && tabShown('{{ $t['key'] }}')" x-cloak
                     @if($activeTab === $t['key']) aria-current="page" @endif
                     class="sk-tab {{ $activeTab === $t['key'] ? 'sk-tab-on' : '' }}"
                 >{{ $t['label'] }}</a>
@@ -1479,6 +1870,14 @@
     </header>
 
     <div>
+        {{-- A refresh failed: this tab shows its last copy, with its time and why
+             (critique 2026-11-03, second run). --}}
+        <div x-show="tabCopy && staleSince[tabCopy[0]]" x-cloak role="status"
+            class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
+            <i data-lucide="cloud-off" class="w-4 h-4 shrink-0"></i>
+            <span x-text="tabCopy && staleSince[tabCopy[0]] ? 'Showing the last copy, from ' + new Date(staleSince[tabCopy[0]]).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + '. ' + offlineWhy : ''"></span>
+            <button type="button" @click="tabCopy && tabCopy[1]()" class="font-semibold underline underline-offset-2 hover:text-amber-950">Try again</button>
+        </div>
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
         <div
             x-show="returnToProfile" x-cloak
@@ -1492,7 +1891,7 @@
                 @click="backToProfile()"
                 class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline shrink-0"
             >
-                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Profile
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to profile
             </button>
         </div>
 
@@ -1596,30 +1995,6 @@
 
             </div>
             </template>
-        </div>
-    </div>
-
-    {{-- ── EOC Activation Confirmation Modal ──────────────────────────────── --}}
-    <div x-show="showEOCConfirm" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm" @click.self="showEOCConfirm = false"
-        x-trap="showEOCConfirm"
-        role="dialog"
-        aria-modal="true"
-        @keydown.escape.window="showEOCConfirm = false">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center flex-shrink-0">
-                    <i data-lucide="siren" class="w-6 h-6 text-rose-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-ink-body">Set Operational Status</h3>
-                    <p class="text-sm text-ink-muted">This changes the banner shown in your own browser only.</p>
-                </div>
-            </div>
-            <p class="text-sm text-slate-600 mb-5">There is no backend notion of an "operational status" yet — no notification, log entry, or record is created anywhere by this. It changes what this banner reads, for you, until you reload the page.</p>
-            <div class="flex gap-3">
-                <button @click="showEOCConfirm = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">Cancel</button>
-                <button @click="showEOCConfirm = false; opStatusOverride = 'Emergency Operations Activated'; toast('Operational status set. This is a local display setting only — nobody was notified.', 'warning'); $nextTick(() => window.renderIcons?.())" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors">Set Status</button>
-            </div>
         </div>
     </div>
 

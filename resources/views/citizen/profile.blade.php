@@ -561,7 +561,7 @@
                 </x-ui.card>
 
                 <!-- Household -->
-                <x-ui.card padded="false">
+                <x-ui.card :padded="false">
                     <div class="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-ink flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-ink-muted"></i><x-ui.t fil="Kasapi ng Pamilya" en="Family Members" /></h3>
                         <span class="text-[11px] font-medium text-ink-muted" x-text="familyMembers.length"></span>
@@ -584,7 +584,7 @@
                 </x-ui.card>
 
                 <!-- Documents on file -->
-                <x-ui.card padded="false">
+                <x-ui.card :padded="false">
                     <div class="px-4 pt-3.5 pb-2.5">
                         <h3 class="text-sm font-semibold text-ink flex items-center gap-2"><i data-lucide="folder-check" class="w-4 h-4 text-ink-muted"></i><x-ui.t fil="Mga Dokumento sa File" en="Documents on File" /></h3>
                     </div>
@@ -675,7 +675,7 @@
                         <p class="text-xs text-slate-600 flex-1" x-text="idSelfie ? ($store.lang.current === 'en' ? 'Selfie taken' : 'Nakuha ang selfie') : ($store.lang.current === 'en' ? 'No selfie yet' : 'Wala pang selfie')"></p>
                         <button type="button" @click="captureSelfie()" class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap">
                             <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-                            <span x-text="idSelfie ? ($store.lang.current === 'en' ? 'Retake' : 'Kunan muli') : ($store.lang.current === 'en' ? 'Take Selfie' : 'Mag-selfie')"></span>
+                            <span x-text="idSelfie ? ($store.lang.current === 'en' ? 'Retake' : 'Kunan muli') : ($store.lang.current === 'en' ? 'Take selfie' : 'Mag-selfie')"></span>
                         </button>
                     </div>
                     <p x-show="selfieError" x-cloak class="text-xs text-rose-600 mt-2" x-text="selfieError"></p>
@@ -691,7 +691,7 @@
                     @click="submitId()"
                 >
                     <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>
-                    <x-ui.t fil="Isumite para sa Beripikasyon" en="Submit for Verification" />
+                    <x-ui.t fil="Isumite para sa Beripikasyon" en="Submit for verification" />
                 </x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
@@ -780,11 +780,11 @@
 
                 <x-slot:footer>
                     <x-ui.button variant="secondary" size="sm" x-bind:disabled="savingProfile" @click="showEditProfile = false"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
-                    <x-ui.button size="sm" x-show="mobileStep === 'code'" x-cloak x-bind:disabled="savingProfile" @click="verifyMobile()"><x-ui.t fil="Kumpirmahin ang Code" en="Confirm Code" /></x-ui.button>
+                    <x-ui.button size="sm" x-show="mobileStep === 'code'" x-cloak x-bind:disabled="savingProfile" @click="verifyMobile()"><x-ui.t fil="Kumpirmahin ang code" en="Confirm code" /></x-ui.button>
                     <x-ui.button size="sm" x-show="mobileStep !== 'code'" x-bind:disabled="savingProfile" @click="saveProfile()">
                         <span class="inline-flex items-center gap-1.5">
                             <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="savingProfile" x-cloak></i>
-                            <span x-text="savingProfile ? ($store.lang.current === 'en' ? 'Saving…' : 'Sine-save…') : ($store.lang.current === 'en' ? 'Save Changes' : 'I-save ang Pagbabago')"></span>
+                            <span x-text="savingProfile ? ($store.lang.current === 'en' ? 'Saving…' : 'Sine-save…') : ($store.lang.current === 'en' ? 'Save changes' : 'I-save ang pagbabago')"></span>
                         </span>
                     </x-ui.button>
                 </x-slot:footer>

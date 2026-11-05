@@ -1,12 +1,3 @@
-@php
-    // Module catalog (key/name/icon) is reference metadata for the RBAC
-    // system, not a per-account business record -- the account's own real
-    // moduleKeys/permissions come from GET /auth/me (see resources/js/app.js
-    // $store.session), so this is only used to look up a display name/icon
-    // for whichever keys that response actually grants.
-    $permissionModules = config('esperanza_rbac.permission_modules');
-@endphp
-
 <x-layouts.admin title="Dashboard" subtitle="Requests, residents and alerts in your scope." active="dashboard">
     {{-- Tabs (owner, 2026-10-14): the overview, the office dashboards and the
          barangay dashboards, on this one page rather than new sidebar entries.
@@ -18,7 +9,6 @@
             ready: false,
             loading: true,
             failed: false,
-            modules: @js($permissionModules),
             dash: null,
             coverage: null,
             statusColors: {
@@ -38,7 +28,6 @@
                 'Watch': 'bg-amber-50 text-amber-600', 'Advisory': 'bg-teal-50 text-teal-600',
                 'Information': 'bg-sky-50 text-sky-600',
             },
-            get myModules() { return this.modules.filter(m => this.$store.session.can(m.key)); },
             get docStatus() {
                 const by = this.dash?.requests?.documents_by_status || {};
                 return Object.entries(by).map(([label, value]) => ({ label, value, color: this.statusColors[label] || '#94a3b8' }));
@@ -137,25 +126,6 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 lg:justify-end lg:basis-[460px] lg:shrink">
-                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-white bg-white/14 backdrop-blur-[10px] border border-white/28">
-                        <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-[13px] h-[13px]"></i>
-                        <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide access' : 'Brgy. ' + $store.session.account?.scope + ' only'"></span>
-                    </span>
-                    <template x-for="mod in myModules.slice(0, 3)" :key="mod.key">
-                        <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-white bg-white/14 backdrop-blur-[10px] border border-white/28">
-                            <i :data-lucide="mod.icon" class="w-[13px] h-[13px]"></i>
-                            <span x-text="mod.name"></span>
-                        </span>
-                    </template>
-                    <span
-                        x-show="myModules.length > 3"
-                        x-cloak
-                        class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-white/85 bg-white/14 backdrop-blur-[10px] border border-white/28"
-                        x-text="'+' + (myModules.length - 3) + ' more'"
-                        :title="myModules.slice(3).map(m => m.name).join(', ')"
-                    ></span>
-                </div>
             </div>
         </div>
 
@@ -169,7 +139,7 @@
 
         <div x-show="view === 'overview'" class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-[14.5px] text-ink-body">Live counts, refreshed each time this page opens.</p>
-            <x-ui.button :href="route('admin.reports')" icon="download">Export Report</x-ui.button>
+            <x-ui.button :href="route('admin.reports')" icon="download">Export report</x-ui.button>
         </div>
 
         <!-- Skeleton state -->

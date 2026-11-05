@@ -9,7 +9,7 @@
     font: inherit;
 }
 .sakuna-map .leaflet-control-attribution {
-    font-size: 10px;
+    font-size: 12px;
 }
 .sakuna-map .leaflet-popup-content-wrapper {
     border-radius: 16px;
@@ -76,4 +76,12 @@
     background: #2563eb;
     border: 3px solid #fff;
     box-shadow: 0 0 0 6px rgb(37 99 235 / .25);
+}
+
+/* Critical carries a ring as well as its colour (critique 2026-11-03, eighth run). */
+.sakuna-critical {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #BE123C, 0 1px 6px rgb(11 23 48 / .4);
+}
+.sakuna-cluster.sakuna-cluster-dark {
+    color: #0F172A;
 }

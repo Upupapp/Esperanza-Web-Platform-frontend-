@@ -30,6 +30,9 @@
     // Alpine expression to run when the user presses Try again.
     'retryExpr' => null,
     'retryable' => true,
+    // 'rose' (default) or 'neutral': Sakuna keeps red for Critical severity
+    // and the longest wait, so its failed loads use the calm tone.
+    'tone' => 'rose',
 ])
 
 <div
@@ -37,8 +40,8 @@
     role="alert"
     aria-live="assertive"
 >
-    <div class="w-16 h-16 rounded-[22px] bg-rose-50 shadow-pressed-sm flex items-center justify-center mb-4" aria-hidden="true">
-        <i data-lucide="{{ $icon }}" class="w-7 h-7 text-rose-500"></i>
+    <div class="w-16 h-16 rounded-[22px] {{ $tone === 'neutral' ? 'bg-slate-100' : 'bg-rose-50' }} shadow-pressed-sm flex items-center justify-center mb-4" aria-hidden="true">
+        <i data-lucide="{{ $icon }}" class="w-7 h-7 {{ $tone === 'neutral' ? 'text-slate-500' : 'text-rose-500' }}"></i>
     </div>
 
     <h3 class="text-sm font-bold text-ink"

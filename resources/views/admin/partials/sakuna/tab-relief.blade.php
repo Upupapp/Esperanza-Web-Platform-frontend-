@@ -48,47 +48,48 @@
 <div class="sk-pagebar">
     <div class="sk-stats" x-show="!reliefFailed" :class="reliefLoading ? 'animate-pulse opacity-60' : ''">
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-amber"></span>Total distributions</span>
-            <span class="sk-sval tabular-nums" x-text="reliefList.length"></span>
+            <span class="sk-slab">Total distributions</span>
+            <span class="sk-sval tabular-nums" x-text="fig(reliefList.length, reliefLoading || reliefFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-blue"></span>Beneficiaries served</span>
-            <span class="sk-sval tabular-nums" x-text="new Set(reliefList.map(d => d.beneficiary)).size"></span>
+            <span class="sk-slab">Beneficiaries served</span>
+            <span class="sk-sval tabular-nums" x-text="fig(new Set(reliefList.map(d => d.beneficiary)).size, reliefLoading || reliefFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-teal"></span>Released</span>
-            <span class="sk-sval tabular-nums" x-text="reliefList.filter(d => d.status === 'Released').length"></span>
+            <span class="sk-slab">Released</span>
+            <span class="sk-sval tabular-nums" x-text="fig(reliefList.filter(d => d.status === 'Released').length, reliefLoading || reliefFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Awaiting release</span>
-            <span class="sk-sval tabular-nums" x-text="reliefList.filter(d => d.status === 'Submitted').length"></span>
+            <span class="sk-slab"><span class="sk-dot sk-t-amber" x-show="reliefList.some(d => d.status === 'Submitted')"></span>Submitted, not yet released</span>
+            <span class="sk-sval tabular-nums" x-text="fig(reliefList.filter(d => d.status === 'Submitted').length, reliefLoading || reliefFailed)"></span>
         </div>
     </div>
     <div class="sk-actions">
-        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About relief distribution: record and release relief goods to beneficiaries, with built-in duplicate protection" title="Relief distribution: record and release relief goods to beneficiaries, with built-in duplicate protection.">
+        <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About relief distribution" title="Relief distribution: record and release relief goods to beneficiaries, with built-in duplicate protection.">
             <i data-lucide="info"></i>
         </button>
         <div class="sk-btngrp" role="group" aria-label="Export">
-            <button type="button" class="sk-btn" @click="exportCSV(filteredRelief, 'relief-distributions.csv')">
+            <button type="button" class="sk-btn disabled:opacity-50" :disabled="reliefLoading || reliefFailed" @click="exportCSV(filteredRelief, 'relief-distributions.csv')">
                 <i data-lucide="download"></i> Export CSV
             </button>
-            <button type="button" class="sk-btn" @click="exportPDF(filteredRelief, 'relief-distributions.csv')">
-                Export PDF
+            <button type="button" class="sk-btn disabled:opacity-50" :disabled="reliefLoading || reliefFailed" @click="exportPDF(filteredRelief, 'relief-distributions.csv')">
+                <i data-lucide="file-text"></i> Export PDF
             </button>
         </div>
-        <button type="button" x-show="can('sakuna_relief', 'create')" @click="openCreateDistribution()" class="sk-btn sk-btn-p">
-            <i data-lucide="plus"></i> Record Distribution
+        <button type="button" x-show="can('sakuna_relief', 'create')" @click="openCreateDistribution()" :disabled="reliefLoading || reliefFailed || onLastCopy" :title="reliefFailed || onLastCopy ? 'Waits for the connection' : ''" class="sk-btn sk-btn-p disabled:opacity-50">
+            <i data-lucide="plus"></i> Record distribution
         </button>
     </div>
 </div>
 
 <div x-show="reliefLoading" class="sk-card h-72 animate-pulse"></div>
-<div x-show="reliefFailed" x-cloak><x-ui.error-state messageExpr="'Could not load relief distributions.'" retryExpr="loadRelief()" :retryable="true" /></div>
+<div x-show="reliefFailed" x-cloak><x-ui.error-state tone="neutral" icon="cloud-off" title="Not loaded" messageExpr="'Could not load relief distributions. ' + offlineWhy" retryExpr="loadRelief()" :retryable="true" /></div>
 
 <div x-show="!reliefLoading && !reliefFailed" x-cloak class="space-y-3">
 
 <section class="sk-card overflow-hidden">
     {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <h2 class="sr-only">Relief distributions</h2>
     <div class="sk-toolbar">
         <div class="sk-search" style="max-width: 340px;">
             <label for="relief-search" class="sr-only">Search by beneficiary, ref or item</label>
@@ -111,53 +112,55 @@
 
     {{-- ── Distributions Table ──────────────────────────────────────────────────────────── --}}
     <div class="sk-scroll" tabindex="0" role="region" aria-label="Relief distributions table (scrolls sideways)">
-        <table class="sk-tbl min-w-[960px]">
+        <table class="sk-tbl sk-tbl-act min-w-[960px]">
             <thead>
                 <tr>
-                    <th>Ref</th>
-                    <th>Operation</th>
                     <th>Beneficiary</th>
+                    <th>Item · operation</th>
                     <th>Barangay</th>
-                    <th>Item</th>
                     <th class="sk-r">Qty</th>
-                    <th>Status</th>
-                    <th>Released</th>
-                    <th class="sk-r">Actions</th>
+                    <th>Status · released</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <template x-for="d in filteredRelief" :key="d.ref">
                     <tr>
-                        <td class="whitespace-nowrap"><span class="sk-mono" x-text="d.ref"></span></td>
-                        <td class="whitespace-nowrap"><span class="sk-tag" x-text="d.operation"></span></td>
                         <td class="whitespace-nowrap">
                             <div class="sk-b" x-text="d.beneficiary"></div>
-                            <div x-show="d.evacuee_ref" class="sk-mono" style="color: #1D4ED8; font-size: 11px;" x-text="'FACED · ' + d.evacuee_ref"></div>
+                            <div class="sk-mono" x-text="d.ref + (d.evacuee_ref ? ' · FACED ' + d.evacuee_ref : '')"></div>
+                        </td>
+                        <td>
+                            <div class="text-ink-body" x-text="d.item"></div>
+                            <div class="sk-sub" x-text="d.operation"></div>
                         </td>
                         <td class="whitespace-nowrap" x-text="d.barangay"></td>
-                        <td class="whitespace-nowrap" x-text="d.item"></td>
                         <td class="sk-r whitespace-nowrap tabular-nums">
                             <span x-text="d.quantity + (d.unit ? ' ' + d.unit : '')"></span>
                             <div x-show="d.cost != null || d.provider" class="sk-sub" x-text="[d.cost != null ? '₱' + Number(d.cost).toLocaleString('en-PH') : null, d.provider].filter(Boolean).join(' · ')"></div>
                         </td>
                         <td class="whitespace-nowrap"><span :class="statusBadge(d.status)" class="sk-pill" x-text="d.status"></span>
-                            <div x-show="d.acknowledgement" class="text-[11px] font-medium mt-0.5" :class="d.acknowledgement === 'received' ? 'text-emerald-700' : 'text-rose-700'" data-relief-answer
-                                x-text="d.acknowledgement === 'received' ? 'Resident confirmed in app' : 'Resident says not received'"></div></td>
-                        <td class="whitespace-nowrap" :class="d.distributed_at ? '' : 'sk-muted'" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
-                        <td class="sk-r whitespace-nowrap">
-                            <button type="button" x-show="can('sakuna_relief','release') && d.status === 'Submitted'" @click="releaseDistribution(d)" class="sk-btn sk-btn-sm sk-btn-soft">
-                                <i data-lucide="package-check"></i> Release
-                            </button>
-                            <span x-show="d.status === 'Released'" class="sk-muted">—</span>
+                            <div x-show="d.acknowledgement" class="text-xs font-medium mt-0.5" :class="d.acknowledgement === 'received' ? 'text-emerald-700' : 'text-rose-700'" data-relief-answer
+                                x-text="d.acknowledgement === 'received' ? 'Resident confirmed in app' : 'Resident says not received'"></div>
+                            <div class="sk-sub" x-show="d.distributed_at" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''"></div></td>
+                        <td class="whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1">
+                                <button type="button" x-show="can('sakuna_relief','release') && d.status === 'Submitted'" @click="releaseDistribution(d)" class="sk-btn sk-btn-sm sk-btn-soft">
+                                    <i data-lucide="package-check"></i> Release
+                                </button>
+                                <button type="button" @click="reliefViewing = d" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'View ' + d.ref">
+                                    <i data-lucide="eye"></i> View
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="filteredRelief.length === 0">
-                    <td colspan="9">
+                    <td colspan="6">
                         <div class="sk-empty" style="padding: 36px 16px;">
                             <i data-lucide="package"></i>
                             <span>No distributions match your filters.</span>
-                            <button type="button" @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="sk-clear">Clear Filters</button>
+                            <button type="button" @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="sk-clear">Clear filters</button>
                         </div>
                     </td>
                 </tr>
@@ -182,10 +185,10 @@
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
-                <h3 class="font-semibold text-ink-body">Record Distribution</h3>
+                <h3 class="font-semibold text-ink-body">Record distribution</h3>
                 <p class="text-xs text-ink-muted mt-0.5">A duplicate for the same operation and beneficiary is refused automatically.</p>
             </div>
-            <button aria-label="Close" @click="showCreateDistribution = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showCreateDistribution = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -204,7 +207,7 @@
                 <datalist id="relief-evacuee-suggestions">
                     <template x-for="ev in evacueesList.filter(e => e.status === 'Processing')" :key="ev.ref"><option :value="ev.ref" x-text="ev.head_name + ' — ' + ev.barangay"></option></template>
                 </datalist>
-                <p class="text-[11px] text-ink-muted mt-1">Recorded on the family's FACED card, in its Family Assistance Record.</p>
+                <p class="text-xs text-ink-muted mt-1">Recorded on the family's FACED card, in its Family Assistance Record.</p>
             </div>
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-beneficiary">Beneficiary Name <span class="text-rose-500">*</span></label>
@@ -221,9 +224,9 @@
                 </select>
             </div>
             <div>
-                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-center">Given at (centre)</label>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-center">Given at (center)</label>
                 <select id="dist-center" x-model="distributionForm.center" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-                    <option value="">Not at a centre</option>
+                    <option value="">Not at a center</option>
                     <template x-for="c in reliefCenters" :key="c.ref"><option :value="c.ref" x-text="c.name + ' — ' + c.barangay"></option></template>
                 </select>
             </div>
@@ -261,18 +264,49 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
-            <button @click="showCreateDistribution = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">Cancel</button>
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
+            <button @click="showCreateDistribution = false" class="sk-btn">Cancel</button>
             <button :disabled="distributionSaving || !distributionForm.operation || !distributionForm.barangay || !distributionForm.beneficiary_name || !distributionForm.item" @click="submitDistribution(true)"
-                class="flex-1 py-2.5 text-sm font-medium text-brand-700 bg-white border border-brand-200 rounded-2xl hover:bg-brand-50 transition-colors disabled:opacity-50" data-dist-another>
+                class="sk-btn sk-btn-soft" data-dist-another>
                 Record &amp; add another item
             </button>
             <button :disabled="distributionSaving || !distributionForm.operation || !distributionForm.barangay || !distributionForm.beneficiary_name || !distributionForm.item" @click="submitDistribution()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
-                <span x-text="distributionSaving ? 'Recording…' : 'Record Distribution'"></span>
+                class="sk-btn sk-btn-p">
+                <span x-text="distributionSaving ? 'Recording…' : 'Record distribution'"></span>
             </button>
         </div>
     </div>
 </div>
 
 </div>{{-- end x-data wrapper --}}
+
+{{-- ── Distribution window (critique 2026-11-03, seventh run) ────────────────────────
+     Read only: what the row leaves out (center or place, when it was recorded,
+     the resident's answer and when). --}}
+<div x-show="reliefViewing" x-cloak
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    @click.self="reliefViewing = null" x-trap="reliefViewing" role="dialog" aria-modal="true" aria-labelledby="relief-view-title"
+    @keydown.escape.window="reliefViewing = null">
+    <div class="bg-white rounded-[28px] shadow-float w-full max-w-lg my-auto">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
+            <div>
+                <h3 id="relief-view-title" class="font-semibold text-ink-body" x-text="reliefViewing ? reliefViewing.item + ' for ' + reliefViewing.beneficiary : ''"></h3>
+                <p class="font-mono text-xs text-ink-muted mt-0.5" x-text="reliefViewing?.ref || ''"></p>
+            </div>
+            <button aria-label="Close window" @click="reliefViewing = null" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <dl class="p-6 grid grid-cols-2 gap-3 text-sm">
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Operation</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.operation || '—'"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Status</dt><dd class="mt-0.5"><span :class="statusBadge(reliefViewing?.status)" class="sk-pill" x-text="reliefViewing?.status"></span></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Quantity</dt><dd class="font-medium text-ink-body mt-0.5 tabular-nums" x-text="reliefViewing ? reliefViewing.quantity + (reliefViewing.unit ? ' ' + reliefViewing.unit : '') : ''"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted" x-text="reliefViewing?.cost != null && reliefViewing?.provider ? 'Cost · provider' : (reliefViewing?.cost != null ? 'Cost' : 'Provider')"></dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing ? ([reliefViewing.cost != null ? '₱' + Number(reliefViewing.cost).toLocaleString('en-PH') : null, reliefViewing.provider].filter(Boolean).join(' · ') || '—') : ''"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Barangay</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.barangay || '—'"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Center or place</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.center || reliefViewing?.location || '—'"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">FACED card</dt><dd class="font-mono text-ink-body mt-0.5" x-text="reliefViewing?.evacuee_ref || 'Not linked'"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Recorded</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.created_at ? new Date(reliefViewing.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Released</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.distributed_at ? new Date(reliefViewing.distributed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not yet'"></dd></div>
+            <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Resident's answer</dt><dd class="font-medium mt-0.5" :class="reliefViewing?.acknowledgement === 'received' ? 'text-emerald-700' : (reliefViewing?.acknowledgement ? 'text-amber-800' : 'text-ink-body')"
+                x-text="reliefViewing?.acknowledgement === 'received' ? 'Confirmed in the app' + (reliefViewing.acknowledged_at ? ', ' + new Date(reliefViewing.acknowledged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '') : (reliefViewing?.acknowledgement ? 'Says not received' : 'No answer yet')"></dd></div>
+        </dl>
+    </div>
+</div>

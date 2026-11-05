@@ -349,7 +349,7 @@
 
                     <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-6 bg-slate-50/50 space-y-4">
                         <div class="surface-glass rounded-[26px] p-4">
-                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Citizen Information</h4>
+                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3">Citizen Information</h4>
                             <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-3">
                                 <div><dt class="text-xs text-ink-muted">Full Name</dt><dd class="text-sm font-semibold text-ink" x-text="selectedCitizen.name"></dd></div>
                                 <div><dt class="text-xs text-ink-muted">Account No.</dt><dd class="text-sm font-mono font-semibold text-ink" x-text="selectedCitizen.id"></dd></div>
@@ -360,7 +360,7 @@
                         </div>
 
                         <div class="surface-glass rounded-[26px] overflow-hidden">
-                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r p-4 pb-0">Stored Documents</h4>
+                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] p-4 pb-0">Stored Documents</h4>
                             <ul class="divide-y divide-brand-600/[.08] mt-3">
                                 <template x-for="doc in selectedCitizenDocs" :key="doc.id">
                                     <li class="flex items-center gap-3 px-4 py-3">

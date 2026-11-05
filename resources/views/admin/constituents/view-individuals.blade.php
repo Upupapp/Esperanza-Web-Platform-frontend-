@@ -23,22 +23,22 @@
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-well/70">
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">
                         Resident
                     </th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden xl:table-cell">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">
                         Barangay / Sitio
                     </th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">
                         Household
                     </th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">
                         Record
                     </th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">
                         Status
                     </th>
-                    <th class="text-center px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">
                         Actions
                     </th>
                 </tr>
@@ -60,7 +60,7 @@
                                         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl clay-blue text-sm font-medium hover:brightness-95 transition-colors"
                                     >
                                         <i data-lucide="user-plus" class="w-4 h-4"></i>
-                                        Add Resident
+                                        Add resident
                                     </button>
                                 </template>
                             </x-ui.empty-state>
@@ -187,7 +187,7 @@
 
                         {{-- Actions --}}
                         <td class="px-4 py-3" @click.stop>
-                            <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100 focus:opacity-100">
+                            <div class="flex items-center justify-start gap-1">
                                 <button
                                     @click="openIndividual(r)"
                                     title="View resident detail"

@@ -8,7 +8,7 @@
     @if($description)
         <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ $description }}</p>
     @endif
-    @isset($slot)
+    @if(isset($slot) && trim((string) $slot) !== '')
         <div class="mt-5">{{ $slot }}</div>
-    @endisset
+    @endif
 </div>

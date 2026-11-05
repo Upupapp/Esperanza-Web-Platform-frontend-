@@ -156,7 +156,12 @@
             } catch { this.submissions = []; }
             finally { this.submissionsLoading = false; this.$nextTick(() => window.renderIcons?.()); }
         },
+        // The list's Approve opens the form first; the form asks once more.
+        approveAsk: '',
         async approve(sub) {
+            if (!this.viewing || this.viewing.ref !== sub.ref) { this.approveAsk = sub.ref; this.viewSubmission(sub); return; }
+            if (this.approveAsk !== sub.ref) { this.approveAsk = sub.ref; return; }
+            this.approveAsk = '';
             try {
                 await $api.post('/admin/sakuna/bdrrmc-forms/submissions/' + encodeURIComponent(sub.ref) + '/approve');
                 this.$dispatch('toast', { message: sub.ref + ' approved.', variant: 'success' });
@@ -174,24 +179,28 @@
     <section class="sk-card overflow-hidden">
         <div class="sk-chead">
             <h2 class="sk-ctitle inline-flex items-center gap-1.5">BDRRMC Capture Forms
-                <button type="button" class="sk-iconbtn sk-iconbtn-bare !w-6 !h-6"
-                    aria-label="About capture forms: the barangay DRRM capture forms (the layout Barangay Labangtaytay files with the MDRRMO/PDRRMC): fill one out, save it to the system, and print it."
+                <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare !w-6 !h-6"
+                    aria-label="About capture forms"
                     title="The barangay DRRM capture forms (the layout Barangay Labangtaytay files with the MDRRMO/PDRRMC): fill one out, save it to the system, and print it.">
                     <i data-lucide="info" class="!w-3.5 !h-3.5"></i>
                 </button>
             </h2>
             <span class="sk-csub">Fill out, save to the system, then print</span>
         </div>
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));">
+        <p class="px-3.5 py-2 text-xs sk-muted border-b border-[#EEF2F7]">DROMIC: the DSWD's Disaster Response Operations Monitoring and Information Center report. RDS: Relief Distribution Sheet.</p>
+        {{-- Each form its own card (owner, 2026-11-03): white tiles on the
+             tinted well, equal heights per row, a hover edge because each is
+             something to pick. --}}
+        <div class="grid gap-2.5 p-3 bg-[#F4F7FC]" style="grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));">
             @foreach($bdrrmcForms as $f)
-                <div class="flex items-center gap-3 px-3.5 py-3 border-b border-r border-[#EEF2F7]">
+                <div class="sk-tile sk-form-tile flex items-center gap-3 px-3.5 py-3">
                     <span class="w-[34px] h-[34px] rounded-[9px] {{ $f['color'] }} flex items-center justify-center flex-shrink-0">
                         <i data-lucide="{{ $f['icon'] }}" class="w-4 h-4"></i>
                     </span>
                     <div class="flex-grow min-w-0">
-                        <p class="text-[10.5px] font-semibold tracking-[.06em] uppercase text-[#5F6B80]">{{ $f['code'] }}</p>
-                        <p class="sk-b text-[13px] leading-snug">{{ $f['name'] }}</p>
-                        <p class="sk-sub">{{ $f['desc'] }}</p>
+                        <p class="text-xs font-semibold tracking-[.06em] uppercase text-[#5F6B80]">{{ $f['code'] }}</p>
+                        <p class="sk-b text-[13px] leading-snug text-pretty">{{ $f['name'] }}</p>
+                        <p class="sk-sub text-pretty">{{ $f['desc'] }}</p>
                     </div>
                     <button
                         type="button"
@@ -207,13 +216,13 @@
 
     <section x-show="canListSubmissions" x-cloak class="sk-card overflow-hidden">
         <div class="sk-chead">
-            <h3 class="sk-ctitle">Submitted forms <span class="sk-csub">· saved capture forms, newest first. The MDRRMO approves each one.</span></h3>
+            <h2 class="sk-ctitle">Submitted forms <span class="sk-csub">· saved capture forms, newest first. The MDRRMO approves each one.</span></h2>
             <button type="button" @click="loadSubmissions()" class="sk-btn sk-btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
         </div>
         <p x-show="submissionsLoading" class="sk-empty">Loading…</p>
         <p x-show="!submissionsLoading && !submissions.length" class="sk-empty">No capture form has been saved yet.</p>
         <div x-show="submissions.length" class="sk-scroll" tabindex="0" role="region" aria-label="Submitted forms table (scrolls sideways)">
-            <table class="sk-tbl">
+            <table class="sk-tbl sk-tbl-act">
                 <thead>
                     <tr>
                         <th>Reference</th>
@@ -223,25 +232,25 @@
                         <th class="sk-r">Rows</th>
                         <th>Saved</th>
                         <th>Status</th>
-                        <th class="sk-r">Actions</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <template x-for="sub in submissions" :key="sub.ref">
                         <tr>
                             <td><span class="sk-mono" x-text="sub.ref"></span></td>
-                            <td class="sk-b" x-text="formNames[sub.form] || sub.form"></td>
-                            <td x-text="'Brgy. ' + sub.barangay"></td>
-                            <td class="sk-muted" x-text="sub.period || '—'"></td>
+                            <td class="sk-b min-w-[9rem] max-w-[15rem]" x-text="formNames[sub.form] || sub.form"></td>
+                            <td x-text="sub.barangay"></td>
+                            <td class="sk-muted max-w-[7rem]" x-text="sub.period || '—'"></td>
                             <td class="sk-r tabular-nums" x-text="sub.row_count"></td>
-                            <td class="sk-muted" x-text="(sub.submitted_by || '—') + ' · ' + (sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')"></td>
+                            <td class="min-w-[6rem]"><div class="text-ink-body" x-text="sub.submitted_by || '—'"></div><div class="sk-sub" x-text="sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''"></div></td>
                             <td><span class="sk-pill" :class="statusBadge(sub.status)" x-text="sub.status"></span></td>
-                            <td class="sk-r whitespace-nowrap">
-                                <button type="button" @click="viewSubmission(sub)" :disabled="viewLoading" class="sk-btn sk-btn-sm sk-btn-soft">View</button>
+                            <td><div class="flex flex-col items-start gap-1">
                                 {{-- Who filed a form cannot approve it; the server refuses it too (2026-10-27). --}}
-                                <button type="button" x-show="sub.can_approve" @click="approve(sub)" class="sk-btn sk-btn-sm sk-btn-ok">Approve</button>
+                                <button type="button" x-show="sub.can_approve" @click="approve(sub)" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'Review and approve ' + sub.ref"><i data-lucide="check"></i> Review and approve…</button>
+                                <button type="button" @click="viewSubmission(sub)" :disabled="viewLoading" class="sk-btn sk-btn-sm sk-btn-soft"><i data-lucide="eye"></i> View</button>
                                 <span x-show="sub.status === 'Submitted' && sub.submitted_by_me && canApprove" class="sk-ssub">Filed by you</span>
-                            </td>
+                            </div></td>
                         </tr>
                     </template>
                 </tbody>
@@ -367,34 +376,34 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area :data-print-orientation="paperSpec('edit').orientation" :data-print-under="viewing ? true : null" class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div role="dialog" aria-modal="true" :aria-label="formNames[openForm]" x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area :data-print-orientation="paperSpec('edit').orientation" :data-print-under="viewing ? true : null" class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="no-print flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
                 <div>
-                    <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide" x-text="formCodes[openForm]"></p>
+                    <p class="text-xs font-semibold text-ink-muted uppercase tracking-wide" x-text="formCodes[openForm]"></p>
                     <h3 class="font-semibold text-ink-body" x-text="formNames[openForm]"></h3>
                 </div>
-                <button aria-label="Close" @click="openForm = null" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close window" @click="openForm = null" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4 bg-slate-100/70">
                 <template x-if="openForm === 'evacuees'">
                 <div class="space-y-4">
-                    {{-- Fill from records (2026-10-27): the families staying at a centre at the
+                    {{-- Fill from records (2026-10-27): the families staying at a center at the
                          time of the report, from check-ins, transfers and check-outs.
                          Nothing is saved until Save Form. --}}
                     <div x-show="canFill && canFill('evacuees')" class="no-print rounded-2xl border border-brand-600/15 bg-brand-50/40 p-3 space-y-2">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="text-xs text-ink-body"><span class="font-semibold">Fill from records:</span> the families staying at an evacuation centre at the date and time of the report.</p>
-                            <button type="button" @click="openFill()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-white border border-brand-200 rounded-xl px-2.5 py-1.5 hover:border-brand-300"><i data-lucide="database" class="w-3.5 h-3.5"></i> <span x-text="fillOpen ? 'Close' : 'Fill from records'"></span></button>
+                            <p class="text-xs text-ink-body"><span class="font-semibold">Fill from records:</span> the families staying at an evacuation center at the date and time of the report.</p>
+                            <button type="button" @click="openFill()" class="sk-btn sk-btn-soft sk-btn-sm"><i data-lucide="database" class="w-3.5 h-3.5"></i> <span x-text="fillOpen ? 'Close' : 'Fill from records'"></span></button>
                         </div>
                         <div x-show="fillOpen" x-cloak class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 items-end">
-                            <div><label for="fill-evac-center" class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1">Evacuation center</label>
-                                <select id="fill-evac-center" x-model="fill.center" class="w-full rounded-xl border border-slate-200 py-2 px-3 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard bg-white"><option value="">Choose a centre</option><template x-for="c in centers" :key="c.ref"><option :value="c.ref" x-text="c.name + ' · Brgy. ' + c.barangay + (c.status === 'Processing' ? ' · open' : '')"></option></template></select></div>
-                            <div><label for="fill-evac-asof" class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1">As of (Esperanza time)</label>
+                            <div><label for="fill-evac-center" class="block text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Evacuation center</label>
+                                <select id="fill-evac-center" x-model="fill.center" class="w-full rounded-xl border border-slate-200 py-2 px-3 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard bg-white"><option value="">Choose a center</option><template x-for="c in centers" :key="c.ref"><option :value="c.ref" x-text="c.name + ' · Brgy. ' + c.barangay + (c.status === 'Processing' ? ' · open' : '')"></option></template></select></div>
+                            <div><label for="fill-evac-asof" class="block text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">As of (Esperanza time)</label>
                                 <input id="fill-evac-asof" type="datetime-local" x-model="fill.asOf" class="w-full rounded-xl border border-slate-200 py-2 px-3 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard bg-white"></div>
-                            <button type="button" @click="fillFromRecords('evacuees')" :disabled="fill.loading" class="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2"><span x-text="fill.loading ? 'Filling…' : 'Fill'"></span></button>
+                            <button type="button" @click="fillFromRecords('evacuees')" :disabled="fill.loading" class="sk-btn sk-btn-p"><span x-text="fill.loading ? 'Filling…' : 'Fill'"></span></button>
                         </div>
                         <p x-show="fillOpen && fill.error" x-cloak role="alert" class="text-xs text-rose-700" x-text="fill.error"></p>
-                        <p x-show="fillOpen" x-cloak class="text-[11px] text-ink-muted">Nothing is saved until you choose Save Form. What the records do not hold stays blank and is flagged; type it if you know it.</p>
+                        <p x-show="fillOpen" x-cloak class="text-xs text-ink-muted">Nothing is saved until you choose Save Form. What the records do not hold stays blank and is flagged; type it if you know it.</p>
                     </div>
     
                     {{-- What the records said, and what is missing --}}
@@ -417,20 +426,20 @@
                     <div x-show="canFill && canFill('rds')" class="no-print rounded-2xl border border-brand-600/15 bg-brand-50/40 p-3 space-y-2">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <p class="text-xs text-ink-body"><span class="font-semibold">Fill from records:</span> the relief released in an operation in this barangay, one line per release.</p>
-                            <button type="button" @click="openFill()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-white border border-brand-200 rounded-xl px-2.5 py-1.5 hover:border-brand-300"><i data-lucide="database" class="w-3.5 h-3.5"></i> <span x-text="fillOpen ? 'Close' : 'Fill from records'"></span></button>
+                            <button type="button" @click="openFill()" class="sk-btn sk-btn-soft sk-btn-sm"><i data-lucide="database" class="w-3.5 h-3.5"></i> <span x-text="fillOpen ? 'Close' : 'Fill from records'"></span></button>
                         </div>
                         <div x-show="fillOpen" x-cloak class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto] gap-2 items-end">
-                            <div><label for="fill-rds-operation" class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1">Relief operation</label>
+                            <div><label for="fill-rds-operation" class="block text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Relief operation</label>
                                 <input id="fill-rds-operation" type="text" list="fill-rds-operations" x-model="fill.operation" placeholder="e.g. Typhoon Relief Round 1" class="w-full rounded-xl border border-slate-200 py-2 px-3 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard bg-white">
                                 <datalist id="fill-rds-operations"><template x-for="op in operations" :key="op"><option :value="op"></option></template></datalist></div>
-                            <div><label for="fill-rds-date" class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1">Day (optional)</label>
+                            <div><label for="fill-rds-date" class="block text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Day (optional)</label>
                                 <input id="fill-rds-date" type="date" x-model="fill.date" class="w-full rounded-xl border border-slate-200 py-2 px-3 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard bg-white"></div>
-                            <div><label for="fill-rds-center" class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1">Only at a centre (optional)</label>
+                            <div><label for="fill-rds-center" class="block text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Only at a center (optional)</label>
                                 <select id="fill-rds-center" x-model="fill.rdsCenter" class="w-full rounded-xl border border-slate-200 py-2 px-3 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard bg-white"><option value="">Anywhere in the barangay</option><template x-for="c in centers" :key="c.ref"><option :value="c.ref" x-text="c.name"></option></template></select></div>
-                            <button type="button" @click="fillFromRecords('rds')" :disabled="fill.loading" class="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2"><span x-text="fill.loading ? 'Filling…' : 'Fill'"></span></button>
+                            <button type="button" @click="fillFromRecords('rds')" :disabled="fill.loading" class="sk-btn sk-btn-p"><span x-text="fill.loading ? 'Filling…' : 'Fill'"></span></button>
                         </div>
                         <p x-show="fillOpen && fill.error" x-cloak role="alert" class="text-xs text-rose-700" x-text="fill.error"></p>
-                        <p x-show="fillOpen" x-cloak class="text-[11px] text-ink-muted">Choose the barangay below first. Nothing is saved until you choose Save Form; the signature column stays blank for the beneficiaries to sign on paper.</p>
+                        <p x-show="fillOpen" x-cloak class="text-xs text-ink-muted">Choose the barangay below first. Nothing is saved until you choose Save Form; the signature column stays blank for the beneficiaries to sign on paper.</p>
                     </div>
     
                     <template x-if="drafted && drafted.rds">
@@ -469,7 +478,7 @@
                             <button type="button" @click="pick(p)" class="text-xs px-2.5 py-1 rounded-full border border-slate-200 hover:border-brand-300" x-text="p.name + ' · ' + p.barangay + (p.sitio ? ', ' + p.sitio : '')"></button>
                         </template>
                     </div>
-                    <p class="text-[11px] text-ink-muted">Only residents classified on the DRRM list appear. Not registered? Write the owner in on the form.</p>
+                    <p class="text-xs text-ink-muted">Only residents classified on the DRRM list appear. Not registered? Write the owner in on the form.</p>
                 </div>
 
                 @include('admin.partials.sakuna.bdrrmc-paper', ['mode' => 'edit'])
@@ -479,8 +488,8 @@
                 </button>
             </div>
             <div class="no-print px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
-                <button @click="print($event)" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button @click="save()" :disabled="saving" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-2xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save Form'"></span></button>
+                <button @click="print($event)" class="sk-btn"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
+                <button @click="save()" :disabled="saving" class="sk-btn sk-btn-p"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save form'"></span></button>
             </div>
         </div>
         </div>
@@ -507,7 +516,7 @@
                     <h3 class="font-semibold text-ink-body" x-text="viewName()"></h3>
                     <p class="text-xs text-ink-muted mt-0.5" x-text="viewing.ref + ' · ' + viewing.status + ' · saved by ' + (viewing.submitted_by || '—') + ', ' + viewWhen(viewing.submitted_at) + (viewing.approved_by ? ' · approved by ' + viewing.approved_by + ', ' + viewWhen(viewing.approved_at) : '')"></p>
                 </div>
-                <button aria-label="Close" @click="viewing = null" class="no-print p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close window" @click="viewing = null" class="sk-mclose no-print"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <p x-show="viewing.meta && viewing.meta.provisional" class="no-print rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900"><strong>Provisional.</strong> <span x-text="viewing.meta ? viewing.meta.provisional_reason : ''"></span></p>
@@ -532,7 +541,7 @@
                 <div class="space-y-4">
                     <dl class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <template x-for="field in viewHeader()" :key="field[0]">
-                            <div><dt class="text-[10px] font-medium text-ink-muted uppercase tracking-wide" x-text="field[0]"></dt><dd class="text-sm text-ink-body" x-text="field[1]"></dd></div>
+                            <div><dt class="text-xs font-medium text-ink-muted uppercase tracking-wide" x-text="field[0]"></dt><dd class="text-sm text-ink-body" x-text="field[1]"></dd></div>
                         </template>
                     </dl>
     
@@ -560,7 +569,7 @@
                                         <td x-show="viewing.form === 'evacuees'" class="px-2 py-1 text-center font-semibold" x-text="viewRowTotals(row).m + viewRowTotals(row).f"></td>
                                         <td x-show="viewing.form === 'evacuees'" class="px-2 py-1 text-center" x-text="viewRowSource(i) && viewRowSource(i).headcount !== undefined ? viewRowSource(i).headcount : '—'"></td>
                                         <td x-show="viewing.form === 'rds'" class="px-2 py-1 min-w-[7rem]"></td>
-                                        <td class="no-print px-2 py-1 text-[10px] text-ink-muted">
+                                        <td class="no-print px-2 py-1 text-xs text-ink-muted">
                                             <template x-if="viewRowSource(i) && viewRowSource(i).ref">
                                                 <div>
                                                     <p class="font-mono" x-text="viewRowSource(i).ref"></p>
@@ -627,8 +636,10 @@
             </div>
             <div class="no-print px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
                 <span x-show="viewing.status === 'Submitted' && viewing.submitted_by_me && canApprove" class="mr-auto text-xs text-ink-muted">You filed this form, so another approver signs it off.</span>
-                <button @click="printSaved($event)" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button x-show="viewing.can_approve" @click="approve(viewing)" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-4 py-2 transition-colors"><i data-lucide="check" class="w-4 h-4"></i> Approve</button>
+                <button @click="printSaved($event)" class="sk-btn"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
+                <span x-show="viewing.can_approve && approveAsk === viewing.ref" x-cloak class="mr-auto text-sm text-ink-body" role="status">Approve this form as checked? The paper signature still applies.</span>
+                <button x-show="viewing.can_approve && approveAsk === viewing.ref" x-cloak @click="approveAsk = ''" class="sk-btn">Not yet</button>
+                <button x-show="viewing.can_approve" @click="approve(viewing)" class="sk-btn sk-btn-p"><i data-lucide="check" class="w-4 h-4"></i> <span x-text="approveAsk === viewing.ref ? 'Yes, approve' : 'Approve…'">Approve…</span></button>
             </div>
         </div>
         </div>

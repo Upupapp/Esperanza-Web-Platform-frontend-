@@ -14,7 +14,7 @@
         <div class="absolute inset-[42px] rounded-full surface-pressed grid place-items-center text-center pointer-events-none">
             <div class="px-2 min-w-0">
                 <p class="text-[30px] font-extrabold leading-none tracking-[-.02em] text-ink tabular-nums" x-text="(hover !== null && rows[hover] ? rows[hover].value : total).toLocaleString()"></p>
-                <p class="mt-1.5 text-[11px] font-semibold leading-tight text-ink-muted" x-text="hover !== null && rows[hover] ? rows[hover].label + ' · ' + pct(rows[hover]) + '%' : @js($totalLabel)">{{ $totalLabel }}</p>
+                <p class="mt-1.5 text-xs font-semibold leading-tight text-ink-muted" x-text="hover !== null && rows[hover] ? rows[hover].label + ' · ' + pct(rows[hover]) + '%' : @js($totalLabel)">{{ $totalLabel }}</p>
             </div>
         </div>
     </div>
@@ -26,9 +26,9 @@
                 @mouseenter="hover = i"
             >
                 <span class="w-3 h-3 rounded-[4px] shrink-0" :style="'background:' + row.color"></span>
-                <span class="flex-1 min-w-0 truncate text-[13px] font-semibold text-ink-body" x-text="row.label"></span>
+                <span class="flex-1 min-w-0 break-words leading-snug text-[13px] font-semibold text-ink-body" x-text="row.label"></span>
                 <span class="text-[13.5px] font-extrabold text-ink tabular-nums" x-text="row.value.toLocaleString()"></span>
-                <span class="w-10 text-right text-[11.5px] font-semibold text-ink-faint tabular-nums" x-text="pct(row) + '%'"></span>
+                <span class="w-10 text-right text-xs font-semibold text-ink-muted tabular-nums" x-text="pct(row) + '%'"></span>
             </div>
         </template>
         <p x-show="!rows.length" class="text-sm text-ink-muted text-center py-2">{{ $empty }}</p>

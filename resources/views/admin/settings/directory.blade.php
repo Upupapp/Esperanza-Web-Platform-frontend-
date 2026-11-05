@@ -20,11 +20,11 @@
                     <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays
                 </button>
             </div>
-            <x-ui.button x-show="view === 'offices' && may('comm_directory', 'create')" icon="plus" size="sm" class="shrink-0" @click="openAddOffice()">Add Office</x-ui.button>
+            <x-ui.button x-show="view === 'offices' && may('comm_directory', 'create')" icon="plus" size="sm" class="shrink-0" @click="openAddOffice()">Add office</x-ui.button>
         </div>
         <div class="flex flex-wrap items-center justify-between gap-2">
             <p class="text-[11px] text-ink-muted" x-show="!loading && !failed" x-text="countLine"></p>
-            <p class="text-[11px] text-ink-muted flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i>Residents see this in Direktoryo, on the website and in the app.</p>
+            <p class="text-[11px] text-ink-muted flex flex-wrap items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i>Residents see this in Direktoryo, on the website and in the app.<a href="{{ route('admin.departments') }}" x-show="$store.session.canPerm('um_personnel', 'view')" class="font-semibold text-brand-600 hover:underline">The offices staff and services belong to are in Departments &rarr;</a></p>
         </div>
     </div>
 
@@ -98,8 +98,8 @@
     <div x-data="{ get open() { return officeOpen; }, set open(v) { officeOpen = v; } }">
         <x-ui.modal :bare="true" maxWidth="md">
             <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
-                <h3 class="text-sm font-semibold text-ink" x-text="officeMode === 'add' ? 'Add Office' : 'Edit Office'"></h3>
-                <button type="button" aria-label="Close" @click="officeOpen = false" class="text-ink-muted hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <h3 class="text-base font-extrabold text-ink" x-text="officeMode === 'add' ? 'Add office' : 'Edit office'"></h3>
+                <button type="button" aria-label="Close" @click="officeOpen = false" class="w-9 h-9 -mr-1.5 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="px-6 py-5 space-y-4">
                 <x-ui.input name="office_name" label="Office" x-model="officeForm.office" />
@@ -120,7 +120,7 @@
         <x-ui.modal title="Remove Office" maxWidth="sm">
             <p class="text-sm text-ink-body">Remove <span class="font-semibold" x-text="removing?.office"></span> from the directory? Residents will no longer see it in Direktoryo.</p>
             <x-slot:footer>
-                <x-ui.button variant="secondary" size="sm" @click="removing = null">Keep It</x-ui.button>
+                <x-ui.button variant="secondary" size="sm" @click="removing = null">Keep it</x-ui.button>
                 <x-ui.button variant="danger" size="sm" icon="trash-2" x-bind:disabled="processing" @click="confirmRemove()">Remove</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
@@ -151,7 +151,7 @@
             </template>
             <x-slot:footer>
                 <x-ui.button variant="secondary" size="sm" @click="barangayOpen = false">Cancel</x-ui.button>
-                <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="saveBarangay()">Save Changes</x-ui.button>
+                <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="saveBarangay()">Save changes</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     </div>

@@ -75,12 +75,12 @@
                     </span>
                     <div class="min-w-0 flex-1">
                         <p class="text-xs font-semibold text-ink truncate" x-text="mod.name"></p>
-                        <p class="text-[10.5px] text-ink-muted"><span x-text="moduleChecked(mod)"></span>/<span x-text="moduleTotal(mod)"></span> permissions</p>
+                        <p class="text-xs text-ink-muted"><span x-text="moduleChecked(mod)"></span>/<span x-text="moduleTotal(mod)"></span> permissions</p>
                     </div>
                     <span
                         x-show="!({{ $locked }})"
                         @click.stop="toggleAllModule(mod)"
-                        class="text-[10.5px] font-medium text-brand-600 hover:underline shrink-0 px-1.5"
+                        class="text-xs font-medium text-brand-600 hover:underline shrink-0 px-1.5"
                         x-text="moduleChecked(mod) === moduleTotal(mod) ? 'Clear all' : 'Select all'"
                      tabindex="0" role="button" @keydown.enter.prevent="toggleAllModule(mod)" @keydown.space.prevent="toggleAllModule(mod)"></span>
                 </button>
@@ -106,7 +106,7 @@
                                     >
                                     <span class="text-[11.5px] font-medium text-slate-700" x-text="sub.name"></span>
                                 </label>
-                                <span class="text-[10px] text-ink-muted shrink-0" x-text="subCount(sub.key) + '/' + sub.perms.length"></span>
+                                <span class="text-[11px] text-ink-muted shrink-0" x-text="subCount(sub.key) + '/' + sub.perms.length"></span>
                             </div>
                             <div class="flex flex-wrap gap-1.5 pl-6">
                                 <template x-for="perm in sub.perms" :key="perm">
@@ -114,7 +114,7 @@
                                         type="button"
                                         @click="togglePerm(sub.key, perm)"
                                         :disabled="{{ $locked }}"
-                                        class="px-2.5 py-1 rounded-xl text-[10px] font-medium border transition-colors"
+                                        class="px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors"
                                         :class="[
                                             hasPerm(sub.key, perm) ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-200 text-ink-muted',
                                             ({{ $locked }}) ? 'cursor-not-allowed opacity-70' : 'hover:border-slate-300'

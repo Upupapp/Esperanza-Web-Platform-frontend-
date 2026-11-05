@@ -43,47 +43,48 @@
 <div class="sk-pagebar">
     <div class="sk-stats" x-show="!resourcesFailed" :class="resourcesLoading ? 'animate-pulse opacity-60' : ''">
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Resource types</span>
-            <span class="sk-sval tabular-nums" x-text="resourcesList.length"></span>
+            <span class="sk-slab">Resource types</span>
+            <span class="sk-sval tabular-nums" x-text="fig(resourcesList.length, resourcesLoading || resourcesFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-amber"></span>Total units</span>
-            <span class="sk-sval tabular-nums" x-text="resourcesList.reduce((s,r) => s + r.quantity, 0)"></span>
+            <span class="sk-slab"><span class="sk-dot sk-t-amber" x-show="resourcesList.some(r => r.quantity > 0 && r.available === 0)"></span>None left to deploy</span>
+            <span class="sk-sval tabular-nums" x-text="fig(resourcesList.filter(r => r.quantity > 0 && r.available === 0).length, resourcesLoading || resourcesFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Deployed</span>
-            <span class="sk-sval tabular-nums" x-text="resourcesList.reduce((s,r) => s + r.deployed, 0)"></span>
+            <span class="sk-slab">Units deployed</span>
+            <span class="sk-sval tabular-nums" x-text="fig(resourcesList.reduce((s,r) => s + r.deployed, 0), resourcesLoading || resourcesFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-teal"></span>Available</span>
-            <span class="sk-sval tabular-nums" x-text="resourcesList.reduce((s,r) => s + r.available, 0)"></span>
+            <span class="sk-slab">Units available</span>
+            <span class="sk-sval tabular-nums" x-text="fig(resourcesList.reduce((s,r) => s + r.available, 0), resourcesLoading || resourcesFailed)"></span>
         </div>
     </div>
     <div class="sk-actions">
-        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About response assets and resources: track inventory and deploy MDRRMO response resources to active incidents" title="Response assets and resources: track inventory and deploy MDRRMO response resources to active incidents.">
+        <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About response assets and resources" title="Response assets and resources: track inventory and deploy MDRRMO response resources to active incidents.">
             <i data-lucide="info"></i>
         </button>
         <div class="sk-btngrp" role="group" aria-label="Export">
-            <button type="button" class="sk-btn" @click="exportCSV(filteredResources, 'resources-export.csv')">
+            <button type="button" class="sk-btn disabled:opacity-50" :disabled="resourcesLoading || resourcesFailed" @click="exportCSV(filteredResources, 'resources-export.csv')">
                 <i data-lucide="download"></i> Export CSV
             </button>
-            <button type="button" class="sk-btn" @click="exportPDF(filteredResources, 'resources-export.csv')">
-                Export PDF
+            <button type="button" class="sk-btn disabled:opacity-50" :disabled="resourcesLoading || resourcesFailed" @click="exportPDF(filteredResources, 'resources-export.csv')">
+                <i data-lucide="file-text"></i> Export PDF
             </button>
         </div>
-        <button type="button" x-show="can('sakuna_resources', 'create')" @click="openCreateResource()" class="sk-btn sk-btn-p">
-            <i data-lucide="plus"></i> Add Resource
+        <button type="button" x-show="can('sakuna_resources', 'create')" @click="openCreateResource()" :disabled="resourcesLoading || resourcesFailed || onLastCopy" :title="resourcesFailed || onLastCopy ? 'Waits for the connection' : ''" class="sk-btn sk-btn-p disabled:opacity-50">
+            <i data-lucide="plus"></i> Add resource
         </button>
     </div>
 </div>
 
 <div x-show="resourcesLoading" class="sk-card h-72 animate-pulse"></div>
-<div x-show="resourcesFailed" x-cloak><x-ui.error-state messageExpr="'Could not load resources.'" retryExpr="loadResources()" :retryable="true" /></div>
+<div x-show="resourcesFailed" x-cloak><x-ui.error-state tone="neutral" icon="cloud-off" title="Not loaded" messageExpr="'Could not load resources. ' + offlineWhy" retryExpr="loadResources()" :retryable="true" /></div>
 
 <div x-show="!resourcesLoading && !resourcesFailed" x-cloak class="space-y-3">
 
 <section class="sk-card overflow-hidden">
     {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <h2 class="sr-only">Resources</h2>
     <div class="sk-toolbar">
         <div class="sk-search" style="max-width: 340px;">
             <label for="resource-search" class="sr-only">Search by name, ref or category</label>
@@ -101,57 +102,52 @@
 
     {{-- ── Resources Table ──────────────────────────────────────────────────────────────── --}}
     <div class="sk-scroll" tabindex="0" role="region" aria-label="Resources table (scrolls sideways)">
-        <table class="sk-tbl min-w-[900px]">
+        <table class="sk-tbl sk-tbl-act">
             <thead>
                 <tr>
-                    <th>Ref</th>
-                    <th>Resource name</th>
-                    <th>Category</th>
-                    <th>Barangay</th>
-                    <th class="sk-r">Quantity</th>
-                    <th class="sk-r">Deployed</th>
-                    <th class="sk-r">Available</th>
+                    <th>Resource</th>
+                    <th>Category · barangay</th>
+                    <th>Available</th>
                     <th>Readiness</th>
-                    <th class="sk-r">Actions</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <template x-for="r in filteredResources" :key="r.ref">
                     <tr class="cursor-pointer group" @click="openResourceDetail(r)" tabindex="0" @keydown.enter.prevent="openResourceDetail(r)">
-                        <td class="whitespace-nowrap"><span class="sk-mono" x-text="r.ref"></span></td>
-                        <td class="whitespace-nowrap"><span class="sk-b group-hover:text-[#1D4ED8] transition-colors" x-text="r.name"></span></td>
-                        <td class="whitespace-nowrap"><span class="sk-tag" x-text="r.category"></span></td>
-                        <td class="whitespace-nowrap" :class="r.barangay ? '' : 'sk-muted'" x-text="r.barangay || '—'"></td>
-                        <td class="sk-r whitespace-nowrap tabular-nums" x-text="r.quantity + (r.unit ? ' ' + r.unit : '')"></td>
-                        <td class="sk-r whitespace-nowrap tabular-nums" :class="r.deployed > 0 ? 'text-orange-700 font-medium' : 'sk-muted'" x-text="r.deployed"></td>
-                        <td class="sk-r whitespace-nowrap tabular-nums" :class="r.available > 0 ? 'text-emerald-700 font-medium' : 'sk-muted'" x-text="r.available"></td>
+                        <td><div class="sk-b group-hover:text-[#1D4ED8] transition-colors" x-text="r.name"></div><div class="sk-mono" x-text="r.ref"></div></td>
+                        <td><span class="sk-tag" x-text="r.category"></span><div class="sk-sub" x-text="r.barangay || 'Municipal stock'"></div></td>
+                        <td class="whitespace-nowrap" :aria-label="r.available + ' of ' + r.quantity + ' available, ' + r.deployed + ' deployed'">
+                            <div class="tabular-nums"><span class="font-semibold text-ink" x-text="r.available"></span> <span class="sk-muted" x-text="'of ' + r.quantity + (r.unit ? ' ' + r.unit : '')"></span></div>
+                            <div class="w-24 h-[5px] rounded-full bg-[#E9EEF6] overflow-hidden mt-1" aria-hidden="true"><div class="h-full rounded-full bg-emerald-600" :style="'width:' + (r.quantity ? Math.round(r.available / r.quantity * 100) : 0) + '%'"></div></div>
+                            <div class="sk-sub" x-show="r.deployed > 0" x-text="r.deployed + ' deployed'"></div>
+                        </td>
                         <td class="whitespace-nowrap">
                             <span x-show="r.readiness" class="sk-pill sk-p-blue" x-text="r.readiness"></span>
                             <span x-show="!r.readiness" class="sk-muted">—</span>
                         </td>
-                        <td class="sk-r whitespace-nowrap" @click.stop>
-                            <button type="button" @click="openResourceDetail(r)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'View ' + r.ref" title="View Details">
-                                <i data-lucide="eye"></i>
-                            </button>
-                            <button type="button" x-show="can('sakuna_resources','edit')" @click="openEditResource(r)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Edit ' + r.ref" title="Edit">
-                                <i data-lucide="pencil"></i>
-                            </button>
-                            <button type="button" x-show="r.available > 0" @click="openDeploy(r)" class="sk-iconbtn sk-iconbtn-bare hover:!text-emerald-700" :aria-label="'Deploy or return ' + r.ref" title="Deploy / Return">
-                                <i data-lucide="send"></i>
-                            </button>
-                            <button type="button" x-show="r.available === 0 && r.deployed === 0" disabled title="Nothing to deploy" aria-label="Nothing to deploy"
-                                class="sk-iconbtn sk-iconbtn-bare opacity-40 cursor-not-allowed">
-                                <i data-lucide="send"></i>
-                            </button>
+                        <td class="whitespace-nowrap" @click.stop>
+                            <div class="inline-flex items-center gap-1">
+                                <button type="button" x-show="r.available > 0 || r.deployed > 0" @click="openDeploy(r)" class="sk-btn sk-btn-sm" :aria-label="(r.available > 0 ? 'Deploy or return ' : 'Record units coming back for ') + r.ref" :title="r.available > 0 ? 'Send units out, or record units coming back' : 'Every unit is out: record units coming back'">
+                                    <span x-show="r.available > 0" class="inline-flex"><i data-lucide="send"></i></span><span x-show="!(r.available > 0)" class="inline-flex"><i data-lucide="undo-2"></i></span>
+                                    <span x-text="r.available > 0 ? 'Deploy' : 'Return'"></span>
+                                </button>
+                                <button type="button" @click="openResourceDetail(r)" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'View ' + r.ref">
+                                    <i data-lucide="eye"></i> View
+                                </button>
+                                <button type="button" x-show="can('sakuna_resources','edit')" @click="openEditResource(r)" class="sk-btn sk-btn-sm" :aria-label="'Edit ' + r.ref">
+                                    <i data-lucide="pencil"></i> Edit
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="filteredResources.length === 0">
-                    <td colspan="9">
+                    <td colspan="5">
                         <div class="sk-empty" style="padding: 36px 16px;">
                             <i data-lucide="package"></i>
                             <span>No resources match your filters.</span>
-                            <button type="button" @click="resourceSearch = ''; resourceCategoryFilter = ''" class="sk-clear">Clear Filters</button>
+                            <button type="button" @click="resourceSearch = ''; resourceCategoryFilter = ''" class="sk-clear">Clear filters</button>
                         </div>
                     </td>
                 </tr>
@@ -182,13 +178,13 @@
                     <p class="text-xs text-ink-muted" x-text="selectedResource?.name ?? '—'"></p>
                 </div>
             </div>
-            <button aria-label="Close" @click="showDeployModal = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showDeployModal = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">
             <div class="flex items-center justify-between text-xs bg-slate-50 rounded-xl p-3">
-                <span class="text-ink-muted">Available: <strong class="text-emerald-600" x-text="selectedResource?.available"></strong></span>
-                <span class="text-ink-muted">Deployed: <strong class="text-orange-600" x-text="selectedResource?.deployed"></strong></span>
+                <span class="text-ink-muted">Available: <strong class="text-emerald-700" x-text="selectedResource?.available"></strong></span>
+                <span class="text-ink-muted">Deployed: <strong class="text-orange-700" x-text="selectedResource?.deployed"></strong></span>
             </div>
 
             <div>
@@ -208,7 +204,7 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
             <button :disabled="deploySaving || !deployForm.quantity || Number(deployForm.quantity) > (selectedResource?.deployed ?? 0)" @click="submitDeploy('return')"
                 class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-white/60 transition-colors disabled:opacity-40">
                 <i data-lucide="undo-2" class="w-4 h-4 inline mr-1.5"></i> Return
@@ -224,14 +220,14 @@
 {{-- ── Resource Detail Modal ───────────────────────────────────────────────────────────── --}}
 <div x-show="showResourceDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
     @click.self="showResourceDetail = false"
         x-trap="showResourceDetail"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showResourceDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl my-auto">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">
@@ -245,13 +241,13 @@
                     </div>
                 </div>
             </div>
-            <button aria-label="Close" @click="showResourceDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showResourceDetail = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Barangay</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedResource?.barangay || '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Readiness</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedResource?.readiness || '—'"></p></div>
@@ -261,11 +257,11 @@
             </div>
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="boxes" class="w-3.5 h-3.5"></i> Inventory</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="boxes" class="w-3.5 h-3.5"></i> Inventory</h4>
                 <div class="bg-slate-50 rounded-xl p-4">
                     <div class="flex items-center justify-between mb-2 text-xs text-ink-muted">
-                        <span>Deployed: <strong class="text-orange-600" x-text="selectedResource?.deployed"></strong></span>
-                        <span>Available: <strong class="text-emerald-600" x-text="selectedResource?.available"></strong></span>
+                        <span>Deployed: <strong class="text-orange-700" x-text="selectedResource?.deployed"></strong></span>
+                        <span>Available: <strong class="text-emerald-700" x-text="selectedResource?.available"></strong></span>
                     </div>
                     <div class="h-2.5 bg-emerald-200 rounded-full overflow-hidden">
                         <div class="h-full bg-orange-400" :style="'width: ' + (selectedResource?.quantity ? (selectedResource.deployed / selectedResource.quantity * 100) : 0) + '%'"></div>
@@ -274,7 +270,7 @@
             </div>
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5"></i> Deployment History</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5"></i> Deployment History</h4>
                 <div class="space-y-0">
                     <template x-for="(mv, idx) in (selectedResource?.movements || [])" :key="idx">
                         <div class="flex items-start gap-3 py-2.5" :class="idx < (selectedResource.movements.length - 1) ? 'border-b border-slate-50' : ''">
@@ -285,7 +281,7 @@
                                 <p class="text-xs font-medium text-slate-700 capitalize" x-text="mv.verb + ' — ' + mv.quantity + (selectedResource?.unit ? ' ' + selectedResource.unit : ' unit(s)')"></p>
                                 <p class="text-xs text-ink-muted" x-text="[mv.incident_ref ? mv.incident_ref + ' (' + mv.incident_title + ')' : null, mv.actor_name].filter(Boolean).join(' · ')"></p>
                             </div>
-                            <span class="text-[11px] text-ink-muted whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
+                            <span class="text-xs text-ink-muted whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
                         </div>
                     </template>
                     <p x-show="!(selectedResource?.movements || []).length" class="text-xs text-ink-muted py-2">No deployments or returns recorded yet.</p>
@@ -295,12 +291,12 @@
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex flex-wrap gap-2 items-center">
             <button x-show="can('sakuna_resources','edit')" @click="showResourceDetail = false; openEditResource(selectedResource)"
-                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors">
+                class="sk-btn">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Edit
             </button>
             <button x-show="selectedResource?.available > 0 || selectedResource?.deployed > 0" @click="showResourceDetail = false; openDeploy(selectedResource)"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 transition-colors ml-auto">
-                <i data-lucide="send" class="w-4 h-4"></i> Deploy / Return
+                <i data-lucide="send" class="w-4 h-4"></i> Deploy / return
             </button>
         </div>
     </div>
@@ -319,8 +315,8 @@
         class="bg-white rounded-[28px] shadow-float w-full max-w-xl">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
-            <h3 class="font-semibold text-ink-body" x-text="resourceFormMode === 'create' ? 'Add Resource to Inventory' : 'Edit Resource'"></h3>
-            <button aria-label="Close" @click="showCreateResource = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 class="font-semibold text-ink-body" x-text="resourceFormMode === 'create' ? 'Add resource to inventory' : 'Edit resource'"></h3>
+            <button aria-label="Close window" @click="showCreateResource = false" class="sk-mclose"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-2 gap-4">
@@ -363,14 +359,14 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex justify-end gap-2">
             <button @click="showCreateResource = false"
-                class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">
+                class="sk-btn">
                 Cancel
             </button>
             <button :disabled="resourceSaving || !resourceForm.name || !resourceForm.category || resourceForm.quantity === ''" @click="saveResource()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
-                <span x-text="resourceSaving ? 'Saving…' : (resourceFormMode === 'create' ? 'Add Resource' : 'Save Changes')"></span>
+                class="sk-btn sk-btn-p">
+                <span x-text="resourceSaving ? 'Saving…' : (resourceFormMode === 'create' ? 'Add resource' : 'Save changes')"></span>
             </button>
         </div>
     </div>

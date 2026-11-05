@@ -11,7 +11,7 @@
 <body class="h-full font-sans antialiased {{ $fullscreen ? 'overflow-hidden' : '' }}">
     {{-- First on the page: a keyboard or screen-reader user jumps past the navigation (WCAG 2.4.1, 2026-10-17). --}}
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[200] focus:rounded-xl focus:bg-white focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-brand-700 focus:shadow-lg focus:outline-none focus:ring-4 focus:ring-brand-200"><span x-text="$store.lang.current === 'en' ? 'Skip to content' : 'Lumaktaw sa nilalaman'">Lumaktaw sa nilalaman</span></a>
-    <div class="{{ $fullscreen ? 'h-screen overflow-hidden' : 'min-h-screen' }} flex" x-data="{ time: '' }" x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000)">
+    <div class="{{ $fullscreen ? 'h-screen overflow-hidden' : 'min-h-screen' }} flex" x-data="{ time: '' }" x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000)">
         <div class="hidden lg:flex lg:w-[46%] relative overflow-hidden shrink-0">
             <img
                 src="{{ asset('images/esperanza/' . $image) }}"
@@ -52,7 +52,8 @@
         </div>
 
         {{-- Clay design (STYLE_GUIDE §2): the washed canvas, the form on a glass card. --}}
-        <div class="relative flex-1 flex items-center justify-center p-5 sm:p-8 canvas-washed {{ $fullscreen ? 'h-full overflow-hidden' : '' }}">
+        {{-- With the language switch, the top padding clears it (top-4/6 + its 44px height) so the card never slides under it. --}}
+        <div class="relative flex-1 flex items-center justify-center p-5 sm:p-8 {{ $langSwitch ? 'pt-20 sm:pt-24' : '' }} canvas-washed {{ $fullscreen ? 'h-full overflow-hidden' : '' }}">
 
             @if ($langSwitch)
                 {{-- Choose the language before signing in (live test 2026-10-07,

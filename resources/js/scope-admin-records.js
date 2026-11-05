@@ -308,7 +308,7 @@ function adminBalita(barangays = []) {
         count(status) { return this.posts.filter((a) => a.status === status).length; },
         // Needs your attention: posts this officer can decide, and their own sent back.
         get waitingForMe() { return this.posts.filter((a) => a.status === 'Pending Review' && this.canMove(a, 'Approved')).length; },
-        get sentBackToMe() { return this.posts.filter((a) => a.status === 'Rejected' && (a.mine || this.approver)).length; },
+        get sentBackToMe() { return this.posts.filter((a) => a.status === 'Rejected' && this.mayChange(a)).length; },
         // The post's line under its writer: when it went out, or when it will.
         postWhen(post) {
             if (post.published_at) return when(post.published_at).split(',').slice(0, 2).join(',');
@@ -371,14 +371,18 @@ function adminBalita(barangays = []) {
         // changes only their own posts, as the server checks (2026-10-19).
         can(action) { return this.$store.session.canPerm('comm_news', action); },
         get approver() { return this.can('approve'); },
+        // The server's can_change (owner, 2026-11-05) is false where this
+        // officer may not touch the post, e.g. an MDRRMO Head looking at
+        // another office's post. Absent (an older server), nothing changes.
+        mayChange(post) { return post.can_change !== false && (this.approver || !!post.mine); },
         canMove(post, to) {
             const action = post.available_transitions?.[to];
-            return !!action && this.can(action) && (this.approver || !!post.mine);
+            return !!action && this.can(action) && this.mayChange(post);
         },
-        canEdit(post) { return ['Draft', 'Pending Review', 'Rejected'].includes(post.status) && this.can('edit') && (this.approver || !!post.mine); },
+        canEdit(post) { return ['Draft', 'Pending Review', 'Rejected'].includes(post.status) && this.can('edit') && this.mayChange(post); },
         // For good, once it is a draft, sent back or archived (2026-10-21):
         // anything residents can see is archived first.
-        canDelete(post) { return ['Draft', 'Rejected', 'Archived'].includes(post.status) && this.can('delete') && (this.approver || !!post.mine); },
+        canDelete(post) { return ['Draft', 'Rejected', 'Archived'].includes(post.status) && this.can('delete') && this.mayChange(post); },
         // A barangay officer writes for their own barangay only.
         get ownBarangay() {
             const account = this.$store.session.account;
@@ -456,7 +460,7 @@ function adminBalita(barangays = []) {
         // review (a writer), or schedule (an approver with a time).
         get primaryLabel() {
             if (this.form.schedule) return this.approver ? 'Schedule Post' : 'Send for review';
-            return this.approver ? 'Publish Now' : 'Send for review';
+            return this.approver ? 'Publish now' : 'Send for review';
         },
         // The post as residents will see it in Balita.
         get previewWhen() {
@@ -524,6 +528,7 @@ function adminBalita(barangays = []) {
                             : status === 'Approved' ? 'Scheduled for ' + when(this.scheduleIso) + '. It goes out by itself then.'
                                 : 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.'
                                     : this.$store.session.account?.roleKey === 'mio_staff' ? 'Your MIO Head is notified to review it.'
+                                        : this.$store.session.account?.roleKey === 'mdrrmo_staff' ? 'Your MDRRMO Head approves it.'
                                         : 'Your Department Head or the Municipal Information Office approves it.'),
                 );
                 await this.load();
@@ -654,7 +659,7 @@ function adminBalita(barangays = []) {
             }
         },
         openComments(post) {
-            window.dispatchEvent(new CustomEvent('balita-comments', { detail: { kind: 'announcements', id: post.id, title: post.title, moderate: this.approver } }));
+            window.dispatchEvent(new CustomEvent('balita-comments', { detail: { kind: 'announcements', id: post.id, title: post.title, moderate: this.approver && this.mayChange(post) } }));
         },
         cover(post) { return (post.media || [])[0] || null; },
         when,
@@ -683,7 +688,7 @@ function adminBalita(barangays = []) {
             return null;
         },
         // Post now, or again after a failure (POST /admin/announcements/{id}/facebook).
-        fbMayPost(post) { return this.approver && post.status === 'Released' && this.fbConnected() && this.fb?.status !== 'token_problem'; },
+        fbMayPost(post) { return this.approver && post.can_change !== false && post.status === 'Released' && this.fbConnected() && this.fb?.status !== 'token_problem'; },
         async fbPost(post) {
             if (this.fbBusy) return;
             this.fbBusy = post.id;

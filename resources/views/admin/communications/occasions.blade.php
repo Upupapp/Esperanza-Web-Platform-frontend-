@@ -483,7 +483,7 @@
                 <span x-show="!image.busy && touched" x-cloak class="inline-flex items-center gap-1.5"><i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>Unsaved changes</span>
             </p>
             <span class="sm:hidden mr-auto"></span>
-            <x-ui.button variant="secondary" size="sm" loading="processing" x-bind:title="image.busy ? 'Wait for the picture to finish uploading' : ''" @click="save('draft')"><span x-text="editing ? 'Save changes' : 'Save Draft'">Save Draft</span></x-ui.button>
+            <x-ui.button variant="secondary" size="sm" loading="processing" x-bind:title="image.busy ? 'Wait for the picture to finish uploading' : ''" @click="save('draft')"><span x-text="editing ? 'Save changes' : 'Save draft'">Save draft</span></x-ui.button>
             <x-ui.button size="sm" icon="arrow-right" iconPosition="right" class="max-sm:w-full" x-show="step < 5" x-bind:disabled="processing" @click="next()"><span x-text="stepInfo.next">Next: Schedule</span></x-ui.button>
             <x-ui.button size="sm" icon="circle-play" loading="processing" class="max-sm:w-full" x-show="step === 5 && (!editing || editing.state === 'draft')" x-cloak @click="save('activate')"><span x-text="can('approve') ? 'Save and activate' : 'Save and send for review'">Save and activate</span></x-ui.button>
         </div>

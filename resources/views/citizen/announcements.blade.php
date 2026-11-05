@@ -23,7 +23,7 @@
                         <template x-for="[key, en, fil, icon] in tabs" :key="key">
                             <button type="button" role="tab" :aria-selected="tab === key" @click="tab = key"
                                 x-show="key !== 'barangay' || $store.citizenSession.account?.barangay"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11.5px] font-medium rounded-xl transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
+                                class="tap inline-flex items-center gap-1.5 px-3 py-1.5 text-[11.5px] font-medium rounded-xl transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
                                 :class="tab === key ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-ink'">
                                 <i :data-lucide="icon" class="w-3.5 h-3.5"></i><span x-text="t(en, fil)"></span>
                             </button>
@@ -95,15 +95,15 @@
                             {{-- Like, comment, share --}}
                             <div class="grid grid-cols-3 gap-1 px-2.5 py-1.5 mt-1.5 border-t border-brand-600/10">
                                 <button type="button" @click="toggleLike(post)" :aria-pressed="post.liked_by_me" :disabled="post.liking"
-                                    class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
+                                    class="tap flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
                                     :class="post.liked_by_me ? 'text-rose-600' : 'text-ink-muted'">
                                     <i data-lucide="heart" class="w-4 h-4 transition-transform" :class="post.liked_by_me && 'scale-110'" :style="post.liked_by_me ? 'fill: currentColor' : ''"></i>
                                     <span x-text="t('Like', 'I-like')"></span>
                                 </button>
-                                <button type="button" @click="toggleComments(post)" :aria-expanded="post.showComments" class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors text-ink-muted focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
+                                <button type="button" @click="toggleComments(post)" :aria-expanded="post.showComments" class="tap flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors text-ink-muted focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
                                     <i data-lucide="message-circle" class="w-4 h-4"></i><span x-text="t('Comment', 'Komento')"></span>
                                 </button>
-                                <button type="button" @click="share(post)" class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors text-ink-muted focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
+                                <button type="button" @click="share(post)" class="tap flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors text-ink-muted focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
                                     <i data-lucide="share-2" class="w-4 h-4"></i><span x-text="t('Share', 'Ibahagi')"></span>
                                 </button>
                             </div>
@@ -159,22 +159,7 @@
 
             {{-- Sidebar --}}
             <aside class="hidden lg:block sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin space-y-4 pr-1" :aria-label="t('More from Balita', 'Iba pa sa Balita')">
-                <x-ui.card padded="false" class="p-3.5">
-                    <h2 class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-ink-muted"></i><x-ui.t fil="Kamakailang Post" en="Recent Posts" /></h2>
-                    <div class="space-y-2.5">
-                        <template x-for="rp in recentPosts" :key="'recent-' + rp.key">
-                            <button type="button" @click="tab = 'all'; category = ''; focusKey = rp.key; $nextTick(() => document.getElementById('post-' + rp.key)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))" class="w-full flex items-start gap-2 text-left rounded-xl hover:bg-white/60 p-1 -m-1">
-                                <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-7 h-7 rounded-full object-cover shrink-0">
-                                <span class="min-w-0">
-                                    <span class="block text-xs font-medium text-ink truncate" x-text="rp.author"></span>
-                                    <span class="block text-[11px] text-ink-muted leading-snug" x-text="rp.title || (rp.body.length > 62 ? rp.body.slice(0, 62) + '…' : (rp.body || (rp.media.length ? t('Photos and videos', 'Mga larawan at video') : '')))"></span>
-                                </span>
-                            </button>
-                        </template>
-                    </div>
-                </x-ui.card>
-
-                <x-ui.card padded="false" class="p-3.5" x-show="trendingPosts.length">
+                <x-ui.card :padded="false" class="p-3.5" x-show="trendingPosts.length">
                     <h2 class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5"><i data-lucide="flame" class="w-3.5 h-3.5 text-orange-500"></i><x-ui.t fil="Trending sa Balita" en="Trending in Balita" /></h2>
                     <div class="space-y-2.5">
                         <template x-for="tp in trendingPosts" :key="'trending-' + tp.key">
@@ -190,7 +175,7 @@
                     </div>
                 </x-ui.card>
 
-                <x-ui.card padded="false" class="p-3.5">
+                <x-ui.card :padded="false" class="p-3.5">
                     <h2 class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5"><i data-lucide="calendar-days" class="w-3.5 h-3.5 text-ink-muted"></i><x-ui.t fil="Paparating na Kaganapan" en="Upcoming Events" /></h2>
                     <div class="space-y-2.5">
                         <template x-for="ev in events" :key="ev.key">

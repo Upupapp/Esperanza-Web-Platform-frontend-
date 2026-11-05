@@ -72,7 +72,7 @@
         // calls answers 401 for a visitor - and a Sign In link instead.
         guest: {{ $public ? '!window.EsperanzaApi.getToken()' : 'false' }},
     }"
-    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll() }"
+    x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll() }"
 >
     <div class="flex-1 basis-44 flex items-center gap-3 min-w-0">
         <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body shrink-0">
@@ -152,7 +152,7 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-80 surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
+                class="absolute right-0 mt-2 w-80 max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:right-3 max-sm:mt-0 max-sm:w-auto surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
             >
                 <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
                     <p class="text-sm font-bold text-ink"><x-ui.t fil="Aking mga ID" en="My IDs" /></p>
@@ -219,7 +219,7 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-[22rem] surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
+                class="absolute right-0 mt-2 w-[22rem] max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:right-3 max-sm:mt-0 max-sm:w-auto surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
             >
                 <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
                     <p class="text-sm font-bold text-ink" x-text="$store.lang.current === 'en' ? 'Notifications' : 'Mga Abiso'"></p>

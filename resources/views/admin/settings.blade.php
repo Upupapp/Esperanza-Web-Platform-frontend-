@@ -12,7 +12,7 @@
         // (owner, 2026-10-21: they were Balita's Offices and Barangays tabs).
         'directory' => ['book-user', 'Direktoryo', '/admin/settings/directory'],
         'notifications' => ['bell', 'Notifications', null],
-        'security' => ['shield', 'Security', null],
+        'security' => ['shield', 'Security rules', null],
         'branding' => ['palette', 'Branding', '/admin/settings/branding'],
         'templates' => ['file-badge', 'Document Templates', '/admin/settings/templates'],
         'site-content' => ['file-text', 'Site Content', '/admin/settings/site-content'],
@@ -87,11 +87,10 @@
         </div>
 
         <div x-show="$store.session.canSettings() || directoryAllowed || facebookAllowed" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-
-        {{-- A strip that scrolls sideways below the desktop width, a list beside the content from it. --}}
+        {{-- Below the desktop width the sections wrap onto rows (NAV-4: tabs wrap, never hide off screen); a list beside the content from it, where a long name wraps inside the narrow column. --}}
         <div class="lg:col-span-1 min-w-0">
             <x-ui.card :padded="false" class="p-2">
-                <nav aria-label="Settings sections" class="flex lg:flex-col gap-0.5 overflow-x-auto lg:overflow-visible scrollbar-thin" x-init="$nextTick(() => $el.querySelector('[aria-current=page]')?.scrollIntoView({ block: 'nearest', inline: 'center' }))">
+                <nav aria-label="Settings sections" class="flex flex-wrap lg:flex-col lg:flex-nowrap gap-0.5" x-init="$nextTick(() => $el.querySelector('[aria-current=page]')?.scrollIntoView({ block: 'nearest', inline: 'center' }))">
                     @foreach($settingsTabs as $tabKey => [$tabIcon, $tabLabel])
                         <button
                             type="button"
@@ -100,7 +99,7 @@
                             @elseif($tabKey === 'directory') x-show="directoryAllowed" x-cloak
                             @elseif($tabKey === 'integrations') x-show="$store.session.canSettings() || facebookAllowed" x-cloak
                             @else x-show="$store.session.canSettings()" x-cloak @endif
-                            class="shrink-0 lg:w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
+                            class="shrink-0 lg:w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors"
                             :class="tab === '{{ $tabKey }}' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-white/60'"
                             :aria-current="tab === '{{ $tabKey }}' ? 'page' : null"
                         >
@@ -182,7 +181,7 @@
                                 <option>Filipino</option>
                             </select>
                         </div>
-                        <x-ui.button icon="check" @click="save()" x-show="can('set_general','edit')">Save Changes</x-ui.button>
+                        <x-ui.button icon="check" @click="save()" x-show="can('set_general','edit')">Save changes</x-ui.button>
                     </div>
                 </x-ui.card>
             </div>
@@ -345,9 +344,9 @@
                                     <template x-for="t in themes" :key="t"><option :value="t" x-text="t"></option></template>
                                 </select>
                             </div>
-                            <x-ui.input name="municipality_name" label="Municipality Name" x-model="municipalityName" x-bind:disabled="!can('set_branding','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                            <x-ui.input name="municipality_name" label="Municipality Name" placeholder="Esperanza" hint="Shown in the sidebar and page titles as the name followed by LGU. Leave it empty to keep Esperanza." x-model="municipalityName" x-bind:disabled="!can('set_branding','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                             <p class="text-[11px] text-ink-muted" x-show="current?.version">Current version <span x-text="current?.version"></span><span x-show="current?.effective_date"> · effective <span x-text="current?.effective_date"></span></span></p>
-                            <x-ui.button icon="check" x-bind:disabled="saving" @click="save()" x-show="can('set_branding','edit')" x-text="saving ? 'Publishing…' : 'Publish New Version'"></x-ui.button>
+                            <x-ui.button icon="check" x-bind:disabled="saving" @click="save()" x-show="can('set_branding','edit')" x-text="saving ? 'Publishing…' : 'Publish new version'"></x-ui.button>
                         </div>
                     </x-ui.card>
 

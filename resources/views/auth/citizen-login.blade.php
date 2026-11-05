@@ -1,4 +1,12 @@
 <x-layouts.guest title="Citizen Login" image="esperanza-community.jpg" fullscreen>
+    {{-- Below lg the brand panel is hidden: a compact seal and name keep the card identifiable (design critique 2026-11-04). --}}
+    <div class="lg:hidden flex items-center gap-3 mb-5">
+        <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" class="w-10 h-10 rounded-full ring-2 ring-slate-200 object-cover" alt="Municipal Seal">
+        <div>
+            <p class="text-sm font-semibold text-ink leading-tight">Municipality of Esperanza</p>
+            <p class="text-xs text-ink-muted">Province of Masbate</p>
+        </div>
+    </div>
     <div
         x-data="{
             identifier: '',
@@ -83,7 +91,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                <span x-text="$store.lang.current === 'en' ? (loading ? 'Signing in…' : 'Sign In') : (loading ? 'Nagsa-sign in…' : 'Mag-sign In')"></span>
+                <span x-text="$store.lang.current === 'en' ? (loading ? 'Signing in…' : 'Sign in') : (loading ? 'Nagsa-sign in…' : 'Mag-sign in')"></span>
             </x-ui.button>
         </form>
 

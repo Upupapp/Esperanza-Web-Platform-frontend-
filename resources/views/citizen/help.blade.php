@@ -110,17 +110,17 @@
 
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit">
-                <button @click="tab = 'faqs'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'faqs' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="circle-question-mark" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tanong" en="FAQs" /></button>
-                <button x-show="hasTutorials" x-cloak @click="tab = 'tutorials'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'tutorials' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Gabay" en="Tutorials" /></button>
-                <button @click="tab = 'support'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'support' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
+                <button @click="tab = 'faqs'" class="tap px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'faqs' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="circle-question-mark" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tanong" en="FAQs" /></button>
+                <button x-show="hasTutorials" x-cloak @click="tab = 'tutorials'" class="tap px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'tutorials' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Gabay" en="Tutorials" /></button>
+                <button @click="tab = 'support'" class="tap px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'support' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                     <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i><x-ui.t fil="Suporta" en="Support" />
-                    <span class="text-[9px] font-semibold bg-white/25 rounded-full px-1.5 py-0.5" :class="tab === 'support' ? 'text-white' : 'bg-slate-100 text-ink-muted'" x-text="tickets.length"></span>
+                    <span class="text-[11px] font-semibold rounded-full px-1.5 py-0.5" :class="tab === 'support' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-ink-muted'" x-text="tickets.length"></span>
                 </button>
             </div>
         </div>
 
         <!-- FAQs -->
-        <div x-show="tab === 'faqs'" class="max-w-3xl">
+        <div x-show="tab === 'faqs'" class="max-w-3xl mx-auto">
             <div class="surface-glass rounded-[26px] p-3 mb-4">
                 <div class="flex flex-wrap items-center gap-2 mb-2.5">
                     <div class="relative flex-1 min-w-[180px]">
@@ -136,7 +136,7 @@
                     <template x-for="c in faqCategories" :key="c">
                         <button
                             @click="faqCategory = c"
-                            class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                            class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
                             :class="faqCategory === c ? 'clay-blue' : 'surface-pressed text-ink-muted hover:bg-slate-100'"
                             x-text="faqCategoryLabel(c)"
                         ></button>
@@ -175,12 +175,12 @@
                             <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50" x-data="helpFeedback('faqs', faq.q)">
                                 <span class="text-[11px] text-ink-muted"><x-ui.t fil="Nakatulong ba ito?" en="Was this helpful?" /></span>
                                 <button type="button" @click="send(true)" :disabled="sending" :aria-pressed="vote === true"
-                                    class="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-[11px] font-medium transition-colors disabled:opacity-60"
+                                    class="tap inline-flex items-center gap-1 rounded-xl px-2 py-1 text-[11px] font-medium transition-colors disabled:opacity-60"
                                     :class="vote === true ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 [&_svg]:fill-current' : 'text-ink-muted hover:bg-white/60 hover:text-ink'">
                                     <i data-lucide="thumbs-up" class="w-3.5 h-3.5"></i><x-ui.t fil="Oo" en="Yes" />
                                 </button>
                                 <button type="button" @click="send(false)" :disabled="sending" :aria-pressed="vote === false"
-                                    class="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-[11px] font-medium transition-colors disabled:opacity-60"
+                                    class="tap inline-flex items-center gap-1 rounded-xl px-2 py-1 text-[11px] font-medium transition-colors disabled:opacity-60"
                                     :class="vote === false ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200 [&_svg]:fill-current' : 'text-ink-muted hover:bg-white/60 hover:text-ink'">
                                     <i data-lucide="thumbs-down" class="w-3.5 h-3.5"></i><x-ui.t fil="Hindi" en="No" />
                                 </button>
@@ -215,7 +215,7 @@
                     <template x-for="c in tutorialCategories" :key="c">
                         <button
                             @click="tutorialCategory = c"
-                            class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                            class="tap px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
                             :class="tutorialCategory === c ? 'clay-blue' : 'surface-pressed text-ink-muted hover:bg-slate-100'"
                             x-text="faqCategoryLabel(c)"
                         ></button>
@@ -328,12 +328,12 @@
                             class="btn-shine inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-brand-500 to-brand-600 text-white px-5 py-2.5 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-50"
                         >
                             <span x-show="submitting" x-cloak><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i></span>
-                            <span x-text="$store.lang.current === 'en' ? (submitting ? 'Submitting…' : 'Submit Ticket') : (submitting ? 'Sinusumite…' : 'Isumite ang Ticket')"></span>
+                            <span x-text="$store.lang.current === 'en' ? (submitting ? 'Submitting…' : 'Submit ticket') : (submitting ? 'Sinusumite…' : 'Isumite ang ticket')"></span>
                         </button>
                     </div>
                 </x-ui.card>
 
-                <x-ui.card padded="false">
+                <x-ui.card :padded="false">
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
                         <h3 class="text-sm font-semibold text-ink"><x-ui.t fil="Aking mga Support Ticket" en="My Support Tickets" /></h3>
                         <span class="text-[11px] text-ink-muted" x-text="tickets.length + ' ' + ($store.lang.current === 'en' ? 'total' : 'kabuuan')"></span>

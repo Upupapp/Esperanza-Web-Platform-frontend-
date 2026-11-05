@@ -36,7 +36,7 @@ class EventsReachResidentsTest extends TestCase
         // A published event is put right by one who approves events; withdrawn
         // before its day it is a cancellation, with a reason residents read.
         $this->assertStringContainsString("(e.status === 'Released' && this.can('approve'))", $js);
-        $this->assertStringContainsString('Cancel Event', $page);
+        $this->assertStringContainsString('Cancel event', $page);
         $this->assertStringContainsString('Reason residents will read', $page);
         $this->assertStringContainsString("this.transition(this.selected, 'Archived', this.cancelReason.trim())", $js);
         // The reviewer's notification opens the event.
