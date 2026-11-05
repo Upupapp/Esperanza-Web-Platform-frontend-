@@ -46,7 +46,7 @@ export function executiveSummary(d) {
     const ev = s.evacuation;
     const rel = s.relief.totals;
     const dmg = s.damage;
-    const per = s.persons;
+    const per = s.persons || {};
     const p1 = [];
     const p2 = [];
 
@@ -127,7 +127,7 @@ export function executiveSummary(d) {
     const out = (s.resources.items || []).filter((r) => r.quantity > 0 && r.available === 0);
     if (out.length) p2.push(list(out.map((r) => r.name)) + (out.length === 1 ? ' has' : ' have') + ' none left to deploy.');
     if (s.alerts.issued > 0) p2.push(plural(s.alerts.issued, 'public alert was', 'public alerts were') + ' issued' + (s.alerts.cancelled ? ' (' + num(s.alerts.cancelled) + ' later cancelled)' : '') + '.');
-    if (!p2.length) p2.push('Nothing in these records calls for follow-up: no incident is waiting, no one is recorded missing and no relief is pending.');
+    if (!p2.length) p2.push(s.persons ? 'Nothing in these records calls for follow-up: no incident is waiting, no one is recorded missing and no relief is pending.' : 'Nothing in these records calls for follow-up: no incident is waiting and no relief is pending.');
     else p2.unshift('What needs attention:');
 
     return [p1.join(' '), p2.join(' ')];
@@ -142,7 +142,7 @@ export function kpis(d) {
         { label: 'Incidents', value: num(s.incidents.total), note: 'in the period' },
         { label: 'People evacuated', value: num(s.evacuated.individuals), note: plural(s.evacuated.families, 'family', 'families') },
         { label: 'Inside centres now', value: num(ev.persons_inside), note: ev.capacity > 0 ? pct(ev.persons_inside, ev.capacity) + '% of ' + num(ev.capacity) : 'no centre open' },
-        { label: 'Still missing', value: num(s.persons.missing), note: num(s.persons.found) + ' found' },
+        ...(s.persons ? [{ label: 'Still missing', value: num(s.persons.missing), note: num(s.persons.found) + ' found' }] : []),
         { label: 'Relief released', value: num(rel.released), note: 'of ' + num(rel.records) + ' recorded' },
         { label: 'Families served', value: num(rel.families), note: rel.cost > 0 ? peso(rel.cost) : 'relief' },
         { label: 'Estimated damage', value: peso(s.damage.estimated_cost), note: plural(s.damage.reports, 'report') },
@@ -205,7 +205,7 @@ export function charts(d) {
     add({ key: 'damage', title: 'Estimated damage by sector', note: 'PHP', kind: 'bar', categories: sectors.map((r) => r.sector),
         series: [{ name: 'Estimated cost (PHP)', values: sectors.map((r) => r.estimated_cost), color: '#7C2D12' }], format: 'money' });
     const per = s.persons;
-    add({ key: 'persons', title: 'Missing, found, deceased and unidentified', kind: 'column', categories: ['Still missing', 'Found', 'Deceased', 'Unidentified'],
+    if (per) add({ key: 'persons', title: 'Missing, found, deceased and unidentified', kind: 'column', categories: ['Still missing', 'Found', 'Deceased', 'Unidentified'],
         series: [{ name: 'People', values: [per.missing, per.found, per.deceased, per.unidentified], color: NAVY, colors: [AMBER, '#059669', '#475569', '#7C3AED'] }], format: 'count' });
     return out;
 }

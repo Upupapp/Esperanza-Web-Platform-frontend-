@@ -17,14 +17,16 @@
     // The filter sends the status on record; it shows the incident's own word
     // for it, as the Incidents tab does (critique 2026-11-03).
     $reportStatuses = ['Submitted' => 'Reported', 'Under Verification' => 'Validated', 'Assigned' => 'Assigned', 'Processing' => 'Dispatched', 'Completed' => 'Resolved', 'Archived' => 'Closed', 'Rejected' => 'Rejected'];
+    // case_kind: the Missing Persons tab's three kinds of case.
+    $reportCaseKinds = ['' => 'All cases', 'missing' => 'Missing', 'deceased' => 'Deceased', 'unidentified' => 'Unidentified'];
 @endphp
 
 <div x-data="sakunaReport" class="space-y-3">
 
     {{-- Sakuna Redesign (2026-11-02): filters and export in one row, as the
-         design draws it; on a narrow screen the row scrolls sideways rather
-         than wrapping. The dates sit behind one button (presets, From/To,
-         Apply). All the filters apply together. --}}
+         design draws it; when they don't fit, the row wraps and the export
+         buttons drop to a second line (2026-11-05). The dates sit behind one
+         button (presets, From/To, Apply). All the filters apply together. --}}
     <section class="sk-card relative" @keydown.escape.window="cancelRange()">
         <div class="sk-toolbar sk-toolbar-row">
             <select x-model="f.barangay" @change="load(1)" aria-label="Barangay" class="sk-sel" style="flex: 1 1 126px; min-width: 96px;">
@@ -41,6 +43,11 @@
             <select x-model="f.status" @change="load(1)" aria-label="Incident status" class="sk-sel" style="flex: 1 1 114px; min-width: 96px;">
                 <option value="">All statuses</option>
                 @foreach($reportStatuses as $s => $label)<option value="{{ $s }}">{{ $label }}</option>@endforeach
+            </select>
+            {{-- The kind of person case (sheet item 13, owner 2026-11-05), for
+                 whoever sees the Missing Persons tab: the same condition. --}}
+            <select x-model="f.case_kind" @change="load(1)" x-show="permsReady && tabShown('missing-persons')" x-cloak aria-label="Case kind" class="sk-sel" style="flex: 1 0 auto; min-width: 118px;">
+                @foreach($reportCaseKinds as $k => $label)<option value="{{ $k }}">{{ $label }}</option>@endforeach
             </select>
             <select x-model="f.livelihood_group" @change="groupChanged()" aria-label="Livelihood group" class="sk-sel" style="flex: 1 1 128px; min-width: 110px;">
                 <option value="">All livelihoods</option>
@@ -94,20 +101,8 @@
         {{-- Figures: incidents, people and families each on their own. --}}
         <section class="sk-card overflow-hidden">
             <div class="sk-g6">
-                <template x-for="card in [
-                    ['Incidents', summary.incidents.total, ''],
-                    ['Evacuated individuals', summary.evacuated.individuals, ''],
-                    ['Evacuated families', summary.evacuated.families, ''],
-                    ['Inside centers now', summary.evacuation.now.persons_inside, ''],
-                    ['Still missing', summary.persons.missing, 'sk-t-amber'],
-                    ['Found', summary.persons.found, ''],
-                    ['Deceased', summary.persons.deceased, ''],
-                    ['Unidentified', summary.persons.unidentified, 'sk-t-amber'],
-                    ['Relief released', summary.relief.totals.released, ''],
-                    ['Resources deployed now', summary.resources.now.deployed, ''],
-                    ['Damage reports', summary.damage.reports, ''],
-                    ['Alerts issued', summary.alerts.issued, ''],
-                ]" :key="card[0]">
+                {{-- The person tiles only with their figures (figureCards, sakuna-report.js). --}}
+                <template x-for="card in figureCards()" :key="card[0]">
                     <div class="sk-stat">
                         <span class="sk-slab"><span x-show="card[2] && card[1]" class="sk-dot" :class="card[2]"></span><span x-text="card[0]"></span></span>
                         <span class="sk-sval tabular-nums" x-text="card[1].toLocaleString()"></span>
@@ -120,7 +115,7 @@
              XLSX and PDF carry. Counts only; names stay in their own tabs. --}}
         <div class="flex flex-wrap items-center justify-between gap-2.5">
             <div class="sk-segwrap" role="tablist" aria-label="Report sections">
-                <template x-for="tab in sectionTabs" :key="tab[0]">
+                <template x-for="tab in shownSectionTabs()" :key="tab[0]">
                     <button type="button" role="tab" :aria-selected="section === tab[0]" @click="section = tab[0]"
                         class="sk-seg" :class="section === tab[0] ? 'sk-seg-on' : ''"
                         x-text="tab[1]"></button>
@@ -128,7 +123,7 @@
             </div>
             <span class="sk-csub" x-text="new Date(summary.period.from + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' + new Date(summary.period.to + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + (f.barangay || 'all barangays')"></span>
         </div>
-        <div x-show="section !== 'overview'" x-cloak class="space-y-3" data-report-section>
+        <div x-show="section !== 'overview'" x-cloak class="space-y-3" data-report-section x-effect="if (section === 'missing' && !hasPersons()) section = 'overview'">
             <template x-for="tbl in tablesFor(section)" :key="tbl.heading">
                 <section class="sk-card overflow-hidden">
                     <div class="sk-chead">
@@ -228,7 +223,7 @@
                             <th scope="col">Barangay</th>
                             <th scope="col">Summary</th>
                             <th scope="col">Status</th>
-                            <th scope="col" class="sk-r">Missing</th>
+                            <th scope="col" class="sk-r" x-show="hasPersons()">Missing</th>
                             <th scope="col" class="sk-r">Damage reports</th>
                         </tr>
                     </thead>
@@ -241,11 +236,11 @@
                                 <td x-text="r.barangay"></td>
                                 <td x-text="r.title"></td>
                                 <td><span class="sk-pill" :class="statusBadge(r.status)" x-text="incidentStatusLabel(r.status)" :title="'Status on record: ' + r.status"></span></td>
-                                <td class="sk-r tabular-nums" x-text="r.missing"></td>
+                                <td class="sk-r tabular-nums" x-show="hasPersons()" x-text="cell(r.missing)"></td>
                                 <td class="sk-r tabular-nums" x-text="r.damage_reports"></td>
                             </tr>
                         </template>
-                        <tr x-show="!rows.length"><td colspan="8"><div class="sk-empty">No incidents match these filters.</div></td></tr>
+                        <tr x-show="!rows.length"><td :colspan="hasPersons() ? 8 : 7"><div class="sk-empty">No incidents match these filters.</div></td></tr>
                     </tbody>
                 </table>
             </div>

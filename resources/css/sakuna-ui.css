@@ -76,8 +76,10 @@
     .sk-ctitle { margin: 0; font-size: 14px; font-weight: 600; color: var(--sk-text); }
     .sk-csub { font-size: 12px; color: var(--sk-faint); font-weight: 400; }
     .sk-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--sk-line-soft); }
-    /* One row that never wraps; a narrow screen scrolls it sideways (Reports). */
-    .sk-toolbar-row { flex-wrap: nowrap; overflow-x: auto; border-bottom: 0; gap: 6px; }
+    /* The Reports filter row (its only user): it wraps at every width, so the
+       export buttons drop to a second line rather than being clipped (QA
+       2026-11-05: with the case-kind select it was 1101px in 1078px at 1440). */
+    .sk-toolbar-row { flex-wrap: wrap; overflow-x: visible; border-bottom: 0; gap: 6px; }
     .sk-spacer { flex: 1 1 auto; }
     .sk-pagebar { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; }
     .sk-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
@@ -322,8 +324,6 @@
 .sk .sk-tag { background: #E8EEF8; box-shadow: inset 0 0 0 1px #D6DFEE; color: #334155; }
 /* Filter selects stay compact; the chosen value still shows. */
 .sk .sk-toolbar .sk-sel { max-width: 190px; }
-/* The Reports filter row wraps on a narrow screen rather than hiding its exports. */
-@media (max-width: 1100px) { .sk .sk-toolbar-row { flex-wrap: wrap; overflow-x: visible; } }
 /* One window close button on every Sakuna window: 36px, the X at 18px. */
 .sk .sk-mclose { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: var(--sk-muted); flex-shrink: 0; background: transparent; transition: background-color .15s, color .15s; }
 .sk .sk-mclose:hover { background: #F1F5F9; color: var(--sk-text); }

@@ -34,7 +34,8 @@ class FullQaRunFixesTest extends TestCase
         foreach (['command-center', 'vulnerability', 'incidents', 'evacuation-centers', 'evacuees', 'resources', 'relief', 'damage-assessment', 'bdrrmc-forms', 'alerts', 'reports'] as $tab) {
             $this->assertMatchesRegularExpression("/'{$tab}': 'sakuna_[a-z]+'/", $view, "{$tab} names its submodule");
         }
-        $this->assertStringContainsString('x-show="permsReady && tabAllowed(', $view, 'the strip shows only permitted tabs');
+        $this->assertStringContainsString('x-show="permsReady && tabShown(', $view, 'the strip shows only permitted tabs');
+        $this->assertStringContainsString('tabShown(tab) { return this.tabAllowed(tab) && ', $view, 'a permitted tab, Missing Persons only while it is on');
         $this->assertStringContainsString('<template x-if="activeAllowed">', $view, 'a tab loads only once permitted');
         $this->assertStringContainsString('this.landOnAllowedTab();', $view, 'a tab outside the role sends them to the first they hold');
         // Screen status (formerly Activate EOC) was display-only and is gone (owner, 2026-11-04).

@@ -303,7 +303,8 @@
                     <p x-show="!residentRequests.loading && !residentRequests.failed && !residentRequests.rows.length" x-cloak class="text-xs text-ink-muted">No documents or assistance on record yet.</p>
                     <ul x-show="residentRequests.rows.length" x-cloak class="divide-y divide-brand-600/[.08] -mx-1">
                         <template x-for="q in residentRequests.rows" :key="q.ref">
-                            <li class="flex items-start gap-3 py-2.5 px-1 rounded-xl cursor-pointer hover:bg-white/60 transition-colors" role="button" tabindex="0"
+                            <li>
+                            <div class="flex items-start gap-3 py-2.5 px-1 rounded-xl cursor-pointer hover:bg-white/60 transition-colors" role="button" tabindex="0"
                                 :title="'Open ' + q.ref + ' in ' + (q.type === 'tulong' ? 'Tulong' : 'Dokyu')"
                                 @click="q.type === 'tulong' ? goToTulong(selectedIndividual, q.ref) : goToDokyu(selectedIndividual, q.ref)"
                                 @keydown.enter.prevent="q.type === 'tulong' ? goToTulong(selectedIndividual, q.ref) : goToDokyu(selectedIndividual, q.ref)">
@@ -320,6 +321,36 @@
                                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap shrink-0"
                                       :class="['Completed', 'Released'].includes(q.status) ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : (['Rejected', 'Cancelled'].includes(q.status) ? 'bg-rose-50 text-rose-700 ring-rose-200' : 'bg-amber-50 text-amber-700 ring-amber-200')"
                                       x-text="q.status"></span>
+                            </div>
+                            {{-- A Tulong case's notes, read-only (owner, 2026-11-05): the
+                                 date, how and what was done, newest first; loaded
+                                 when opened. Notes are added inside the Tulong case. --}}
+                            <div x-show="q.type === 'tulong' && mayReadCaseNotes" x-cloak class="ml-12 pr-1 pb-2.5 -mt-1" data-case-notes>
+                                <button type="button" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 hover:underline"
+                                        :aria-expanded="caseNotes.ref === q.ref ? 'true' : 'false'" :aria-controls="'case-notes-' + q.ref"
+                                        @click="toggleCaseNotes(q.ref)">
+                                    <span><i data-lucide="notebook-pen" class="w-3.5 h-3.5"></i></span><span x-text="caseNotes.ref === q.ref ? 'Hide case notes' : 'Case notes'"></span>
+                                </button>
+                                <div x-show="caseNotes.ref === q.ref" x-cloak :id="'case-notes-' + q.ref" class="mt-1.5 rounded-xl border border-indigo-200 bg-indigo-50/30 p-2.5">
+                                    <div x-show="caseNotes.loading"><x-ui.skeleton class="h-10" /></div>
+                                    <p x-show="!caseNotes.loading && caseNotes.denied" class="text-xs text-ink-muted">These notes stay with the office that handles the case.</p>
+                                    <p x-show="!caseNotes.loading && caseNotes.failed" class="text-xs text-rose-700" role="alert">Could not load the notes. <button type="button" class="underline" @click="loadCaseNotes(q.ref)">Try again</button></p>
+                                    <p x-show="!caseNotes.loading && !caseNotes.denied && !caseNotes.failed && !caseNotes.rows.length" class="text-xs text-ink-muted">No notes you can see on this case.</p>
+                                    <ol x-show="caseNotes.rows.length" class="space-y-1.5">
+                                        <template x-for="n in caseNotes.rows" :key="n.ref">
+                                            <li class="rounded-xl border bg-white/80 px-3 py-2" :class="n.voided_at ? 'border-slate-200 opacity-60' : 'border-indigo-100'">
+                                                <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+                                                    <p class="text-xs font-semibold text-ink" :class="n.voided_at && 'line-through'" x-text="noteDay(n.rendered_on) + (noteModes[n.mode] ? ' · ' + noteModes[n.mode] : '')"></p>
+                                                    <span class="text-[10px] text-ink-muted" x-text="[n.rendered_by_name, n.confidential ? 'Confidential' : ''].filter(Boolean).join(' · ')"></span>
+                                                </div>
+                                                <p x-show="n.details" class="text-xs text-slate-600 whitespace-pre-line mt-0.5" x-text="n.details"></p>
+                                                <p x-show="n.referred_to" class="text-[11px] text-ink-muted" x-text="'Referred to ' + n.referred_to"></p>
+                                                <p x-show="n.voided_at" class="text-[11px] text-rose-700" x-text="'Voided' + (n.void_reason ? ': ' + n.void_reason : '')"></p>
+                                            </li>
+                                        </template>
+                                    </ol>
+                                </div>
+                            </div>
                             </li>
                         </template>
                     </ul>

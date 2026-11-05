@@ -23,7 +23,7 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="incident-detail-title"
-    @keydown.escape.window="if (incidentConfirmVerb) incidentConfirmVerb = ''; else if (showAssignForm) showAssignForm = false; else if (showEscalateForm) showEscalateForm = false; else showIncidentDetail = false">
+    @keydown.escape.window="if (incidentReportOpen) return; if (incidentConfirmVerb) incidentConfirmVerb = ''; else if (showAssignForm) showAssignForm = false; else if (showEscalateForm) showEscalateForm = false; else showIncidentDetail = false">
     <div
         x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
@@ -45,6 +45,10 @@
             <div class="flex items-center gap-2">
                 <span x-show="selectedIncident?.severity" :class="severityBadge(selectedIncident?.severity ?? '')" class="sk-pill" x-text="(selectedIncident?.severity ?? '') + ' severity'"></span>
                 <span :class="statusBadge(selectedIncident?.status ?? '')" x-text="incidentStatusLabel(selectedIncident?.status ?? '')" :title="'Status on record: ' + (selectedIncident?.status ?? '')"></span>
+                {{-- One incident's printed report (2026-11-05): _incident-report-print below. --}}
+                <button type="button" x-show="can('sakuna_reports','print') && selectedIncident?.ref" @click="$dispatch('sakuna-print-incident', { ref: selectedIncident.ref })" class="sk-btn sk-btn-sm ml-1">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print report
+                </button>
                 <button aria-label="Close window" title="Close window" @click="showIncidentDetail = false" class="sk-mclose ml-2">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
@@ -70,7 +74,7 @@
             <div x-show="Array.isArray(selectedIncident?.persons)" x-cloak class="p-4 rounded-xl border border-rose-100 bg-white">
                 <div class="flex items-center justify-between gap-2 mb-2">
                     <p class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Missing, deceased or unidentified persons</p>
-                    <a x-show="can('sakuna_missing','create')" :href="tabUrls['missing-persons'] + '?incident=' + encodeURIComponent(selectedIncident?.ref || '')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Record a person</a>
+                    <a x-show="!missingOff && can('sakuna_missing','create')" :href="tabUrls['missing-persons'] + '?incident=' + encodeURIComponent(selectedIncident?.ref || '')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Record a person</a>
                 </div>
                 <p x-show="!(selectedIncident?.persons || []).length" class="text-xs text-ink-muted">No one is recorded under this incident.</p>
                 <ul class="space-y-1">
@@ -330,3 +334,5 @@
         </div>
     </div>
 </div>{{-- /Incident Detail Modal --}}
+
+@include('admin.partials.sakuna._incident-report-print')

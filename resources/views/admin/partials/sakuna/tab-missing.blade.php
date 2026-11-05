@@ -23,7 +23,7 @@
                 saveCopy('missing', { params: JSON.stringify(this.params()), rows: this.rows, total: this.total, lastPage: this.lastPage });
             } catch (err) {
                 const copy = lastCopy('missing');
-                if (err?.code === 'FEATURE_OFF' || err?.status === 404) this.off = true;
+                if (err?.code === 'FEATURE_OFF' || err?.status === 404) { this.off = true; if (err?.code === 'FEATURE_OFF') markMissingOff(); }
                 else if (copy && copy.data.params === JSON.stringify(this.params())) { useCopy('missing'); this.rows = copy.data.rows || []; this.total = copy.data.total || 0; this.lastPage = copy.data.lastPage || 1; }
                 else this.failed = true;
             } finally { this.loading = false; }

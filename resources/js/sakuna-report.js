@@ -11,7 +11,14 @@ const loadWorkbook = () => import('./xlsx-report');
 
 // Incidents speak their own words for the universal statuses (sakuna.blade.php incidentStatusLabel).
 const incidentWords = { Submitted: 'Reported', 'Under Verification': 'Validated', Processing: 'Dispatched', Completed: 'Resolved', Archived: 'Closed' };
-const blankFilters = () => ({ barangay: '', from: '', to: '', type: '', status: '', livelihood_group: '', livelihood_code: '' });
+// case_kind (sheet item 13, owner 2026-11-05): the Missing Persons tab's kinds of case.
+const caseKinds = { missing: 'Missing persons', deceased: 'Deceased persons', unidentified: 'Unidentified bodies' };
+const blankFilters = () => ({ barangay: '', from: '', to: '', type: '', status: '', case_kind: '', livelihood_group: '', livelihood_code: '' });
+// The person figures (missing, found, deceased, unidentified) come only to
+// whoever may see Missing Persons while it is on (2026-11-05): without them the
+// summary has no persons block (or null) and the rows no person columns, and
+// every tile, column, chart, table and export line about them is left out.
+export const hasPersons = (summary) => !!summary?.persons && typeof summary.persons === 'object';
 const toast = (message, variant = 'success') => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
 
 export function sakunaReport() {
@@ -29,6 +36,15 @@ export function sakunaReport() {
         init() {
             this.$store.livelihood?.load();
             this.load();
+            // Missing Persons learned off elsewhere on the page: drop a case kind already chosen.
+            window.addEventListener('sakuna-missing-off', () => { if (this.f.case_kind) { this.f.case_kind = ''; this.load(1); } });
+        },
+        /** A case kind sent while Missing Persons is off: the server says FEATURE_OFF. Cleared, not an error. */
+        caseKindOff(err) {
+            if (err?.code !== 'FEATURE_OFF' || !this.f.case_kind) return false;
+            this.f.case_kind = '';
+            this.markMissingOff?.();
+            return true;
         },
         params(extra = {}) {
             return Object.fromEntries(Object.entries({ ...this.f, ...extra }).filter(([, v]) => v !== '' && v !== null));
@@ -39,6 +55,7 @@ export function sakunaReport() {
             this.loading = true;
             this.failed = false;
             this.page = page;
+            let again = false;
             try {
                 const [s, r] = await Promise.all([
                     api.get('/admin/sakuna/reports/summary', { params: this.params() }),
@@ -48,12 +65,13 @@ export function sakunaReport() {
                 this.rows = r.data || [];
                 this.total = r.meta?.total ?? this.rows.length;
                 this.lastPage = r.meta?.last_page || 1;
-            } catch {
-                this.failed = true;
+            } catch (err) {
+                if (this.caseKindOff(err)) again = true; else this.failed = true;
             } finally {
                 this.loading = false;
                 this.$nextTick(() => window.renderIcons?.());
             }
+            if (again) this.load(1);
         },
         clear() { this.f = blankFilters(); this.rangeOpen = false; this.load(1); },
 
@@ -136,7 +154,10 @@ export function sakunaReport() {
                 if (format === 'XLSX') await this.writeXlsx(d); else await this.writePdf(d);
                 toast(format + ' downloaded.');
             } catch (err) {
-                toast(err?.localised ? err.localised('en') : 'Could not export this report.', 'error');
+                if (this.caseKindOff(err)) {
+                    toast('Missing Persons is not switched on here, so the case kind filter is gone. Export again for the whole report.', 'info');
+                    this.load(1);
+                } else toast(err?.localised ? err.localised('en') : 'Could not export this report.', 'error');
             } finally {
                 this.exporting = '';
             }
@@ -150,6 +171,8 @@ export function sakunaReport() {
                 ['Barangay', f.barangay || 'All barangays'],
                 ['Disaster type', f.type || 'All types'],
                 ['Incident status', f.status ? (incidentWords[f.status] || f.status) : 'All statuses'],
+                // Only for whoever sees the Missing Persons tab, as the filter is.
+                ...(f.case_kind || (this.permsReady && this.tabShown('missing-persons')) ? [['Case kind', caseKinds[f.case_kind] || 'All cases']] : []),
                 ['Livelihood / occupation', f.livelihood_code ? this.$store.livelihood.label(f.livelihood_code) : (f.livelihood_group ? this.$store.livelihood.label(f.livelihood_group) || f.livelihood_group : 'All')],
             ];
         },
@@ -161,6 +184,7 @@ export function sakunaReport() {
         // incidents alone. "Now" figures say so; the rest count the period.
         keyFigures(s) {
             const e = s.evacuation, r = s.relief.totals, res = s.resources.now;
+            const p = s.persons || {};
             return [
                 ['Incidents', 'Incidents reported', s.incidents.total],
                 ['Evacuation (right now)', 'Open evacuation centres', e.now.open_centres],
@@ -170,10 +194,7 @@ export function sakunaReport() {
                 ['Evacuation', 'Families checked in', e.period.families_checked_in],
                 ['Evacuation', 'Individuals evacuated', s.evacuated.individuals],
                 ['Evacuation', 'Families checked out', e.period.families_checked_out],
-                ['Missing persons', 'Still missing', s.persons.missing],
-                ['Missing persons', 'Found', s.persons.found],
-                ['Missing persons', 'Deceased', s.persons.deceased],
-                ['Missing persons', 'Unidentified', s.persons.unidentified],
+                ...(hasPersons(s) ? [['Missing persons', 'Still missing', p.missing], ['Missing persons', 'Found', p.found], ['Missing persons', 'Deceased', p.deceased], ['Missing persons', 'Unidentified', p.unidentified]] : []),
                 ['Relief', 'Families served', r.families],
                 ['Relief', 'Items released', r.released],
                 ['Relief', 'Awaiting release', r.awaiting],
@@ -222,13 +243,13 @@ export function sakunaReport() {
                 { group: 'resources', heading: 'Deployed and returned during the period', columns: [t('resource', 'Resource'), t('incident', 'Incident'), n('deployed', 'Deployed'), n('returned', 'Returned'), t('unit', 'Unit')], rows: s.resources.deployments },
                 { group: 'damage', heading: 'Damage by sector', columns: [t('sector', 'Sector'), n('reports', 'Reports'), n('units_affected', 'Units affected'), { ...n('estimated_cost', 'Estimated cost (PHP)'), money: true }], rows: s.damage.by_sector },
                 { group: 'damage', heading: 'Damage by barangay', columns: [t('barangay', 'Barangay'), n('reports', 'Reports'), n('units_affected', 'Units affected'), { ...n('estimated_cost', 'Estimated cost (PHP)'), money: true }], rows: s.damage.by_barangay },
-                { group: 'missing', heading: 'Missing, found, deceased and unidentified persons', note: 'Counts only. Names stay in the Missing Persons tab.',
+                ...(hasPersons(s) ? [{ group: 'missing', heading: 'Missing, found, deceased and unidentified persons', note: 'Counts only. Names stay in the Missing Persons tab.',
                     columns: [t('label', 'Status'), n('count', 'People')],
-                    rows: [{ label: 'Still missing', count: s.persons.missing }, { label: 'Found', count: s.persons.found }, { label: 'Deceased', count: s.persons.deceased }, { label: 'Unidentified', count: s.persons.unidentified }] },
+                    rows: [{ label: 'Still missing', count: s.persons.missing }, { label: 'Found', count: s.persons.found }, { label: 'Deceased', count: s.persons.deceased }, { label: 'Unidentified', count: s.persons.unidentified }] }] : []),
                 { group: 'alerts', heading: 'Public alerts', columns: [t('ref', 'Alert'), t('level', 'Level'), t('type', 'Type'), t('title', 'Title'), t('barangays', 'Barangays'), t('status', 'Status'), t('published', 'Published'), n('reached', 'Reached')],
                     rows: s.alerts.list.map((a) => ({ ...a, published: a.published_at ? new Date(a.published_at).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '' })) },
             ];
-            if (all) {
+            if (all && hasPersons(s)) {
                 tables.splice(tables.findIndex((x) => x.group === 'missing') + 1, 0, { group: 'missing', heading: 'Persons by incident', columns: [t('ref', 'Incident'), t('title', 'Summary'), n('missing', 'Missing'), n('found', 'Found'), n('deceased', 'Deceased')],
                     rows: d.rows.filter((r) => r.missing || r.found || r.deceased) });
             }
@@ -237,16 +258,36 @@ export function sakunaReport() {
         section: 'overview',
         sectionTabs: [['overview', 'Overview'], ['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Missing persons'], ['alerts', 'Alerts']],
         tablesFor(group) { return this.summary ? this.reportTables({ summary: this.summary, rows: this.rows }).filter((x) => x.group === group) : []; },
+        hasPersons() { return hasPersons(this.summary); },
+        // The section tabs; Missing persons only with its figures.
+        shownSectionTabs() { return this.sectionTabs.filter((tab) => tab[0] !== 'missing' || this.hasPersons()); },
+        // The figure tiles; the person ones only with their figures.
+        figureCards() {
+            const s = this.summary;
+            if (!s) return [];
+            const p = hasPersons(s) ? s.persons : null;
+            return [
+                ['Incidents', s.incidents.total, ''],
+                ['Evacuated individuals', s.evacuated.individuals, ''],
+                ['Evacuated families', s.evacuated.families, ''],
+                ['Inside centers now', s.evacuation.now.persons_inside, ''],
+                ...(p ? [['Still missing', p.missing, 'sk-t-amber'], ['Found', p.found, ''], ['Deceased', p.deceased, ''], ['Unidentified', p.unidentified, 'sk-t-amber']] : []),
+                ['Relief released', s.relief.totals.released, ''],
+                ['Resources deployed now', s.resources.now.deployed, ''],
+                ['Damage reports', s.damage.reports, ''],
+                ['Alerts issued', s.alerts.issued, ''],
+            ].map((c) => [c[0], Number(c[1] || 0), c[2]]);
+        },
         // A table's rows as the PDF prints them: money with two decimals.
         printable(tbl) {
             const money = tbl.columns.filter((c) => c.money).map((c) => c.key);
             return money.length ? tbl.rows.map((r) => ({ ...r, ...Object.fromEntries(money.map((k) => [k, this.money(r[k])])) })) : tbl.rows;
         },
-        columns() {
+        columns(s) {
             return [
                 { key: 'ref', label: 'Incident' }, { key: 'reported', label: 'Reported' }, { key: 'type', label: 'Disaster type' },
                 { key: 'barangay', label: 'Barangay' }, { key: 'title', label: 'Summary' }, { key: 'status', label: 'Status' },
-                { key: 'missing', label: 'Missing' }, { key: 'found', label: 'Found' }, { key: 'deceased', label: 'Deceased' },
+                ...(hasPersons(s) ? [{ key: 'missing', label: 'Missing' }, { key: 'found', label: 'Found' }, { key: 'deceased', label: 'Deceased' }] : []),
                 { key: 'damage_reports', label: 'Damage reports' }, { key: 'units_affected', label: 'Units affected' },
             ];
         },
@@ -296,7 +337,7 @@ export function sakunaReport() {
             const contents = [['Analytics', 'Each chart with the table it reads; change a number or restyle a chart in Excel.'], ['Incidents', 'Every incident in the period, one row each.'],
                 ['Evacuation', 'Centres now, evacuated people by sex, age and sector, FACED details.'], ['Relief', 'Relief by item, operation and barangay; what families said in the app.'],
                 ['Resources', 'Stock now; deployed and returned in the period.'], ['Damage', 'Damage by sector and barangay.'], ['Missing persons', 'Counts by status and by incident (no names).'],
-                ['Alerts', 'Public alerts issued.'], ['Livelihood', 'Evacuated people by occupation.']];
+                ['Alerts', 'Public alerts issued.'], ['Livelihood', 'Evacuated people by occupation.']].filter(([k]) => k !== 'Missing persons' || hasPersons(d.summary));
             contents.forEach(([k, v]) => span(push([{ v: k, s: S.label }, v]), 'B'));
             push([]);
             push([{ v: 'Notes', s: S.section }]);
@@ -325,7 +366,7 @@ export function sakunaReport() {
             if (!an.charts.length) an.rows.push([{ v: 'No figures in this period to chart.', s: S.note }]);
 
             // 3. Detailed data.
-            const cols = this.columns();
+            const cols = this.columns(d.summary);
             const incRows = [head(cols.map((c) => c.label)), ...d.rows.map((r) => cols.map((c) => (c.key === 'reported' ? new Date(r.reported).toLocaleString('en-PH') : c.key === 'status' ? (incidentWords[r.status] || r.status) : val({ money: false }, r[c.key]))))];
             if (!d.rows.length) incRows.push([{ v: 'No incidents in this period under these filters.', s: S.note }]);
             const incidents = { name: 'Incidents', rows: incRows, freeze: 1 };
@@ -334,6 +375,7 @@ export function sakunaReport() {
             const block = (tbl) => [[{ v: tbl.heading, s: S.section }], ...(tbl.note ? [[{ v: tbl.note, s: S.note }]] : []), head(tbl.columns.map((c) => c.label)),
                 ...(tbl.rows.length ? tbl.rows.map((r) => tbl.columns.map((c) => val(c, r[c.key]))) : [[{ v: 'None recorded.', s: S.note }]]), []];
             const sectionSheets = [['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Missing persons'], ['alerts', 'Alerts']]
+                .filter(([group]) => group !== 'missing' || hasPersons(d.summary))
                 .map(([group, name]) => { const rows = tables.filter((x) => x.group === group).flatMap(block); return { name, rows, cols: width(rows) }; });
             const livRows = block(this.livelihoodTable(d.summary));
             await downloadXlsx([sum, an, incidents, ...sectionSheets, { name: 'Livelihood', rows: livRows, cols: width(livRows) }],
@@ -349,7 +391,7 @@ export function sakunaReport() {
                 { heading: 'Key figures in full', note: 'As of ' + new Date(d.summary.as_of).toLocaleString('en-PH') + '. "Right now" figures show that moment; the rest count the period.',
                     columns: [{ key: 's', label: 'Section' }, { key: 'k', label: 'Figure' }, { key: 'v', label: 'Value' }],
                     rows: this.keyFigures(d.summary).map(([s, k, v]) => ({ s, k, v: typeof v === 'number' ? v.toLocaleString('en-PH') : v })) },
-                { heading: 'Incidents', columns: this.columns(), rows: incidents },
+                { heading: 'Incidents', columns: this.columns(d.summary), rows: incidents },
                 ...this.reportTables(d, true).map((tbl) => ({ ...tbl, rows: this.printable(tbl) })),
                 this.livelihoodTable(d.summary),
                 { heading: 'Notes', columns: [{ key: 'note', label: 'What the records can and cannot say' }], rows: d.summary.notes.map((note) => ({ note })) },
@@ -364,6 +406,89 @@ export function sakunaReport() {
                 kpis: reportKpis(d),
                 charts: reportCharts(d),
             });
+        },
+    };
+}
+
+// ------------------------------------------------ One incident's printed report
+
+const TZ = 'Asia/Manila';
+/** 'Nov 5, 2026, 3:04 PM', as the time it is in Esperanza. */
+const manilaWhen = (iso) => (iso ? new Date(iso).toLocaleString('en-US', { timeZone: TZ, dateStyle: 'medium', timeStyle: 'short' }) : '');
+const stepWords = { report: 'Reported', validate: 'Validated', assign: 'Assigned', dispatch: 'Dispatched', escalate: 'Escalated', resolve: 'Resolved', close: 'Closed', deploy: 'Deployed', return: 'Returned' };
+const personKinds = { missing: 'Missing person', deceased: 'Deceased person', unidentified: 'Unidentified body' };
+
+/**
+ * A printable report of one incident (Sprint 2, owner 2026-11-05), from the
+ * incident window's Print report: GET /admin/sakuna/reports/incident/{ref}
+ * (sakuna_reports.print; the server logs each one). Shown and printed as the
+ * portal's printed reports are (components/admin/report-sheet.blade.php: the
+ * rep-paper sheet on A4 portrait pages, body.dp-printing isolating
+ * #dp-print-area). persons is null where the viewer may not read Missing
+ * Persons or it is off; the section is then left out.
+ */
+export function incidentReportPrint() {
+    return {
+        open: false,
+        loading: false,
+        failed: false,
+        error: '',
+        ref: '',
+        report: null,
+        async show(ref) {
+            if (!ref) return;
+            this.ref = ref;
+            this.report = null;
+            this.failed = false;
+            this.error = '';
+            this.loading = true;
+            this.open = true;
+            try {
+                const res = await api.get('/admin/sakuna/reports/incident/' + encodeURIComponent(ref));
+                if (this.ref === ref) this.report = res.data;
+            } catch (err) {
+                if (this.ref !== ref) return;
+                this.failed = true;
+                this.error = err?.status === 404 ? 'This incident was not found, or it is outside your barangay.' : (err?.localised ? err.localised('en') : 'Could not load the report.');
+            } finally {
+                if (this.ref === ref) this.loading = false;
+            }
+        },
+        print() {
+            if (!this.report) return;
+            document.body.classList.add('dp-printing');
+            this.$nextTick(() => window.print());
+        },
+        when: manilaWhen,
+        word(v) { return stepWords[v] || (v ? String(v).charAt(0).toUpperCase() + String(v).slice(1).replace(/_/g, ' ') : ''); },
+        status(s) { return incidentWords[s] || s || ''; },
+        kind(k) { return personKinds[k] || k || ''; },
+        num(n) { return Number(n || 0).toLocaleString('en-PH'); },
+        peso(n) { return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
+        // The incident's details, two to a row; what the record leaves blank is left out.
+        get detailRows() {
+            const i = this.report?.incident || {};
+            const pairs = [
+                ['Incident', i.ref], ['Disaster type', i.type],
+                ['Severity', i.severity], ['Status', this.status(i.status)],
+                ['Barangay', i.barangay], ['Sitio / Purok', i.sitio],
+                ['Reported', manilaWhen(i.reported)], ['Source', this.word(i.source)],
+                ['Reported by', i.reporter_name || i.reporter?.name], ['Assigned to', i.assigned_name],
+                ['Coordinates', i.lat !== null && i.lat !== undefined && i.lng !== null && i.lng !== undefined ? i.lat + ', ' + i.lng : ''],
+                ['Photos', this.photoCount(i) ? this.photoCount(i) + ' on file' : ''],
+            ].filter((p) => p[1] !== '' && p[1] !== null && p[1] !== undefined);
+            const rows = [];
+            for (let k = 0; k < pairs.length; k += 2) rows.push(pairs.slice(k, k + 2));
+            return rows;
+        },
+        /** photo_count from the server; an older payload's photos list counted instead. */
+        photoCount(i) {
+            if (i?.photo_count !== null && i?.photo_count !== undefined && Number.isFinite(Number(i.photo_count))) return Number(i.photo_count);
+            return Array.isArray(i?.photos) ? i.photos.length : 0;
+        },
+        get generatedText() {
+            const r = this.report;
+            return r ? 'Generated ' + manilaWhen(r.generated_at) + ' by ' + (r.generated_by || '') : '';
         },
     };
 }

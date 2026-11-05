@@ -218,6 +218,8 @@
         // The open resident's documents and assistance received, filed on the
         // portal or imported from an office's records (2026-10-12).
         residentRequests: { ref: '', rows: [], loading: false, failed: false },
+        // One Tulong case's notes, opened from that list (owner, 2026-11-05).
+        caseNotes: { ref: '', rows: [], loading: false, failed: false, denied: false },
         selectedDQIssue:      null,
         lifecycleAction:      '',
         addIndividualStep: 1,
@@ -724,6 +726,7 @@
             this.showIndividualDetail = true;
             this.$nextTick(() => window.renderIcons?.());
             this.loadResidentRequests(r.ref);
+            this.caseNotes = { ref: '', rows: [], loading: false, failed: false, denied: false };
             // The list row is intentionally lean (no tags/household/family/
             // sensitive fields) -- the detail endpoint has the rest.
             try {
@@ -764,6 +767,29 @@
             const q = ref ? 'ref=' + encodeURIComponent(ref) : 'citizen=' + encodeURIComponent(r.name);
             window.location.href = '/admin/assistance-requests?' + q;
         },
+        // A Tulong case's notes, read-only, in the resident's window (owner,
+        // 2026-11-05: no separate services list; the notes of the tulong the
+        // resident received). Loaded only when opened, newest first as the
+        // server sends them; a voided note shows as voided. A confidential
+        // type's notes stay with its office (the server keeps them so).
+        // Notes are written only inside the Tulong case.
+        noteModes: { office: 'At the office', home_visit: 'Home visit', field: 'In the field', online: 'Online or by phone' },
+        get mayReadCaseNotes() { return this.$store.session.canPerm('tulong_records', 'view'); },
+        toggleCaseNotes(ref) {
+            if (this.caseNotes.ref === ref) { this.caseNotes = { ref: '', rows: [], loading: false, failed: false, denied: false }; return; }
+            this.loadCaseNotes(ref);
+        },
+        async loadCaseNotes(ref) {
+            this.caseNotes = { ref, rows: [], loading: true, failed: false, denied: false };
+            try {
+                const res = await $api.get('/admin/services-rendered', { params: { request_ref: ref, include_voided: 1, per_page: 50 }, silent: true });
+                if (this.caseNotes.ref === ref) this.caseNotes = { ...this.caseNotes, rows: res.data || [], loading: false };
+            } catch (err) {
+                if (this.caseNotes.ref === ref) this.caseNotes = { ...this.caseNotes, loading: false, denied: !!err?.isForbidden, failed: !err?.isForbidden };
+            }
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        noteDay(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
         openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.loadMembers('family', f.ref);     this.$nextTick(()=>window.renderIcons?.()); },
         openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.loadMembers('household', h.ref);  this.$nextTick(()=>window.renderIcons?.()); },
         // What the page already has shows at once; the server's list replaces it.

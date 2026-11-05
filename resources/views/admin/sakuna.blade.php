@@ -212,6 +212,7 @@
         // straight back to the profile that started the trip.
         init() {
             this.landOnAllowedTab();
+            this.probeMissing();
             this.loadHeader();
             this.startHeaderRefresh();
             const params = new URLSearchParams(window.location.search);
@@ -1733,6 +1734,29 @@
         },
         allowed(submodule) { return this.can(submodule, 'view'); },
         tabAllowed(tab) { return this.allowed(this.tabSubs[tab]); },
+        // Missing Persons switched off on this server (owner, 2026-11-05;
+        // production has it off): the server answers FEATURE_OFF. Learned once
+        // for the page, from the first request that meets it; then its tab, the
+        // Command Center's card and chip, and the report's case-kind filter hide.
+        missingOff: false,
+        // The one-incident report window is open (_incident-report-print).
+        incidentReportOpen: false,
+        markMissingOff() {
+            if (this.missingOff) return;
+            this.missingOff = true;
+            this.missingSummary = null;
+            this.missingUnknown = false;
+            window.dispatchEvent(new CustomEvent('sakuna-missing-off'));
+        },
+        // The tab bar shows a tab the role may view, Missing Persons only while it is on.
+        tabShown(tab) { return this.tabAllowed(tab) && !(tab === 'missing-persons' && this.missingOff); },
+        // The Command Center and Missing Persons tabs ask Missing Persons
+        // themselves; any other tab asks once, quietly.
+        async probeMissing() {
+            await this.$store.session.whenReady();
+            if (['command-center', 'missing-persons'].includes(this.activeTab) || !this.can('sakuna_missing', 'view')) return;
+            try { await $api.get('/admin/sakuna/missing/summary', { silent: true }); } catch (e) { if (e?.code === 'FEATURE_OFF') this.markMissingOff(); }
+        },
         get permsReady() { return this.$store.session.permsReady; },
         get activeAllowed() { return this.permsReady && this.tabAllowed(this.activeTab); },
         get firstAllowedTab() { return Object.keys(this.tabSubs).find((t) => this.tabAllowed(t)) || null; },
@@ -1836,7 +1860,7 @@
             @foreach($tabs as $t)
                 <a
                     href="{{ $tabUrls[$t['key']] }}"
-                    x-show="permsReady && tabAllowed('{{ $t['key'] }}')" x-cloak
+                    x-show="permsReady && tabShown('{{ $t['key'] }}')" x-cloak
                     @if($activeTab === $t['key']) aria-current="page" @endif
                     class="sk-tab {{ $activeTab === $t['key'] ? 'sk-tab-on' : '' }}"
                 >{{ $t['label'] }}</a>

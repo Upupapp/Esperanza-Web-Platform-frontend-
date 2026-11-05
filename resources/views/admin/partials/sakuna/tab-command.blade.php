@@ -119,7 +119,7 @@
     <section class="sk-card" aria-labelledby="needs-action-title">
         <div class="flex flex-wrap items-center gap-2 px-3.5 py-2.5">
             <h2 id="needs-action-title" class="sk-ctitle mr-1">Needs action</h2>
-            <button type="button" x-show="missingSummary?.missing" @click="setTab('missing-persons')" class="sk-need sk-need-amber" :aria-label="(missingSummary?.missing || 0) + (missingSummary?.missing === 1 ? ' person' : ' people') + ' still missing'">
+            <button type="button" x-show="!missingOff && missingSummary?.missing" @click="setTab('missing-persons')" class="sk-need sk-need-amber" :aria-label="(missingSummary?.missing || 0) + (missingSummary?.missing === 1 ? ' person' : ' people') + ' still missing'">
                 <i data-lucide="user-search"></i>
                 <span x-text="(missingSummary?.missing || 0) + ' still missing'"></span>
             </button>
@@ -289,8 +289,8 @@
                  may not read cases or the feature is not switched on. --}}
             <section class="sk-card"
                  x-data="{ get mp() { return missingSummary; } }"
-                 x-init="if (can('sakuna_missing','view')) $api.get('/admin/sakuna/missing/summary').then((r) => { missingSummary = r.data; missingUnknown = false; saveCopy('missing-summary', r.data); }).catch((e) => { if (e?.status === 404 || e?.code === 'FEATURE_OFF') return; missingSummary = lastCopy('missing-summary')?.data || null; missingUnknown = !missingSummary; })"
-                 x-show="mp" x-cloak>
+                 x-init="if (can('sakuna_missing','view')) $api.get('/admin/sakuna/missing/summary').then((r) => { missingSummary = r.data; missingUnknown = false; saveCopy('missing-summary', r.data); }).catch((e) => { if (e?.code === 'FEATURE_OFF') return markMissingOff(); if (e?.status === 404) return; missingSummary = lastCopy('missing-summary')?.data || null; missingUnknown = !missingSummary; })"
+                 x-show="!missingOff && mp" x-cloak>
                 <div class="sk-chead" style="border-bottom: 0; padding-bottom: 6px;">
                     <h2 class="sk-ctitle">Missing persons</h2>
                     <button type="button" @click="setTab('missing-persons')" class="sk-link">Open Missing Persons <i data-lucide="arrow-right"></i></button>
