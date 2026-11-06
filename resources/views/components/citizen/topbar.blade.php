@@ -17,7 +17,7 @@
         'document-requests' => 'Humiling at subaybayan ang mga dokumento ng munisipyo online.',
         'assistance-requests' => 'Magsumite at subaybayan ang mga kahilingan para sa tulong.',
         'announcements' => 'Pinakabagong balita at abiso mula sa munisipyo.',
-        'events' => 'Mga paparating na kaganapan sa Esperanza.',
+        'events' => 'Mga kaganapan ng munisipyo at barangay.',
         'directory' => 'Hanapin ang mga opisina at contact ng pamahalaan.',
         'help' => 'Mga tanong, gabay, at suporta.',
         'profile' => 'Pamahalaan ang iyong impormasyon bilang residente.',

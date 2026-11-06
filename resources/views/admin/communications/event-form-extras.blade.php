@@ -37,7 +37,7 @@
             <div>
                 <label for="event-closes" class="{{ $exLabel }}">Registration closes</label>
                 <div class="flex items-center gap-2">
-                    <input id="event-closes" type="datetime-local" x-model="form.closes_at" :max="form.date ? form.date + 'T' + (form.time || '23:59') : null" class="{{ $exInput }}">
+                    <input id="event-closes" type="datetime-local" x-model="form.closes_at" :max="form.date ? form.date + 'T' + (form.start_time || '23:59') : null" class="{{ $exInput }}">
                     <button type="button" x-show="form.closes_at" x-cloak @click="form.closes_at = ''" class="shrink-0 text-[11px] font-semibold text-brand-600 hover:underline">At the start</button>
                 </div>
                 <p class="text-[11px] text-ink-muted mt-1" x-text="closesHint()"></p>

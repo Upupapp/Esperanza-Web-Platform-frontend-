@@ -411,16 +411,25 @@
                 const account = this.$store.citizenSession.account;
                 const citizenName = [account?.firstName, account?.lastName].filter(Boolean).join('-') || 'Citizen';
                 const docName = (this.resolvedDocument?.certTitle || this.selectedRequest?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
-                document.body.classList.add('dp-printing');
-                await this.$nextTick();
-                // As the staff download does (admin/document-requests): the seal and
-                // watermark loaded, the oklch() colours swapped for rgb() while
-                // html2canvas reads the page, and Alpine stripped from its clone.
-                // Without the swap every download threw on oklch and saved nothing.
-                await window.DokyuEditor.waitForImages(el);
-                const restoreColors = window.DokyuEditor.sanitizeExportColors(document.body);
+                // Everything from here sits inside the try, as on the staff copy
+                // (manual test 2026-11-06): body.dp-printing hides the whole page
+                // but the document, so a throw before the try, or a save() that
+                // never settles, left the resident on a bare document. The finally
+                // always cleans up, and a stalled save gives up after
+                // PDF_TIMEOUT_MS into the same Print > Save as PDF message.
+                const PDF_TIMEOUT_MS = 30000;
+                let restoreColors = () => {};
+                let timer = null;
                 try {
-                    await html2pdf().set({
+                    document.body.classList.add('dp-printing');
+                    await this.$nextTick();
+                    // As the staff download does (admin/document-requests): the seal and
+                    // watermark loaded, the oklch() colours swapped for rgb() while
+                    // html2canvas reads the page, and Alpine stripped from its clone.
+                    // Without the swap every download threw on oklch and saved nothing.
+                    await window.DokyuEditor.waitForImages(el);
+                    restoreColors = window.DokyuEditor.sanitizeExportColors(document.body);
+                    const saving = html2pdf().set({
                         margin: 0,
                         filename: 'Esperanza-' + docName + '-' + citizenName.replace(/[^a-z0-9-]+/gi, '') + '.pdf',
                         image: { type: 'jpeg', quality: 0.98 },
@@ -439,11 +448,16 @@
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
                         pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
                     }).from(window.DokyuEditor.exportClone(el)).save();
+                    const timeout = new Promise((_, reject) => {
+                        timer = setTimeout(() => reject(new Error('PDF generation timed out after ' + (PDF_TIMEOUT_MS / 1000) + ' s')), PDF_TIMEOUT_MS);
+                    });
+                    await Promise.race([saving, timeout]);
                 } catch (error) {
                     console.error('Citizen document PDF download failed:', error);
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Could not download the PDF. Use Print and choose Save as PDF.' : 'Hindi ma-download ang PDF. Gamitin ang I-print at piliin ang Save as PDF.', variant: 'error' });
                 } finally {
-                    restoreColors();
+                    clearTimeout(timer);
+                    try { restoreColors(); } catch (e) { console.error('Could not restore colours after PDF export:', e); }
                     document.body.classList.remove('dp-printing');
                 }
             },

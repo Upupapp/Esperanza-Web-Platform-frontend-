@@ -1499,14 +1499,25 @@
         },
         incidentActing: false,
         incidentVerbLabel(v) {
-            return { validate: 'Validate', dispatch: 'Dispatch', resolve: 'Mark resolved', close: 'Close incident', assign: 'Assign', escalate: 'Escalate' }[v] || v;
+            return { validate: 'Validate', dispatch: 'Dispatch', resolve: 'Mark resolved', resolve_close: 'Resolve and close', close: 'Close incident', assign: 'Assign', escalate: 'Escalate' }[v] || v;
+        },
+        // Sprint 4 (owner's manual test, 2026-11-06): Mark resolved then
+        // Close incident were two buttons and two confirmations for one
+        // decision. The window offers one Resolve and close (resolve, then
+        // close) whenever the role may do both; close alone stays only for an
+        // incident already Resolved (Completed), e.g. an older one.
+        incidentSteps(inc) {
+            const verbs = inc?.available_verbs || [];
+            const both = verbs.includes('resolve') && this.can('sakuna_incidents', 'close');
+            return ['validate', 'dispatch', 'resolve', 'close']
+                .filter(v => verbs.includes(v))
+                .map(v => (v === 'resolve' && both ? 'resolve_close' : v));
         },
         nextIncidentVerb(inc) {
-            return ['validate', 'dispatch', 'resolve', 'close'].find(v => inc?.available_verbs?.includes(v)) || '';
+            return this.incidentSteps(inc)[0] || '';
         },
         otherIncidentVerbs(inc) {
-            const next = this.nextIncidentVerb(inc);
-            return ['validate', 'dispatch', 'resolve', 'close'].filter(v => v !== next && inc?.available_verbs?.includes(v));
+            return this.incidentSteps(inc).slice(1);
         },
         // From a list row: open the incident with Validate ready, never validate unseen.
         async openIncidentToValidate(inc) {
@@ -1514,15 +1525,24 @@
             setTimeout(() => document.getElementById('incident-next-step')?.focus(), 250);
         },
         askIncidentVerb(inc, verb) {
-            if (['resolve', 'close'].includes(verb)) { this.incidentConfirmVerb = verb; return; }
+            if (['resolve', 'resolve_close', 'close'].includes(verb)) { this.incidentConfirmVerb = verb; return; }
             this.runIncidentVerb(inc, verb);
         },
         async runIncidentVerb(inc, verb) {
             if (this.incidentActing || !inc) return;
             this.incidentActing = true;
-            try { await this.actIncidentVerb(inc, verb); } finally { this.incidentActing = false; this.incidentConfirmVerb = ''; }
+            try {
+                if (verb !== 'resolve_close') { await this.actIncidentVerb(inc, verb); return; }
+                // One confirmation, two steps. A close that fails after the
+                // resolve went through leaves the incident Resolved, and says so.
+                if (!(await this.actIncidentVerb(inc, 'resolve', {}, { quiet: true }))) return;
+                if (await this.actIncidentVerb(inc, 'close', {}, { quiet: true, failure: inc.ref + ' is marked resolved, but it could not be closed. It stays Resolved; try Close incident again.' })) {
+                    this.toast(inc.ref + ' resolved and closed.', 'success');
+                }
+            } finally { this.incidentActing = false; this.incidentConfirmVerb = ''; }
         },
-        async actIncidentVerb(inc, verb, payload = {}) {
+        // Returns true when the step went through (the window chains resolve and close).
+        async actIncidentVerb(inc, verb, payload = {}, opts = {}) {
             try {
                 const res = await $api.post('/admin/sakuna/incidents/' + inc.ref + '/' + verb, payload);
                 Object.assign(inc, res.data);
@@ -1538,9 +1558,12 @@
                 this.showEscalateForm = false;
                 this.showAssignForm = false;
                 const done = { validate: 'validated', assign: 'assigned', dispatch: 'dispatched', escalate: 'escalated', resolve: 'marked resolved', close: 'closed' }[verb] || verb;
-                this.toast(inc.ref + ' ' + done + '.', 'success');
+                if (!opts.quiet) this.toast(inc.ref + ' ' + done + '.', 'success');
+                return true;
             } catch (err) {
-                this.toast(err.localised ? err.localised('en') : 'Could not ' + verb + ' this incident.', 'error');
+                const why = err.localised ? err.localised('en') : 'Could not ' + verb + ' this incident.';
+                this.toast(opts.failure ? opts.failure + ' (' + why + ')' : why, 'error');
+                return false;
             }
         },
 

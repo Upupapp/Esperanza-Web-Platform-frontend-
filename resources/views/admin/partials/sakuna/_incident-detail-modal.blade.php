@@ -49,7 +49,8 @@
                 <button type="button" x-show="can('sakuna_reports','print') && selectedIncident?.ref" @click="$dispatch('sakuna-print-incident', { ref: selectedIncident.ref })" class="sk-btn sk-btn-sm ml-1">
                     <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print report
                 </button>
-                <button aria-label="Close window" title="Close window" @click="showIncidentDetail = false" class="sk-mclose ml-2">
+                {{-- "Close", not "Close window": it sat beside "Close incident" (owner's manual test, 2026-11-06). --}}
+                <button type="button" aria-label="Close" title="Close" @click="showIncidentDetail = false" class="sk-mclose ml-2">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -291,15 +292,16 @@
 
         {{-- Modal Footer Actions (critique 2026-11-03) ─────────────────────────
              One primary button: the incident's next step. Assign and Escalate
-             open their forms; the other steps wait under More actions. Marking
-             resolved or closing the incident asks first, because it ends the
-             work; closing the window is only the × above. --}}
+             open their forms; the other steps wait under More actions. Resolve
+             and close (one step since 2026-11-06: resolve, then close) or
+             closing an already resolved incident asks first, because it ends
+             the work; closing the window is only the × above. --}}
         <div x-show="!showAssignForm && !showEscalateForm" class="flex flex-wrap items-center gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 flex-shrink-0"
              x-data="{ more: false }" @keydown.escape.stop="if (more) more = false; else if (incidentConfirmVerb) incidentConfirmVerb = ''; else if (showAssignForm) showAssignForm = false; else if (showEscalateForm) showEscalateForm = false; else showIncidentDetail = false">
             <template x-if="incidentConfirmVerb">
                 <div class="w-full flex flex-wrap items-center gap-2" role="alertdialog" aria-labelledby="incident-confirm-text">
                     <p id="incident-confirm-text" class="text-sm text-ink-body flex-1 min-w-[14rem]"
-                       x-text="incidentConfirmVerb === 'close' ? 'Close ' + selectedIncident?.ref + '? It leaves the open list and no further steps are taken on it.' : 'Mark ' + selectedIncident?.ref + ' resolved? Use this when the response is finished.'"></p>
+                       x-text="({ resolve_close: 'Resolve and close ' + selectedIncident?.ref + '? Use this when the response is finished. It is marked resolved, leaves the open list and no further steps are taken on it.', close: 'Close ' + selectedIncident?.ref + '? It leaves the open list and no further steps are taken on it.' })[incidentConfirmVerb] || 'Mark ' + selectedIncident?.ref + ' resolved? Use this when the response is finished.'"></p>
                     <button type="button" class="sk-btn sk-btn-sm" @click="incidentConfirmVerb = ''">Keep it open</button>
                     <button type="button" class="sk-btn sk-btn-sm sk-btn-p" :disabled="incidentActing"
                         @click="runIncidentVerb(selectedIncident, incidentConfirmVerb)"

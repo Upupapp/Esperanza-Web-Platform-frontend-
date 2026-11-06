@@ -370,6 +370,19 @@ export function tulongApply() {
                     const err = window.phMobile?.error(this.apForm[f.key], !!f.required, 'en');
                     if (err) return f.label + ': ' + err;
                 }
+                // No negative counts, ages or amounts (manual test 2026-11-06):
+                // the inputs say min 0, which a typed '-5' still gets past.
+                const negative = (v) => String(v ?? '').trim() !== '' && Number(v) < 0;
+                // A projected net income may be a loss, as the server allows (QA 2026-11-06).
+                const mayBeNegative = (key) => String(key || '').endsWith('net_income');
+                for (const f of (this.apType?.fields || []).filter((x) => this.apShown(x))) {
+                    if (f.type === 'number' && !mayBeNegative(f.key) && negative(this.apForm[f.key])) return f.label + ' must be 0 or more.';
+                    if (f.type === 'table' && Array.isArray(this.apForm[f.key])) {
+                        for (const col of (f.columns || []).filter((c) => c.type === 'number' && !mayBeNegative(c.key))) {
+                            if (this.apForm[f.key].some((row) => negative(row?.[col.key]))) return f.label + ', ' + col.label + ' must be 0 or more.';
+                        }
+                    }
+                }
                 return '';
             }
             if (step === 4) {
@@ -377,6 +390,7 @@ export function tulongApply() {
                 if (this.apRecordOnly) {
                     if (!this.apRecord.completed_on) return 'Give the date the assistance was given.';
                     if (!this.apRecord.released_to.trim()) return 'Write who received it.';
+                    if (this.apShowsAmount() && String(this.apRecord.amount ?? '').trim() !== '' && Number(this.apRecord.amount) < 0) return 'The amount must be 0 or more.';
                 }
                 return this.apConsent ? '' : 'The person must agree to the privacy notice first.';
             }
@@ -559,8 +573,11 @@ async function voidNote(r) {
 }
 
 /**
- * A counseling, referral or session case's "Case notes" (round 2,
- * 2026-10-30; the welfare round's "Service records"). The owner folded the
+ * A Tulong case's "Case notes" (round 2, 2026-10-30; the welfare round's
+ * "Service records"). On every Tulong type since 2026-11-06 (owner): a cash,
+ * medical, goods or registration case gets them too, not only counseling,
+ * referral and session cases; the server already takes a note on any type.
+ * Staff only: the resident never sees them. The owner folded the
  * separate Services rendered view, the "Record a service" window and the
  * resident's list of them back into Tulong ("the services rendered just
  * means the tulong"): what is written now is a note on a case, still a
@@ -596,7 +613,13 @@ export function caseNotes() {
         peso,
         modeLabel,
         cnShown() {
-            return !!this.selected && ['counseling', 'referral', 'session'].includes(this.processingKind);
+            return !!this.selected;
+        },
+        /** The panel's one-line help, in the words of this case's kind of work. */
+        cnHint() {
+            if (this.processingKind === 'session') return 'The session is noted here for each participant when it is finished. Add a note for anything else done on the case.';
+            if (['counseling', 'referral'].includes(this.processingKind)) return "Note each session held, home visit or referral as it happens: the notes are the case's work.";
+            return 'Note anything done on the case as it happens: an interview, a home visit, a call, a referral.';
         },
         cnSync() {
             const ref = this.selected?.ref || null;

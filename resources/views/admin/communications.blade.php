@@ -233,10 +233,16 @@
                     <p x-show="editing && editing.status !== 'Released'" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing an event in ' + (editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
                     <p x-show="editing && editing.status === 'Released'" x-cloak class="text-xs text-amber-800 bg-amber-50 rounded-xl px-3 py-2 flex items-start gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i><span>This event is published. Residents who can see it are told of a new date, time or venue, and its Balita post is updated too.</span></p>
                     <x-ui.input name="event_title" label="Event Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="form.name" />
-                    <div class="grid grid-cols-2 gap-3">
+                    {{-- A start and an end time (owner, Sprint 4 2026-11-06): the event is
+                         over once it ends. Both optional; an end needs a start. An older
+                         event's time in words is shown until a start time replaces it. --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <x-ui.input name="event_date" type="date" label="Date" x-model="form.date" />
-                        <x-ui.input name="event_time" type="time" label="Time" x-model="form.time" />
+                        <x-ui.input name="event_start_time" type="time" label="Start time" x-model="form.start_time" />
+                        <x-ui.input name="event_end_time" type="time" label="End time" x-model="form.end_time" x-bind:min="form.start_time || null" x-bind:disabled="!form.start_time && !form.end_time" />
                     </div>
+                    <p x-show="legacyTime && !form.start_time" x-cloak class="text-xs text-ink-muted -mt-2">Time on record: <span class="font-medium text-ink-body" x-text="legacyTime"></span>. Set a start time to replace it, or leave the pickers empty to keep it.</p>
+                    <p x-show="timeProblem()" x-cloak role="alert" class="text-xs text-rose-600 -mt-2" x-text="timeProblem()"></p>
                     <x-ui.input name="event_venue" label="Venue" placeholder="e.g. Municipal Plaza" x-model="form.venue" />
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="event-description">What it is about <span class="text-ink-muted font-normal">(optional)</span></label>

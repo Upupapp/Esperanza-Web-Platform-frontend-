@@ -1351,7 +1351,9 @@
                             <p class="text-[11px] text-ink-muted" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
                         </div>
                         <div class="space-y-2">
-                            <template x-for="req in (selected.requirements || [])" :key="req.key">
+                            {{-- Keyed by status too: an approved requirement redraws at once, so its
+                                 Approve / Flag / Reject row does not linger until a second click. --}}
+                            <template x-for="req in (selected.requirements || [])" :key="req.key + ':' + req.status">
                                 <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Flagged for Replacement', 'border-sky-200 bg-sky-50/30': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2.5 min-w-0">

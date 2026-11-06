@@ -23,6 +23,7 @@ function fmtDate(value) {
 export function citizenWelfare() {
     return {
         certificates: [],
+        certificatesLoading: true,
         fmtDate,
         tr,
         init() {
@@ -35,6 +36,7 @@ export function citizenWelfare() {
             } catch {
                 this.certificates = [];
             } finally {
+                this.certificatesLoading = false;
                 window.Alpine?.nextTick(() => window.renderIcons?.());
             }
         },

@@ -67,7 +67,8 @@ class EventsReachResidentsTest extends TestCase
         $this->assertStringContainsString(':href="post.event?.link"', $balita);
         $this->assertStringContainsString('<a :href="ev.link"', $balita);
         $this->assertStringContainsString('event: a.event || null', $this->source('resources/js/scope-citizen.js'));
-        $this->assertStringContainsString("\$api.get('/events', { params: { from, per_page: 3 } })", $dashboard);
+        // Since Sprint 4 (2026-11-06) also upcoming=1: only events not yet ended.
+        $this->assertStringContainsString("\$api.get('/events', { params: { from, upcoming: 1, per_page: 3 } })", $dashboard);
         $this->assertStringNotContainsString("\$api.get('/events', { params: { month } })", $dashboard);
     }
 }

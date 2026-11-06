@@ -263,14 +263,12 @@
              (supportDesk in resources/js/scope-citizen.js, 2026-10-15). -->
         <div x-show="tab === 'support'" x-cloak class="grid grid-cols-1 lg:grid-cols-3 gap-5" x-data="supportDesk()">
             <div class="lg:col-span-2 space-y-5 min-w-0">
-                {{-- A disaster or an accident is not a support ticket: it goes to
-                     the MDRRMO as an incident report (2026-10-17). --}}
-                <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3" data-testid="help-incident-link">
-                    <p class="text-xs text-rose-900 flex-1"><span class="font-bold"><x-ui.t fil="Baha, sunog, pagguho o aksidente?" en="Flooding, fire, a landslide or an accident?" /></span> <x-ui.t fil="Huwag itong isumite bilang ticket: mag-ulat ng insidente para agad itong makita ng MDRRMO." en="Don't file it as a ticket: report an incident so the MDRRMO sees it at once." /></p>
-                    <a href="{{ route('citizen.emergency') }}?report=1" class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 text-white px-3.5 py-2 text-xs font-semibold hover:bg-rose-700"><i data-lucide="flag" class="w-3.5 h-3.5"></i><x-ui.t fil="Mag-ulat ng insidente" en="Report an incident" /></a>
-                </div>
+                {{-- The "Report an incident" card left Help (owner's manual test,
+                     2026-11-06): incidents are not support; they stay under
+                     Emergency. The heading says what the form is, Report a
+                     Problem, as the app's screen does. --}}
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-ink mb-4"><x-ui.t fil="Magsumite ng Support Ticket" en="Submit a Support Ticket" /></h3>
+                    <h3 class="text-sm font-semibold text-ink mb-4"><x-ui.t fil="Mag-ulat ng Problema" en="Report a Problem" /></h3>
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>

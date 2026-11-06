@@ -491,6 +491,25 @@
                             return Array.isArray(v) ? v.length === 0 : String(v ?? '').trim() === '';
                         }).map((f) => f.label);
                     },
+                    // A number answer below zero (owner's manual test, 2026-11-06:
+                    // the form took -3 household members). The inputs say min 0;
+                    // this is the check, for a typed minus too. Table cells included.
+                    negativeNumbers() {
+                        const below = (v) => String(v ?? '').trim() !== '' && Number(v) < 0;
+                        // A projected net income may be a loss, as the server allows (QA 2026-11-06).
+                        const mayBeNegative = (key) => String(key || '').endsWith('net_income');
+                        const bad = [];
+                        for (const f of (this.types[this.selectedType]?.fields || [])) {
+                            if (!this.fieldShown(f)) continue;
+                            if (f.type === 'number' && !mayBeNegative(f.key) && below(this.formData[f.key])) bad.push(f.label);
+                            if (f.type === 'table') {
+                                (f.columns || []).filter((c) => c.type === 'number' && !c.options && !mayBeNegative(c.key)).forEach((c) => {
+                                    if ((this.formData[f.key] || []).some((row) => below(row?.[c.key]))) bad.push(f.label + ': ' + c.label);
+                                });
+                            }
+                        }
+                        return bad;
+                    },
                     advance() {
                         const en = this.$store.lang.current === 'en';
                         this.stepError = '';
@@ -499,6 +518,11 @@
                             const missing = this.missingRequired();
                             if (missing.length) {
                                 this.stepError = (en ? 'Please fill in: ' : 'Pakipunan ang: ') + missing.join(', ');
+                                return;
+                            }
+                            const negative = this.negativeNumbers();
+                            if (negative.length) {
+                                this.stepError = (en ? 'Must be 0 or more: ' : 'Dapat 0 o higit pa: ') + negative.join(', ');
                                 return;
                             }
                             // Every number field takes a Philippine mobile number (Esperanza QA, 2026-10-07).
@@ -605,6 +629,8 @@
             >
                 <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <x-ui.button @click="open = true" ::disabled="$store.citizenSession.account && !$store.citizenSession.account.fullServiceAccess" icon="hand-heart" size="sm" class="w-full sm:w-auto justify-center"><x-ui.t fil="Bagong Kahilingan sa Tulong" en="New Tulong Request" /></x-ui.button>
+                {{-- The certificates list sits at the bottom of the page; this finds it (owner's manual test, 2026-11-06). --}}
+                <x-ui.button variant="secondary" size="sm" icon="award" href="#my-certificates" class="w-full sm:w-auto justify-center"><x-ui.t fil="Aking mga sertipiko" en="My certificates" /></x-ui.button>
                 <x-ui.modal title="Bagong Kahilingan sa Tulong" titleEn="New Tulong Request" maxWidth="3xl" :fullscreen="true">
                     <!-- Success state -->
                     <div x-show="submitted" x-cloak x-transition.opacity class="flex flex-col items-center justify-center text-center py-10">
@@ -787,6 +813,7 @@
                                                 <input :aria-label="f.label"
                                                     :type="f.type" x-model="formData[f.key]"
                                                     :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
+                                                    :min="f.type === 'number' && !String(f.key).endsWith('net_income') ? 0 : null" :step="f.type === 'number' ? 'any' : null"
                                                     @input="if (f.type === 'tel') formData[f.key] = window.phMobile.clean($event.target.value)"
                                                     class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                 >
@@ -873,7 +900,7 @@
                                                                             </select>
                                                                         </template>
                                                                         <template x-if="!col.options">
-                                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" :min="col.type === 'number' && !String(col.key).endsWith('net_income') ? 0 : null" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                                                                         </template>
                                                                     </div>
                                                                 </template>

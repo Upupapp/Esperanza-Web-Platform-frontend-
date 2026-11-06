@@ -57,12 +57,16 @@
 
                         <section class="rep-section">
                             <h2>Timeline</h2>
-                            <table>
+                            {{-- Fixed columns (owner's manual test, 2026-11-06: the Note
+                                 column was cut off on paper): the table keeps to the
+                                 page's 186 mm and a long note wraps inside its column. --}}
+                            <table class="rep-fixed">
+                                <colgroup><col style="width:22%"><col style="width:12%"><col style="width:20%"><col style="width:16%"><col style="width:30%"></colgroup>
                                 <thead><tr><th>When</th><th>Step</th><th>Status</th><th>By</th><th>Note</th></tr></thead>
                                 <tbody>
                                     <template x-for="(e, ei) in (report.timeline || [])" :key="ei">
                                         <tr>
-                                            <td class="rep-nowrap" x-text="when(e.at)"></td>
+                                            <td x-text="when(e.at)"></td>
                                             <td x-text="word(e.verb)"></td>
                                             <td x-text="[status(e.from), status(e.to)].filter(Boolean).join(' → ')"></td>
                                             <td x-text="e.by || ''"></td>

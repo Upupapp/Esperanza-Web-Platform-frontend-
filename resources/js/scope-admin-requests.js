@@ -332,11 +332,23 @@ function blankForm(choices = {}) {
     };
 }
 
+/** The Manila day n days after ymd, as YYYY-MM-DD. */
+const addDays = (ymd, n) => {
+    const d = new Date(String(ymd).slice(0, 10) + 'T00:00:00Z');
+    if (Number.isNaN(d.getTime())) return ymd;
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+};
+
 /**
  * The Appointments page: the bookings of the schedules this officer runs,
  * one day at a time (GET /admin/appointments), with Confirm, Complete,
  * No-show and Cancel; and the schedules themselves with their closed days
  * (GET /admin/appointment-schedules, meta.choices for the form).
+ *
+ * Beside the day (owner, 2026-11-06): what is coming, soonest first, like a
+ * notification list - GET /admin/appointments?from=<tomorrow>
+ * &status=Booked,Confirmed&per_page=20. A row opens its day on the left.
  */
 export function appointmentsDesk() {
     return {
@@ -366,6 +378,13 @@ export function appointmentsDesk() {
         cancelReason: '',
         cancelError: '',
 
+        // Upcoming (from tomorrow), soonest first
+        upcoming: [],
+        uLoading: false,
+        uFailed: false,
+        uMore: false,
+        uSeq: 0,
+
         // Schedules
         schedules: [],
         choices: { offices: [], barangays: [], services: [] },
@@ -389,7 +408,10 @@ export function appointmentsDesk() {
             this.maySchedules = session.canPerm('appt_schedules', 'view');
             this.section = this.mayBookings ? 'bookings' : 'schedules';
             this.ready = true;
-            if (this.mayBookings) this.loadBookings();
+            if (this.mayBookings) {
+                this.loadBookings();
+                this.loadUpcoming();
+            }
             if (this.maySchedules) this.loadSchedules();
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -410,11 +432,57 @@ export function appointmentsDesk() {
             return day(ymd, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         },
         shiftDate(n) {
-            const d = new Date((this.date || this.today) + 'T00:00:00Z');
-            if (Number.isNaN(d.getTime())) return;
-            d.setUTCDate(d.getUTCDate() + n);
-            this.date = d.toISOString().slice(0, 10);
+            this.date = addDays(this.date || this.today, n);
             this.loadBookings();
+        },
+        // One page of the active bookings from tomorrow on: api.get, not
+        // getAll, so a busy office reads 20 rows, not every booking ahead.
+        async loadUpcoming(quiet = false) {
+            const seq = ++this.uSeq;
+            if (!quiet) {
+                this.uLoading = true;
+                this.uFailed = false;
+            }
+            try {
+                const res = await api.get('/admin/appointments', { params: { from: addDays(manilaToday(), 1), status: ACTIVE.join(','), per_page: 20 } });
+                if (seq !== this.uSeq) return;
+                const rows = Array.isArray(res?.data) ? res.data : [];
+                rows.sort((a, b) => (String(a.date) + ' ' + String(a.start_time || '')).localeCompare(String(b.date) + ' ' + String(b.start_time || '')));
+                this.upcoming = rows;
+                const m = res?.meta || {};
+                this.uMore = Number(m.total ?? rows.length) > rows.length;
+                this.uFailed = false;
+            } catch {
+                if (seq === this.uSeq && !quiet) this.uFailed = true;
+            } finally {
+                if (seq === this.uSeq) {
+                    this.uLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
+            }
+        },
+        // 'Tomorrow', 'In 3 days', or the weekday and date further out.
+        soonLabel(b) {
+            const days = Math.round((new Date(String(b.date).slice(0, 10) + 'T00:00:00Z') - new Date(manilaToday() + 'T00:00:00Z')) / 86400000);
+            if (Number.isNaN(days)) return '';
+            if (days <= 0) return 'Today';
+            if (days === 1) return 'Tomorrow';
+            if (days < 7) return 'In ' + days + ' days';
+            return day(b.date, { weekday: 'short', month: 'short', day: 'numeric' });
+        },
+        // Tomorrow is the most urgent, then the rest of the week.
+        soonClass(b) {
+            const days = Math.round((new Date(String(b.date).slice(0, 10) + 'T00:00:00Z') - new Date(manilaToday() + 'T00:00:00Z')) / 86400000);
+            if (days <= 1) return 'bg-amber-50 text-amber-800 ring-amber-200';
+            if (days < 7) return 'bg-brand-50 text-brand-700 ring-brand-200';
+            return 'bg-slate-100 text-slate-600 ring-slate-200';
+        },
+        openDay(b) {
+            if (!b?.date) return;
+            this.date = String(b.date).slice(0, 10);
+            this.statusFilter = '';
+            this.loadBookings();
+            this.$nextTick(() => document.getElementById('appt-day-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
         },
         goToday() {
             this.date = manilaToday();
@@ -484,6 +552,7 @@ export function appointmentsDesk() {
                 }[action];
                 toast(done[0], done[1]);
                 this.loadBookings(true);
+                this.loadUpcoming(true);
                 return true;
             } catch (err) {
                 const msg = APPT_ERRORS[err?.code] || says(err, 'Could not update ' + b.ref + '.');

@@ -978,7 +978,9 @@ function extrasPayload(f) {
  * withdrawn before its day is a cancellation, told with its reason.
  */
 function adminEvents(barangays = []) {
-    const blank = () => ({ name: '', description: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: barangays[0] || '', post_to_balita: true, ...eventExtras() });
+    // A start and an end time (owner, Sprint 4 2026-11-06), "HH:MM" each;
+    // the server writes the words residents read (`time`) from them.
+    const blank = () => ({ name: '', description: '', category: 'Community', date: '', start_time: '', end_time: '', venue: '', audience: 'Municipal', barangay: barangays[0] || '', post_to_balita: true, ...eventExtras() });
     return {
         loading: true,
         failed: false,
@@ -1057,6 +1059,8 @@ function adminEvents(barangays = []) {
 
         openNew() {
             this.editing = null;
+            this.timeBase = { start: '', end: '' };
+            this.legacyTime = '';
             this.form = blank();
             this.media = emptyMedia();
             this.formKey += 1;
@@ -1065,10 +1069,20 @@ function adminEvents(barangays = []) {
         // A time typed as text before (8:00 AM) for the time field; one it
         // cannot read leaves the field empty and is kept as it was.
         toTime(t) { return toHm(t); },
+        // The times the event had when the form opened: only a change is sent.
+        timeBase: { start: '', end: '' },
+        // An older event's time in words that no picker holds ("Whole day",
+        // "8 AM onwards" before the server read it): shown above the pickers,
+        // and kept unless a start time is set.
+        legacyTime: '',
         openEdit(e) {
+            const start = toHm(e.start_time) || (e.start_time == null ? this.toTime(e.time) : '');
+            const end = toHm(e.end_time);
+            this.timeBase = { start, end };
+            this.legacyTime = !start && e.time ? String(e.time) : '';
             this.form = {
                 name: e.title || e.name || '', description: e.description || '', category: e.category || 'Community',
-                date: e.date || '', time: this.toTime(e.time), venue: e.venue || '',
+                date: e.date || '', start_time: start, end_time: end, venue: e.venue || '',
                 audience: e.barangay ? 'Barangay' : 'Municipal', barangay: e.barangay || barangays[0] || '',
                 post_to_balita: e.post_to_balita !== false,
                 ...eventExtras(e),
@@ -1085,12 +1099,19 @@ function adminEvents(barangays = []) {
         },
         // ---- Registration and certificate (round 2, 2026-10-30)
         /** '' when registration and the certificate are ready to save, else what to put right. */
+        /** '' when the times are right: an end needs a start and comes after it. */
+        timeProblem() {
+            const f = this.form;
+            if (f.end_time && !f.start_time) return 'Set a start time before the end time.';
+            if (f.start_time && f.end_time && f.end_time <= f.start_time) return 'The end time must be after the start time.';
+            return '';
+        },
         extrasProblem() {
             const f = this.form;
             if (f.registration_open) {
                 const cap = String(f.capacity ?? '').trim();
                 if (cap !== '' && !(/^\d+$/.test(cap) && Number(cap) >= 1)) return 'Capacity is a whole number of people, or empty for no limit.';
-                if (f.closes_at && f.date && f.closes_at > f.date + 'T' + (f.time || '23:59')) return 'Registration has to close before the event starts.';
+                if (f.closes_at && f.date && f.closes_at > f.date + 'T' + (f.start_time || '23:59')) return 'Registration has to close before the event starts.';
             }
             const c = f.cert;
             if (c.enabled) {
@@ -1110,7 +1131,7 @@ function adminEvents(barangays = []) {
         closesHint() {
             const f = this.form;
             if (f.closes_at) return 'Residents can register until ' + this.dayLabel(f.closes_at.slice(0, 10)) + ', ' + clock(f.closes_at.slice(11, 16)) + '.';
-            return 'Empty: until the event starts' + (f.date ? ' (' + this.dayLabel(f.date) + (f.time ? ', ' + clock(f.time) : '') + ')' : '') + '.';
+            return 'Empty: until the event starts' + (f.date ? ' (' + this.dayLabel(f.date) + (f.start_time ? ', ' + clock(f.start_time) : '') + ')' : '') + '.';
         },
         /** A preset's title, and its wording too while the wording is still a preset's own. */
         certPreset(key) {
@@ -1173,6 +1194,7 @@ function adminEvents(barangays = []) {
             const f = this.form;
             if (this.processing || !f.name.trim() || !f.date) return;
             if (this.mediaProblem) { balitaToast(this.mediaProblem, 'error'); return; }
+            if (this.timeProblem()) { balitaToast(this.timeProblem(), 'error'); return; }
             const problem = this.extrasProblem();
             if (problem) { balitaToast(problem, 'error'); return; }
             return this.editing ? this.saveEdit(submit) : this.create(submit);
@@ -1184,7 +1206,10 @@ function adminEvents(barangays = []) {
                 const key = f.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) + '-' + Date.now().toString(36);
                 await api.post('/admin/events', {
                     key, name: f.name.trim(), title: f.name.trim(), description: f.description.trim() || null, date: f.date,
-                    time: f.time || null, venue: f.venue.trim() || null, category: f.category,
+                    // `time` for a server from before the start and end times; a
+                    // newer one writes it from start_time and end_time.
+                    time: f.start_time || null, start_time: f.start_time || null, end_time: f.start_time ? (f.end_time || null) : null,
+                    venue: f.venue.trim() || null, category: f.category,
                     barangay: f.audience === 'Barangay' ? f.barangay : null,
                     post_to_balita: !!f.post_to_balita, media_ids: this.media.ids,
                     ...extrasPayload(f),
@@ -1209,7 +1234,13 @@ function adminEvents(barangays = []) {
             if (f.name.trim() !== (e.title || e.name)) { changes.name = f.name.trim(); changes.title = f.name.trim(); }
             if (f.description.trim() !== (e.description || '')) changes.description = f.description.trim() || null;
             if (f.date !== e.date) changes.date = f.date;
-            if (f.time !== this.toTime(e.time)) changes.time = f.time || null;
+            // Both times go when either changed: the server checks one against the other.
+            if (f.start_time !== this.timeBase.start || f.end_time !== this.timeBase.end) {
+                changes.start_time = f.start_time || null;
+                changes.end_time = f.start_time ? (f.end_time || null) : null;
+                // Cleared, an older event's words stay (null clears them only when they were the old start).
+                changes.time = f.start_time || (this.legacyTime || null);
+            }
             if (f.venue.trim() !== (e.venue || '')) changes.venue = f.venue.trim() || null;
             if (f.category !== (e.category || 'Community')) changes.category = f.category;
             if (barangay !== (e.barangay || null)) changes.barangay = barangay;
@@ -1232,7 +1263,7 @@ function adminEvents(barangays = []) {
                 if (submit) { await api.post(path + '/transition', { to: 'Pending Review' }); e.status = 'Pending Review'; }
                 this.open = false;
                 this.editing = null;
-                const told = e.status === 'Released' && e.upcoming && ['date', 'time', 'venue'].some((k) => k in changes);
+                const told = e.status === 'Released' && e.upcoming && ['date', 'time', 'start_time', 'end_time', 'venue'].some((k) => k in changes);
                 balitaToast(submit ? 'Saved and submitted for review.' : (told ? 'Saved. Residents were told of the change.' : 'Changes saved.'));
                 await this.load();
             } catch (err) {

@@ -26,8 +26,11 @@
     <div x-show="!ready" aria-busy="true" class="space-y-3"><x-ui.skeleton class="h-24 rounded-[22px]" /><x-ui.skeleton class="h-24 rounded-[22px] opacity-80" /></div>
     <div x-show="ready && !mayBookings && !maySchedules" x-cloak class="surface-pressed rounded-2xl px-4 py-6 text-center text-[14.5px] font-bold text-ink">Appointments are not part of your role.</div>
 
-    {{-- Bookings: one day at a time. --}}
-    <section x-show="ready && mayBookings && section === 'bookings'" x-cloak class="flex flex-col gap-4" aria-label="Bookings">
+    {{-- Bookings (owner, 2026-11-06): on the left one day at a time, today
+         first; on the right what is coming, soonest first, like a list of
+         notifications. Stacked on a phone, the day first. --}}
+    <div x-show="ready && mayBookings && section === 'bookings'" x-cloak class="grid gap-[22px] lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] items-start">
+    <section id="appt-day-list" class="flex flex-col gap-4 min-w-0 scroll-mt-4" aria-label="Bookings by day">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
                 <button type="button" @click="shiftDate(-1)" aria-label="Previous day" class="{{ $iconBtn }}"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
@@ -53,7 +56,7 @@
         <div x-show="bLoading && !bookings.length" aria-busy="true" class="space-y-3"><x-ui.skeleton class="h-28 rounded-[22px]" /><x-ui.skeleton class="h-28 rounded-[22px] opacity-80" /></div>
         <div x-show="bFailed" x-cloak><x-ui.error-state messageExpr="bError" retryExpr="loadBookings()" :retryable="true" /></div>
         <div x-show="!bLoading && !bFailed && !bookings.length" x-cloak class="surface-pressed rounded-2xl px-4 py-8 text-center">
-            <p class="text-[14.5px] font-bold text-ink" x-text="statusFilter ? 'No ' + statusFilter.toLowerCase() + ' appointments on this day.' : 'No appointments on this day.'"></p>
+            <p class="text-[14.5px] font-bold text-ink" x-text="statusFilter ? 'No ' + statusFilter.toLowerCase() + ' appointments ' + (date === today ? 'today.' : 'on this day.') : (date === today ? 'No appointments today' : 'No appointments on this day.')"></p>
             <p class="mt-1 text-[12.5px] text-ink-muted">Residents book the open slots of your schedules from the Citizen Web.</p>
         </div>
 
@@ -90,6 +93,42 @@
             </template>
         </ul>
     </section>
+
+    {{-- Upcoming: booked and confirmed from tomorrow on, the soonest first.
+         A row opens its day on the left, where its actions are. --}}
+    <aside class="surface-glass rounded-[22px] p-4 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4" aria-labelledby="appt-upcoming-title" data-testid="appt-upcoming">
+        <div class="flex items-center justify-between gap-2">
+            <h4 id="appt-upcoming-title" class="text-[15px] font-extrabold text-ink flex items-center gap-2"><i data-lucide="bell-ring" class="w-4 h-4 text-brand-600"></i>Upcoming</h4>
+            <button type="button" @click="loadUpcoming()" aria-label="Reload the upcoming appointments" class="{{ $iconBtn }}"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+        </div>
+        <p class="text-[12px] text-ink-muted -mt-1">Booked and confirmed, from tomorrow. The soonest is first.</p>
+
+        <div x-show="uLoading && !upcoming.length" aria-busy="true" class="space-y-2"><x-ui.skeleton class="h-16 rounded-2xl" /><x-ui.skeleton class="h-16 rounded-2xl opacity-80" /></div>
+        <p x-show="uFailed" x-cloak class="text-[12.5px] text-rose-700" role="alert">Could not load the upcoming appointments. <button type="button" class="underline font-semibold" @click="loadUpcoming()">Try again</button></p>
+        <p x-show="!uLoading && !uFailed && !upcoming.length" x-cloak class="surface-pressed rounded-2xl px-3 py-5 text-center text-[13px] font-semibold text-ink-muted">Nothing booked after today.</p>
+
+        <ol x-show="!uFailed && upcoming.length" class="flex flex-col gap-2 transition-opacity" :class="uLoading && 'opacity-60'">
+            <template x-for="b in upcoming" :key="b.ref">
+                <li>
+                    <button type="button" @click="openDay(b)" :aria-label="'Open ' + dateLabel(b.date) + ': ' + (b.citizen ? b.citizen.name : 'Resident')"
+                            class="w-full text-left rounded-2xl border border-slate-200 bg-white/80 p-3 hover:border-brand-300 hover:bg-white transition-colors flex gap-3">
+                        <span class="w-9 h-9 shrink-0 rounded-xl grid place-items-center" :class="statusClass(b.status)"><i :data-lucide="statusIcon(b.status)" class="w-4 h-4"></i></span>
+                        <span class="min-w-0 flex-1">
+                            <span class="flex flex-wrap items-center gap-1.5">
+                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold ring-1 ring-inset whitespace-nowrap" :class="soonClass(b)" x-text="soonLabel(b)"></span>
+                                <span class="text-[12px] font-semibold text-ink tabular-nums" x-text="b.when || (day(b.date) + ' · ' + time(b.start_time))"></span>
+                            </span>
+                            <span class="block mt-1 text-[13.5px] font-bold text-ink truncate" x-text="b.citizen ? b.citizen.name : 'Resident'"></span>
+                            <span class="block text-[12px] text-ink-muted truncate" x-text="[b.place, b.status].filter(Boolean).join(' · ')"></span>
+                            <span class="block text-[12px] text-ink-body truncate" x-show="b.purpose" x-text="b.purpose"></span>
+                        </span>
+                    </button>
+                </li>
+            </template>
+        </ol>
+        <p x-show="uMore && !uFailed" x-cloak class="text-[11.5px] text-ink-faint">The next 20 are shown. Pick a later day on the left for the rest.</p>
+    </aside>
+    </div>
 
     {{-- Schedules, with their closed days. --}}
     <section x-show="ready && maySchedules && section === 'schedules'" x-cloak class="flex flex-col gap-4" aria-label="Schedules">

@@ -73,12 +73,15 @@
             async loadEvents() {
                 try {
                     // What is still to come, from today in Esperanza (the month's
-                    // first events showed even after they had passed, 2026-10-21).
+                    // first events showed even after they had passed, 2026-10-21),
+                    // and since Sprint 4 (2026-11-06) only those not yet ended:
+                    // upcoming=1, with `from` kept for a server from before it.
                     const from = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-                    const result = await $api.get('/events', { params: { from, per_page: 3 } });
-                    this.events = (result.data || []).slice(0, 3).map((e) => ({
+                    const result = await $api.get('/events', { params: { from, upcoming: 1, per_page: 3 } });
+                    const ended = window.eventEnded || (() => false);
+                    this.events = (result.data || []).filter((e) => !ended(e)).slice(0, 3).map((e) => ({
                         date: e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
-                        time: e.time || '',
+                        time: window.eventTimeRange ? window.eventTimeRange(e) : (e.time || ''),
                         title: e.title || e.name,
                         venue: e.venue || '',
                         link: e.link || null,

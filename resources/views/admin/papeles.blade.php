@@ -41,6 +41,9 @@
             selectedCitizenId: null,
             previewDoc: null,
             search: '',
+            // Find a resident in ANY barangay (owner, 2026-11-06): the search
+            // inside a folder only ever looked inside that one barangay.
+            globalSearch: '',
             sort: 'newest',
             showAdvancedFilters: false,
             docCategoryFilter: '',
@@ -85,6 +88,24 @@
                         pending: byBarangay[b]?.pending || 0,
                     }));
             },
+            // Every resident with a document, in a barangay this officer may
+            // see, matched by name or account number from what is already
+            // loaded (no extra request). The first 20, by name.
+            get globalResults() {
+                const q = this.globalSearch.trim().toLowerCase();
+                if (q.length < 2) return [];
+                const byCitizen = {};
+                this.documents.forEach(d => {
+                    if (!d.citizen_id || !d.citizen_barangay || !this.$store.session.inScope(d.citizen_barangay)) return;
+                    const c = byCitizen[d.citizen_id] = byCitizen[d.citizen_id] || { id: d.citizen_id, name: d.citizen_name, barangay: d.citizen_barangay, docs: 0 };
+                    c.docs++;
+                });
+                return Object.values(byCitizen)
+                    .filter(c => (c.name || '').toLowerCase().includes(q) || String(c.id).toLowerCase().includes(q))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .slice(0, 20);
+            },
+            openFromSearch(c) { this.openBarangay(c.barangay); this.globalSearch = ''; this.openCitizen(c.id); },
             get citizensInBarangay() {
                 const byCitizen = {};
                 this.documents
@@ -219,6 +240,35 @@
                 <div>
                     <h3 class="text-sm font-semibold text-ink">Citizen Documents by Barangay</h3>
                     <p class="text-xs text-ink-muted" x-text="visibleFolders.length + ' barangay' + (visibleFolders.length === 1 ? '' : 's') + ' in your scope'"></p>
+                </div>
+            </div>
+
+            {{-- Search every barangay at once: a resident by name or account
+                 number, opened straight from the result. --}}
+            <div class="surface-glass rounded-[26px] p-3 mb-4" data-testid="papeles-global-search">
+                <div class="relative">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input id="papeles-global-search" aria-label="Find a resident in any barangay by name or account number" type="search" x-model="globalSearch" autocomplete="off"
+                           @keydown.enter.prevent="globalResults.length === 1 && openFromSearch(globalResults[0])"
+                           placeholder="Find a resident in any barangay: name or account number..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
+                </div>
+                <div x-show="globalSearch.trim().length >= 2" x-cloak class="mt-2.5">
+                    <p class="text-[11px] text-ink-muted mb-1.5" x-text="globalResults.length ? (globalResults.length === 20 ? 'The first 20 residents found. Type more to narrow it.' : globalResults.length + ' resident' + (globalResults.length === 1 ? '' : 's') + ' found') : 'No resident with documents matches this, in the barangays in your scope.'"></p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        <template x-for="c in globalResults" :key="c.id">
+                            <button
+                                type="button" @click="openFromSearch(c)"
+                                class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left hover:border-brand-300 hover:shadow-sm transition-all duration-[220ms] ease-standard"
+                            >
+                                <div class="w-9 h-9 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0" x-text="(c.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-slate-700 truncate" x-text="c.name"></p>
+                                    <p class="text-xs text-ink-muted truncate"><span class="font-mono" x-text="c.id"></span> · <span x-text="'Brgy. ' + c.barangay"></span></p>
+                                </div>
+                                <span class="text-[11px] font-semibold text-ink-muted shrink-0" x-text="c.docs + ' doc' + (c.docs === 1 ? '' : 's')"></span>
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
 

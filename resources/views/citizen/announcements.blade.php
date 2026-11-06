@@ -186,7 +186,7 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-ink truncate" x-text="ev.title || ev.name"></p>
-                                    <p class="text-[11px] text-ink-muted truncate" x-text="[ev.time, ev.venue].filter(Boolean).join(' · ')"></p>
+                                    <p class="text-[11px] text-ink-muted truncate" x-text="[ev.timeLabel, ev.venue].filter(Boolean).join(' · ')"></p>
                                 </div>
                             </a>
                         </template>

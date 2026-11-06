@@ -1,4 +1,4 @@
-<x-layouts.citizen title="Events" subtitle="Upcoming municipal and barangay events." active="events">
+<x-layouts.citizen title="Events" subtitle="Municipal and barangay events." active="events">
     <div
         x-data="{
             events: [],
@@ -54,6 +54,8 @@
                             ref: e.key,
                             key: e.date,
                             title: e.title || e.name,
+                            // Start to end time, or the older words in time (Sprint 4, 2026-11-06).
+                            timeLabel: window.eventTimeRange ? window.eventTimeRange(e) : (e.time || ''),
                             day: d.getDate(),
                             monthShort: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
                             dotColor: this.categoryColor[e.category] || 'bg-slate-400',
@@ -226,7 +228,7 @@
                                         ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Sa Barangay" en="In the Barangay" /></span>
                                     </div>
                                     <p class="text-xs text-ink-muted mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                                        <span class="flex items-center gap-1.5" x-show="event.time"><i data-lucide="clock" class="w-3.5 h-3.5"></i><span x-text="event.time"></span></span>
+                                        <span class="flex items-center gap-1.5" x-show="event.timeLabel"><i data-lucide="clock" class="w-3.5 h-3.5"></i><span x-text="event.timeLabel"></span></span>
                                         <span class="flex items-center gap-1.5" x-show="event.venue"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="event.venue"></span></span>
                                     </p>
                                 </div>

@@ -32,9 +32,12 @@
 
 {{-- Clay design (STYLE_GUIDE §2): no full-width bar. The title sits on the
      canvas; the clock and search are pressed wells, the bell and the user chip
-     glass, the menus glass panels. --}}
+     glass, the menus glass panels.
+     z-30, not z-20 (manual test 2026-11-06): a page card lifted to z-20 for
+     its pop-over (Sakuna Reports' date range) painted over the account and
+     bell menus. Below the phone menu's overlay (z-40). --}}
 <header
-    class="relative z-20 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
+    class="relative z-30 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{ time: '' }"
     x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); $store.adminNotifications.load(); $store.adminNotifications.poll()"
 >

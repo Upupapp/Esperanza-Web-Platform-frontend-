@@ -145,8 +145,11 @@
                     </div>
                 </div>
 
-                {{-- Finish and issue certificates: confirmed here, no browser confirm(). --}}
-                <div x-show="sdPanel === 'finish'" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 space-y-2" role="region" aria-label="Finish the session">
+                {{-- Finish and issue certificates: confirmed here, no browser confirm().
+                     The footer's "Finish session…" opens this and hides while it is
+                     open, so there is one button to press, not the same label
+                     twice (manual test 2026-11-06); it scrolls into view. --}}
+                <div id="sd-finish-panel" x-show="sdPanel === 'finish'" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 space-y-2 scroll-mt-4" role="region" aria-label="Finish the session">
                     <p class="text-xs font-semibold text-emerald-900">Finish the session and issue the certificates?</p>
                     <ul class="text-xs text-emerald-900 list-disc pl-4 space-y-0.5">
                         <li>A certificate goes to every case whose participants <strong>all</strong> attended<span x-show="sdType(ses.service_key)?.sessionCouple">: for a couple, both partners</span>. It is issued on the case, the case is completed, and each participant with an account is notified.</li>
@@ -173,7 +176,7 @@
                 <x-ui.button size="sm" variant="ghost" icon="calendar-x" x-show="sdCan('edit')" @click="sdPanel = 'cancel'; sdCancelReason = ''; $nextTick(() => document.getElementById('sd-cancel')?.focus())">Cancel session</x-ui.button>
             </div>
             <x-ui.button size="sm" variant="secondary" icon="save" x-show="ses && sdScheduled() && sdCan('edit')" x-bind:disabled="sdBusy || !sdDirty()" @click="sdSaveAttendance()">Save attendance</x-ui.button>
-            <x-ui.button size="sm" icon="award" x-show="ses && sdScheduled() && sdCan('release')" x-bind:disabled="sdBusy || !ses?.participants.length" @click="sdPanel = 'finish'">Finish and issue certificates</x-ui.button>
+            <x-ui.button size="sm" icon="award" x-show="ses && sdScheduled() && sdCan('release') && sdPanel !== 'finish'" x-bind:disabled="sdBusy || !ses?.participants.length" @click="sdPanel = 'finish'; $nextTick(() => document.getElementById('sd-finish-panel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))">Finish session…</x-ui.button>
             <x-ui.button size="sm" variant="secondary" x-show="!ses || !sdScheduled()" @click="sdOpen = false">Close</x-ui.button>
         </x-slot:footer>
     </x-ui.modal>

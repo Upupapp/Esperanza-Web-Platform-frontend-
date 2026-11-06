@@ -255,7 +255,7 @@ class WelfareRoundTwoTest extends TestCase
         $this->assertStringContainsString('Record assistance already given', $this->source('resources/views/admin/tulong/apply.blade.php'));
     }
 
-    public function test_a_counseling_or_referral_case_keeps_its_case_notes(): void
+    public function test_every_tulong_case_has_its_case_notes(): void
     {
         $notes = $this->source('resources/views/admin/tulong/case-notes.blade.php');
         $js = $this->source('resources/js/welfare-admin.js');
@@ -268,7 +268,12 @@ class WelfareRoundTwoTest extends TestCase
         }
         $this->assertStringNotContainsString('Service records', $this->shown('resources/views/admin/tulong/case-notes.blade.php'));
         $this->assertStringContainsString("Alpine.data('caseNotes', caseNotes);", $js);
-        $this->assertStringContainsString("return !!this.selected && ['counseling', 'referral', 'session'].includes(this.processingKind);", $js);
+        // On every Tulong type (owner, 2026-11-06), not only counseling,
+        // referral and session cases; staff only.
+        $this->assertStringContainsString("cnShown() {\n            return !!this.selected;\n        },", $js);
+        $this->assertStringNotContainsString("['counseling', 'referral', 'session'].includes(this.processingKind)", $js);
+        $this->assertStringContainsString('x-text="cnHint()"', $notes);
+        $this->assertStringContainsString('Staff only: the resident does not see these notes.', $notes);
         // Still a services-rendered row on the case: the person and type are the case's.
         $this->assertStringContainsString("await api.post('/admin/services-rendered', {\n                    request_ref: ref,", $js);
         $this->assertStringContainsString("const NOTE_MODES = [['office', 'At the office'], ['home_visit', 'Home visit'], ['field', 'In the field'], ['online', 'Online or by phone']];", $js);

@@ -158,7 +158,7 @@
                         <template x-if="['text', 'number', 'date', 'tel'].includes(f.type)">
                             <div>
                                 <label :for="'ap-f-' + f.key" class="{{ $apUi['label'] }}" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                <input :id="'ap-f-' + f.key" :type="f.type" x-model="apForm[f.key]" :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
+                                <input :id="'ap-f-' + f.key" :type="f.type" x-model="apForm[f.key]" :min="f.type === 'number' ? (f.min ?? (String(f.key).endsWith('net_income') ? null : 0)) : null" :step="f.type === 'number' ? (f.step ?? 'any') : null" :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
                                        @input="if (f.type === 'tel') apForm[f.key] = window.phMobile.clean($event.target.value)" class="{{ $apUi['input'] }}">
                             </div>
                         </template>
@@ -219,7 +219,7 @@
                                                         </select>
                                                     </template>
                                                     <template x-if="!col.options">
-                                                        <input :id="'ap-t-' + f.key + ri + col.key" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="{{ $apUi['input'] }} !text-xs !py-1.5">
+                                                        <input :id="'ap-t-' + f.key + ri + col.key" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" :min="col.type === 'number' ? (col.min ?? (String(col.key).endsWith('net_income') ? null : 0)) : null" :step="col.type === 'number' ? (col.step ?? 'any') : null" x-model="row[col.key]" class="{{ $apUi['input'] }} !text-xs !py-1.5">
                                                     </template>
                                                 </div>
                                             </template>

@@ -928,6 +928,14 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     padding: 1.2mm 1.6mm;
     vertical-align: top;
     text-align: left;
+    /* A long word or code breaks inside its cell instead of pushing the
+       table past the page (owner's manual test, 2026-11-06: the incident
+       report's Note column was cut off on paper). */
+    overflow-wrap: anywhere;
+}
+/* A table whose column widths are set by its <colgroup>, not its content. */
+.rep-paper table.rep-fixed {
+    table-layout: fixed;
 }
 .rep-paper th {
     background: #e8ecf3;
@@ -1071,10 +1079,20 @@ body.dp-printing #dp-print-area:has(.rep-paper) {
             font: 8pt Arial, Helvetica, sans-serif;
         }
     }
+    /* Overrides the general print rule's html, body { width: 210mm } (that
+       one is for the Dokyu sheet, which owns its margins under @page
+       { margin: 0 }): a report takes the named page's area, 186 mm wide in
+       portrait, and never more. */
     html:has(.rep-paper),
     html:has(.rep-paper) body {
         width: auto !important;
         min-width: 0 !important;
+    }
+    body.dp-printing .rep-paper {
+        max-width: 186mm !important;
+    }
+    body.dp-printing .rep-paper.rep-landscape {
+        max-width: 273mm !important;
     }
     body.dp-printing #dp-print-area:has(.rep-paper) {
         position: static !important;

@@ -1196,6 +1196,31 @@ function helpFeedback(docKey, item) {
 
 // ================================================================= Events
 
+/**
+ * An event's time as residents read it (Sprint 4, 2026-11-06): its start and
+ * end times ("2:00 PM – 4:00 PM", or the start alone), else the older words
+ * in `time` ("Whole day"), which a server from before the start and end
+ * times sends alone.
+ */
+function eventTimeRange(e) {
+    const start = e?.start_time ? clock(e.start_time) : '';
+    if (!start) return e?.time || '';
+    const end = e?.end_time ? clock(e.end_time) : '';
+    return end ? start + ' – ' + end : start;
+}
+
+/**
+ * Whether an event is over: now is past its `ends_at` (its end time, or the
+ * end of its day without one; owner, Sprint 4). Without `ends_at` (a server
+ * from before it), once its day has passed in Esperanza, as before.
+ */
+function eventEnded(e) {
+    const ends = e?.ends_at ? Date.parse(e.ends_at) : NaN;
+    if (!Number.isNaN(ends)) return Date.now() >= ends;
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+    return !!e?.date && String(e.date).slice(0, 10) < today;
+}
+
 // The upcoming events this resident asked to be reminded of: fetched once a
 // page, shared by every month the calendar shows.
 let reminderKeys = null;
@@ -1273,12 +1298,9 @@ function eventCalendar() {
             }
         },
         google(e) { return googleCalendarUrl(details(e)); },
-        // A reminder is for what is still to come: an event whose day has
-        // passed (Esperanza's day) offers none (2026-10-15).
-        isPast(e) {
-            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-            return !!e.date && String(e.date).slice(0, 10) < today;
-        },
+        // A reminder is for what is still to come: an event that has ended
+        // offers none (2026-10-15; by its end time since Sprint 4, 2026-11-06).
+        isPast(e) { return eventEnded(e); },
     };
 }
 
@@ -2115,10 +2137,12 @@ function balitaFeed() {
             try {
                 const [ann, ev] = await Promise.all([
                     this.fetchPage(1),
-                    api.get('/events', { params: { per_page: 4, from: new Date().toLocaleDateString('en-CA', { timeZone: TZ }) } }).catch(() => ({ data: [] })),
+                    // upcoming=1: only the events not over yet (Sprint 4); `from`
+                    // still keeps a server from before it to today on.
+                    api.get('/events', { params: { per_page: 4, upcoming: 1, from: new Date().toLocaleDateString('en-CA', { timeZone: TZ }) } }).catch(() => ({ data: [] })),
                 ]);
                 this.merge(ann);
-                this.events = ev.data || [];
+                this.events = (ev.data || []).filter((e) => !eventEnded(e)).map((e) => ({ ...e, timeLabel: eventTimeRange(e) }));
             } catch {
                 this.failed = true;
             } finally {
@@ -2270,6 +2294,9 @@ function balitaFeed() {
 export function register(Alpine) {
     window.applyServiceCatalog = applyServiceCatalog;
     window.dialHref = dialHref;
+    // For the pages' own x-data (dashboard, Events): one reading of an event's times.
+    window.eventTimeRange = eventTimeRange;
+    window.eventEnded = eventEnded;
     Alpine.data('citizenEmergency', citizenEmergency);
     Alpine.data('citizenUploads', citizenUploads);
     Alpine.data('balitaFeed', balitaFeed);

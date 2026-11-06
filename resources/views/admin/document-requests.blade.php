@@ -1496,31 +1496,40 @@
                 }
                 const citizenName = (this.selected?.citizen || 'Citizen').replace(/[^a-z0-9]+/gi, '-');
                 const docName = (this.resolvedDocument?.certTitle || this.selected?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
-                document.body.classList.add('dp-printing');
-                await this.$nextTick();
-                // The default seals/watermark are real image files (not
-                // inlined), and a just-uploaded custom seal/watermark is a
-                // data: URL that still needs a browser decode tick — either
-                // way, capturing before they've finished loading bakes a
-                // blank box into the PDF instead of the actual image.
-                await window.DokyuEditor.waitForImages(el);
-                // html2canvas 1.4.1 only understands the rgb/rgba/hsl/hsla
-                // color functions and throws on anything else — Tailwind v4
-                // compiles its whole palette as oklch(), which is exactly
-                // what was breaking every Download PDF attempt (confirmed
-                // via direct reproduction: it throws Attempting to parse an
-                // unsupported color function oklch). html2canvas resolves
-                // background/image resources against the LIVE document
-                // before its own clone (and onclone) ever exists, so the
-                // fix has to touch the real page rather than a clone —
-                // sanitizeExportColors() only ever swaps in a mathematically
-                // identical rgb() for each oklch() it finds, so nothing
-                // visibly changes, and restoreColors() (always run in
-                // finally) puts every touched property back immediately
-                // after capture.
-                const restoreColors = window.DokyuEditor.sanitizeExportColors(document.body);
+                // Everything from here sits inside the try: body.dp-printing hides
+                // the whole page but the document, so a throw before it (or a
+                // save() that never settles) used to leave staff on a bare
+                // document with no way back (manual test 2026-11-06). The
+                // finally now always removes it, and a stalled save gives up
+                // after PDF_TIMEOUT_MS into the same Print fallback toast.
+                const PDF_TIMEOUT_MS = 30000;
+                let restoreColors = () => {};
+                let timer = null;
                 try {
-                    await html2pdf().set({
+                    document.body.classList.add('dp-printing');
+                    await this.$nextTick();
+                    // The default seals/watermark are real image files (not
+                    // inlined), and a just-uploaded custom seal/watermark is a
+                    // data: URL that still needs a browser decode tick — either
+                    // way, capturing before they've finished loading bakes a
+                    // blank box into the PDF instead of the actual image.
+                    await window.DokyuEditor.waitForImages(el);
+                    // html2canvas 1.4.1 only understands the rgb/rgba/hsl/hsla
+                    // color functions and throws on anything else — Tailwind v4
+                    // compiles its whole palette as oklch(), which is exactly
+                    // what was breaking every Download PDF attempt (confirmed
+                    // via direct reproduction: it throws Attempting to parse an
+                    // unsupported color function oklch). html2canvas resolves
+                    // background/image resources against the LIVE document
+                    // before its own clone (and onclone) ever exists, so the
+                    // fix has to touch the real page rather than a clone —
+                    // sanitizeExportColors() only ever swaps in a mathematically
+                    // identical rgb() for each oklch() it finds, so nothing
+                    // visibly changes, and restoreColors() (always run in
+                    // finally) puts every touched property back immediately
+                    // after capture.
+                    restoreColors = window.DokyuEditor.sanitizeExportColors(document.body);
+                    const saving = html2pdf().set({
                         margin: 0,
                         filename: 'Esperanza-' + docName + '-' + citizenName + '.pdf',
                         image: { type: 'jpeg', quality: 0.98 },
@@ -1561,11 +1570,16 @@
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
                         pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
                     }).from(window.DokyuEditor.exportClone(el)).save();
+                    const timeout = new Promise((_, reject) => {
+                        timer = setTimeout(() => reject(new Error('PDF generation timed out after ' + (PDF_TIMEOUT_MS / 1000) + ' s')), PDF_TIMEOUT_MS);
+                    });
+                    await Promise.race([saving, timeout]);
                 } catch (error) {
                     console.error('PDF generation failed:', error?.message || error, error);
                     this.$dispatch('toast', { message: 'Unable to download the PDF. Please try Print and choose Save as PDF.', variant: 'danger' });
                 } finally {
-                    restoreColors();
+                    clearTimeout(timer);
+                    try { restoreColors(); } catch (e) { console.error('Could not restore colours after PDF export:', e); }
                     document.body.classList.remove('dp-printing');
                 }
             },
@@ -2703,7 +2717,9 @@
                             <p class="text-[11px] text-ink-muted" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
                         </div>
                         <div class="space-y-2">
-                            <template x-for="req in (selected.requirements || [])" :key="req.key">
+                            {{-- Keyed by status too: an approved requirement redraws at once, so its
+                                 Approve / Flag / Reject row does not linger until a second click. --}}
+                            <template x-for="req in (selected.requirements || [])" :key="req.key + ':' + req.status">
                                 <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Flagged for Replacement', 'border-sky-200 bg-sky-50/30': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2.5 min-w-0">
@@ -3108,8 +3124,9 @@
              dp-printing print isolation as the citizen portal (shared rules
              in app.css). --}}
         <div
-            x-data="{ get open() { return docPreviewOpen }, set open(v) { if (!v && editingDocument) cancelDocumentEdits(); docPreviewOpen = v; if (!v) { editingDocument = false; documentEditBackup = null; backgroundEditBackup = null; templateKeyEditBackup = null; resetEditorUiState(); } else { zoomLevel = 100; $nextTick(() => recomputeZoomSizer()); } } }"
+            x-data="{ get open() { return docPreviewOpen }, set open(v) { if (!v && editingDocument) cancelDocumentEdits(); docPreviewOpen = v; if (!v) { document.body.classList.remove('dp-printing'); editingDocument = false; documentEditBackup = null; backgroundEditBackup = null; templateKeyEditBackup = null; resetEditorUiState(); } else { zoomLevel = 100; $nextTick(() => recomputeZoomSizer()); } } }"
             @keydown.window="handleZoomShortcut($event); handleUndoRedoShortcut($event)"
+            @keydown.escape.window="document.body.classList.remove('dp-printing')"
         >
             <x-ui.modal title="Prepared Document" maxWidth="3xl" :fullscreen="true" :start-compact="true">
                 <template x-if="selected && documentReady">

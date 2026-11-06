@@ -1,5 +1,6 @@
-{{-- A counseling, referral or session case's "Case notes" (round 2,
-     2026-10-30; the welfare round's "Service records"): each session held,
+{{-- A Tulong case's "Case notes" (round 2, 2026-10-30; the welfare round's
+     "Service records"), on every Tulong type since 2026-11-06 (owner) and
+     staff only: each interview, session held,
      home visit or referral written on the case with its date, how it was
      done and what was done (GET /admin/services-rendered?request_ref=, and
      "Add a note": POST /admin/services-rendered with the case's request_ref -
@@ -21,7 +22,8 @@
             <x-ui.button size="sm" icon="circle-check" x-show="cnMayClose() && !cnClosing" x-bind:disabled="!cnLive()" x-bind:title="cnLive() ? null : 'Add a note first.'" @click="cnClosing = true; cnError = ''; $nextTick(() => document.getElementById('cn-close-note')?.focus())">Close the case</x-ui.button>
         </div>
     </div>
-    <p class="text-[11px] text-ink-muted mt-1" x-text="processingKind === 'session' ? 'The session is noted here for each participant when it is finished. Add a note for anything else done on the case.' : 'Note each session held, home visit or referral as it happens: the notes are the case\'s work.'"></p>
+    <p class="text-[11px] text-ink-muted mt-1" x-text="cnHint()"></p>
+    <p class="text-[11px] text-ink-muted mt-0.5 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> Staff only: the resident does not see these notes.</p>
     <p x-show="cnMayClose() && !cnLive() && !cnLoading" x-cloak class="text-[11px] text-amber-700 mt-1">Add at least one note before closing the case.</p>
 
     {{-- Add a note: when, how, what was done. --}}
@@ -40,7 +42,7 @@
         </div>
         <div>
             <label for="cn-details" class="block text-[11px] font-semibold text-slate-700 mb-0.5">What was done *</label>
-            <textarea id="cn-details" x-model="cnDetails" rows="3" maxlength="2000" placeholder="The session or visit, what was discussed or given, any referral made." class="w-full rounded-xl border-0 px-2.5 py-1.5 text-xs surface-pressed-sm outline-none focus:bg-white/90 focus:ring-4 focus:ring-indigo-100"></textarea>
+            <textarea id="cn-details" x-model="cnDetails" rows="3" maxlength="2000" placeholder="The interview, session or visit, what was discussed or given, any referral made." class="w-full rounded-xl border-0 px-2.5 py-1.5 text-xs surface-pressed-sm outline-none focus:bg-white/90 focus:ring-4 focus:ring-indigo-100"></textarea>
         </div>
         <p x-show="cnSensitive()" x-cloak class="text-[11px] text-rose-700">Confidential: these notes are shown only to the officers of this office.</p>
         <p x-show="cnAddError" class="text-xs text-rose-700" role="alert" x-text="cnAddError"></p>

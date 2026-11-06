@@ -1,7 +1,9 @@
 <x-layouts.citizen title="Settings" subtitle="Manage your account preferences." active="settings">
     <div
         x-data="{
-            tab: 'notifications',
+            // ?tab=privacy opens that tab: a resident's notification about an
+            // answered data request links here (Sprint 4, 2026-11-06).
+            tab: ['notifications', 'security', 'privacy', 'preferences'].includes(new URLSearchParams(window.location.search).get('tab')) ? new URLSearchParams(window.location.search).get('tab') : 'notifications',
             notifPrefs: [],
             notifPrefsLoading: true,
             savingPassword: false,
@@ -19,6 +21,9 @@
             dataRequests: [],
             dataRequestsLoading: true,
             requestingData: false,
+            // The form waits behind New request: the history and the LGU's
+            // answers come first (owner's manual test, 2026-11-06).
+            dataFormOpen: false,
 
             async init() {
                 this.notifPrefsLoading = true;
@@ -85,6 +90,7 @@
                     const result = await $api.post('/citizen/data-requests', { kind: this.dataForm.kind, detail: this.dataForm.detail.trim() });
                     this.dataRequests = [result.data, ...this.dataRequests];
                     this.dataForm = { kind: this.dataForm.kind, detail: '' };
+                    this.dataFormOpen = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Request filed as ' + result.data.ref + '. The LGU will respond by email or mobile.' : 'Naisampa ang hiling bilang ' + result.data.ref + '. Sasagutin ito ng LGU sa email o mobile.', variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not submit request.', variant: 'error' });
@@ -197,7 +203,35 @@
                             />
                         </p>
                     </div>
-                    <form class="mt-5 space-y-3 max-w-xl" @submit.prevent="requestData()">
+                    {{-- History first, each with the LGU's answer; the form waits
+                         behind New request (owner's manual test, 2026-11-06: with
+                         the form on top, an answered request looked like it had
+                         to be made again). --}}
+                    <div class="mt-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <h4 class="text-sm font-semibold text-ink"><x-ui.t fil="Aking mga hiling sa datos" en="My data requests" /></h4>
+                            <x-ui.button variant="secondary" size="sm" icon="plus" x-show="!dataFormOpen" @click="dataFormOpen = true; $nextTick(() => $refs.dataDetail?.focus())"><x-ui.t fil="Bagong hiling" en="New request" /></x-ui.button>
+                        </div>
+                        <div x-show="dataRequestsLoading"><x-ui.skeleton class="h-12" /></div>
+                        <p x-show="!dataRequestsLoading && !dataRequests.length" class="text-xs text-ink-muted"><x-ui.t fil="Wala ka pang hiling." en="You have no requests yet." /></p>
+                        <ul class="divide-y divide-brand-600/[.08]" x-show="!dataRequestsLoading && dataRequests.length">
+                            <template x-for="req in dataRequests" :key="req.ref">
+                                <li class="py-3 flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-slate-700"><span x-text="kindLabel(req.kind)"></span> · <span class="font-mono text-xs text-ink-muted" x-text="req.ref"></span></p>
+                                        <p class="text-xs text-ink-muted mt-0.5 line-clamp-2" x-text="req.detail"></p>
+                                        <div x-show="req.resolution" class="mt-1.5 rounded-xl bg-slate-50 border border-brand-600/10 px-3 py-2">
+                                            <p class="text-[11px] font-semibold text-ink-muted"><x-ui.t fil="Sagot ng LGU" en="The LGU's response" /></p>
+                                            <p class="text-xs text-slate-700 mt-0.5 whitespace-pre-line" x-text="req.resolution"></p>
+                                        </div>
+                                    </div>
+                                    <x-ui.badge statusBind="req.status" />
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                    <form x-show="dataFormOpen" x-cloak class="mt-5 space-y-3 max-w-xl rounded-2xl border border-brand-600/10 p-4" @submit.prevent="requestData()">
                         <h4 class="text-sm font-semibold text-ink"><x-ui.t fil="Humiling tungkol sa iyong datos" en="Make a request about your data" /></h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <template x-for="kind in dataKinds" :key="kind.key">
@@ -210,11 +244,12 @@
                         </div>
                         <label class="block">
                             <span class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Mga detalye" en="Details" /></span>
-                            <textarea x-model="dataForm.detail" rows="3" maxlength="2000" required
+                            <textarea x-ref="dataDetail" x-model="dataForm.detail" rows="3" maxlength="2000" required
                                       :aria-label="$store.lang.current === 'en' ? 'Details of your data request' : 'Mga detalye ng iyong hiling sa datos'"
                                       :placeholder="$store.lang.current === 'en' ? 'Tell the LGU what you need, e.g. which information is wrong and what it should say.' : 'Sabihin sa LGU ang kailangan mo, hal. aling impormasyon ang mali at ano dapat ito.'"
                                       class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
                         </label>
+                        <div class="flex flex-wrap items-center gap-2">
                         <x-ui.button type="submit" size="sm" x-bind:disabled="requestingData || dataForm.detail.trim() === ''">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="requestingData" x-cloak></i>
@@ -222,25 +257,9 @@
                                 <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : ($store.lang.current === 'en' ? 'Send request' : 'Ipadala ang hiling')"></span>
                             </span>
                         </x-ui.button>
+                        <x-ui.button variant="ghost" size="sm" x-show="!requestingData" @click="dataFormOpen = false"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
+                        </div>
                     </form>
-
-                    <div class="mt-6">
-                        <h4 class="text-sm font-semibold text-ink mb-2"><x-ui.t fil="Aking mga hiling sa datos" en="My data requests" /></h4>
-                        <div x-show="dataRequestsLoading"><x-ui.skeleton class="h-12" /></div>
-                        <p x-show="!dataRequestsLoading && !dataRequests.length" class="text-xs text-ink-muted"><x-ui.t fil="Wala ka pang hiling." en="You have no requests yet." /></p>
-                        <ul class="divide-y divide-brand-600/[.08]" x-show="!dataRequestsLoading && dataRequests.length">
-                            <template x-for="req in dataRequests" :key="req.ref">
-                                <li class="py-3 flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-medium text-slate-700"><span x-text="kindLabel(req.kind)"></span> · <span class="font-mono text-xs text-ink-muted" x-text="req.ref"></span></p>
-                                        <p class="text-xs text-ink-muted mt-0.5 line-clamp-2" x-text="req.detail"></p>
-                                        <p class="text-xs text-slate-600 mt-1" x-show="req.resolution" x-text="req.resolution"></p>
-                                    </div>
-                                    <x-ui.badge statusBind="req.status" />
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
 
                     <div class="flex flex-wrap items-center gap-2.5 mt-5">
                         <x-ui.button variant="ghost" size="sm" :href="route('citizen.privacy-policy')" icon="shield-check">
