@@ -2177,8 +2177,13 @@
                 return 'Collect the fee first: ' + p.ref + ' (₱' + Number(p.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ') has no official receipt yet.';
             },
             // The permission the primary button needs at this stage.
+            // Opening a Submitted request starts its review only for an officer
+            // who may review it (the server's show), so its button is that
+            // officer's too: MSWDO Department Staff saw Begin Verification on a
+            // new PWD ID request, and clicking it did nothing (2026-11-12).
             get primaryPermission() {
                 const st = this.selected?.status;
+                if (st === 'Submitted') return 'review';
                 if (['Under Verification', 'Under Review', 'Resubmitted'].includes(st)) return 'approve';
                 if (['Approved', 'Mark to Release'].includes(st)) return 'release';
                 return null;
@@ -2307,7 +2312,10 @@
                 this.processing = true;
                 try {
                     let res;
-                    if (['Under Verification', 'Under Review', 'Resubmitted'].includes(r.status)) {
+                    if (r.status === 'Submitted') {
+                        // Opening it again starts the review (the server's show).
+                        res = await $api.get(this.apiBase(r.ref));
+                    } else if (['Under Verification', 'Under Review', 'Resubmitted'].includes(r.status)) {
                         res = await $api.post(this.apiBase(r.ref) + '/approve');
                     } else if (r.status === 'Approved' && r.idNumberSpec) {
                         // An ID: issued first, so its number is checked before the
@@ -3097,6 +3105,7 @@
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">
                     <div class="flex items-center gap-2 flex-wrap justify-end">
                         <p x-show="approveBlocked" class="mr-auto text-xs text-amber-700 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i><span x-text="approveBlocked"></span></p>
+                        <p x-show="selected.status === 'Submitted' && !may('review')" class="mr-auto text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i><span>Not reviewed yet: the review starts when an officer who reviews this request opens it.</span></p>
                         <template x-if="canReject">
                             <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
                                 <span class="inline-flex items-center gap-1.5">

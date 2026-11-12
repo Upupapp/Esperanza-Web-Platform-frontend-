@@ -24,6 +24,10 @@
             notice: '',
             scopeLabel(s) { return s === 'Municipal' ? 'Municipal-wide access' : 'Brgy. ' + s; },
             async init() {
+                // What the browser or a password manager filled in before the page's
+                // scripts ran stays: x-model would otherwise empty the fields (2026-11-12).
+                this.employeeId = this.$el.querySelector('[name=employee_id]')?.value || '';
+                this.password = this.$el.querySelector('[name=password]')?.value || '';
                 try {
                     const result = await $api.get('/barangays');
                     this.barangayNames = (result.data || []).map((b) => b.name);

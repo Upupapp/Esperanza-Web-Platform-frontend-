@@ -15,6 +15,13 @@
             remember: true,
             loading: false,
             error: '',
+            // What the browser or a password manager filled in before the page's
+            // scripts ran stays: x-model would otherwise empty the fields, and on a
+            // slow phone the sign-in looked like it lost what was typed (2026-11-12).
+            init() {
+                this.identifier = this.$el.querySelector('[name=identifier]')?.value || '';
+                this.password = this.$el.querySelector('[name=password]')?.value || '';
+            },
             async submit() {
                 if (this.loading) return;
                 this.error = '';
