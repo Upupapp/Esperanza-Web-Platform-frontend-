@@ -86,7 +86,7 @@ class FlowGuideFixesTest extends TestCase
 
         // A duplicate or a prank ended as "resolved. Thank you for reporting it." (2026-11-13).
         $this->assertStringContainsString("x-show=\"selectedIncident?.available_verbs?.includes('reject') && can('sakuna_incidents', 'validate')\"", $modal);
-        $this->assertStringContainsString(":disabled=\"incidentActing || incidentRejectReason.trim().length < 5\"", $modal);
+        $this->assertStringContainsString(':disabled="incidentActing || incidentRejectReason.trim().length < 5"', $modal);
         $this->assertStringContainsString("if (verb === 'reject') { await this.actIncidentVerb(inc, 'reject', { note: this.incidentRejectReason.trim() }); return; }", $sakuna);
         $this->assertStringContainsString("'Rejected': 'Not valid',", $sakuna);
         $this->assertStringContainsString("Rejected: ['Not confirmed', 'Hindi nakumpirma',", $citizen);

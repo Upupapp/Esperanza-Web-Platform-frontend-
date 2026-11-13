@@ -28,7 +28,8 @@ class Sprint4ManualTestFixesTest extends TestCase
         $this->assertStringContainsString("const both = verbs.includes('resolve') && this.can('sakuna_incidents', 'close');", $page);
         $this->assertStringContainsString(".map(v => (v === 'resolve' && both ? 'resolve_close' : v));", $page);
         // One confirmation, then resolve and close in sequence; a failed close says it stays Resolved.
-        $this->assertStringContainsString("if (['resolve', 'resolve_close', 'close'].includes(verb)) { this.incidentConfirmVerb = verb; return; }", $page);
+        // Not valid (2026-11-13) asks first too, for its reason.
+        $this->assertStringContainsString("if (['resolve', 'resolve_close', 'close', 'reject'].includes(verb)) { if (verb === 'reject') this.incidentRejectReason = ''; this.incidentConfirmVerb = verb; return; }", $page);
         $this->assertStringContainsString("if (!(await this.actIncidentVerb(inc, 'resolve', {}, { quiet: true }))) return;", $page);
         $this->assertStringContainsString('is marked resolved, but it could not be closed. It stays Resolved', $page);
         $this->assertStringContainsString('return true;', $page);
