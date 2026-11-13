@@ -78,6 +78,21 @@ class FlowGuideFixesTest extends TestCase
         $this->assertStringContainsString('Verify your identity above first.', $this->source('resources/views/auth/citizen-register.blade.php'));
     }
 
+    public function test_an_incident_report_can_be_marked_not_valid_with_a_reason(): void
+    {
+        $modal = $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php');
+        $sakuna = $this->source('resources/views/admin/sakuna.blade.php');
+        $citizen = $this->source('resources/js/scope-citizen.js');
+
+        // A duplicate or a prank ended as "resolved. Thank you for reporting it." (2026-11-13).
+        $this->assertStringContainsString("x-show=\"selectedIncident?.available_verbs?.includes('reject') && can('sakuna_incidents', 'validate')\"", $modal);
+        $this->assertStringContainsString(":disabled=\"incidentActing || incidentRejectReason.trim().length < 5\"", $modal);
+        $this->assertStringContainsString("if (verb === 'reject') { await this.actIncidentVerb(inc, 'reject', { note: this.incidentRejectReason.trim() }); return; }", $sakuna);
+        $this->assertStringContainsString("'Rejected': 'Not valid',", $sakuna);
+        $this->assertStringContainsString("Rejected: ['Not confirmed', 'Hindi nakumpirma',", $citizen);
+        $this->assertStringContainsString("reject: ['Not confirmed by the office', 'Hindi nakumpirma ng opisina'],", $citizen);
+    }
+
     public function test_two_events_with_one_name_on_one_day_still_list(): void
     {
         $events = $this->source('resources/views/citizen/events.blade.php');

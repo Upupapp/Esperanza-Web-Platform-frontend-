@@ -298,7 +298,21 @@
              the work; closing the window is only the × above. --}}
         <div x-show="!showAssignForm && !showEscalateForm" class="flex flex-wrap items-center gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 flex-shrink-0"
              x-data="{ more: false }" @keydown.escape.stop="if (more) more = false; else if (incidentConfirmVerb) incidentConfirmVerb = ''; else if (showAssignForm) showAssignForm = false; else if (showEscalateForm) showEscalateForm = false; else showIncidentDetail = false">
-            <template x-if="incidentConfirmVerb">
+            {{-- Not valid (2026-11-13): a duplicate, a prank or a report that
+                 cannot be confirmed ends here, with the reason the reporter reads. --}}
+            <template x-if="incidentConfirmVerb === 'reject'">
+                <div class="w-full space-y-2" role="alertdialog" aria-labelledby="incident-reject-label">
+                    <label id="incident-reject-label" for="incident-reject-reason" class="block text-sm font-semibold text-ink">Why is this report not valid? <span class="font-normal text-ink-muted">The resident who reported it reads this.</span></label>
+                    <textarea id="incident-reject-reason" rows="2" maxlength="500" x-model="incidentRejectReason" placeholder="e.g. Same report as INC-2026-0012; responders are already there." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-100"></textarea>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" class="sk-btn sk-btn-sm" @click="incidentConfirmVerb = ''">Keep it open</button>
+                        <button type="button" class="sk-btn sk-btn-sm sk-btn-p" :disabled="incidentActing || incidentRejectReason.trim().length < 5"
+                            @click="runIncidentVerb(selectedIncident, 'reject')"
+                            x-text="incidentActing ? 'Saving…' : 'Mark not valid'"></button>
+                    </div>
+                </div>
+            </template>
+            <template x-if="incidentConfirmVerb && incidentConfirmVerb !== 'reject'">
                 <div class="w-full flex flex-wrap items-center gap-2" role="alertdialog" aria-labelledby="incident-confirm-text">
                     <p id="incident-confirm-text" class="text-sm text-ink-body flex-1 min-w-[14rem]"
                        x-text="({ resolve_close: 'Resolve and close ' + selectedIncident?.ref + '? Use this when the response is finished. It is marked resolved, leaves the open list and no further steps are taken on it.', close: 'Close ' + selectedIncident?.ref + '? It leaves the open list and no further steps are taken on it.' })[incidentConfirmVerb] || 'Mark ' + selectedIncident?.ref + ' resolved? Use this when the response is finished.'"></p>
@@ -318,6 +332,7 @@
                         <span x-text="incidentActing ? 'Saving…' : incidentVerbLabel(nextIncidentVerb(selectedIncident))"></span>
                     </button>
                     <button type="button" x-show="selectedIncident?.available_verbs?.includes('assign')" @click="showAssignForm = !showAssignForm; showEscalateForm = false; loadPersonnel()" :aria-expanded="showAssignForm ? 'true' : 'false'" class="sk-btn">Assign</button>
+                    <button type="button" x-show="selectedIncident?.available_verbs?.includes('reject') && can('sakuna_incidents', 'validate')" @click="askIncidentVerb(selectedIncident, 'reject')" class="sk-btn">Not valid</button>
                     <button type="button" x-show="selectedIncident?.available_verbs?.includes('escalate') && escalateChoices().length" @click="escalateSeverity = escalateChoices()[0]; showEscalateForm = !showEscalateForm; showAssignForm = false" :aria-expanded="showEscalateForm ? 'true' : 'false'" class="sk-btn">Escalate</button>
                     <div class="relative" x-show="otherIncidentVerbs(selectedIncident).length">
                         <button type="button" class="sk-btn" @click="more = !more" :aria-expanded="more ? 'true' : 'false'" aria-haspopup="menu">

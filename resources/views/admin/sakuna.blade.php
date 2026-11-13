@@ -1477,6 +1477,8 @@
         // the primary button, the rest in a menu, and marking resolved or
         // closing confirmed first because it ends the work on the incident.
         incidentConfirmVerb: '',
+        // Not valid (2026-11-13): the reason the reporter reads, at least 5 characters.
+        incidentRejectReason: '',
         incidentDetailFailed: false,
         // Assigning (critique 2026-11-03, fourth run): the people who can take
         // the incident, MDRRMO first, grouped by role, searchable, each with the
@@ -1499,7 +1501,7 @@
         },
         incidentActing: false,
         incidentVerbLabel(v) {
-            return { validate: 'Validate', dispatch: 'Dispatch', resolve: 'Mark resolved', resolve_close: 'Resolve and close', close: 'Close incident', assign: 'Assign', escalate: 'Escalate' }[v] || v;
+            return { validate: 'Validate', dispatch: 'Dispatch', resolve: 'Mark resolved', resolve_close: 'Resolve and close', close: 'Close incident', assign: 'Assign', escalate: 'Escalate', reject: 'Mark not valid' }[v] || v;
         },
         // Sprint 4 (owner's manual test, 2026-11-06): Mark resolved then
         // Close incident were two buttons and two confirmations for one
@@ -1525,13 +1527,14 @@
             setTimeout(() => document.getElementById('incident-next-step')?.focus(), 250);
         },
         askIncidentVerb(inc, verb) {
-            if (['resolve', 'resolve_close', 'close'].includes(verb)) { this.incidentConfirmVerb = verb; return; }
+            if (['resolve', 'resolve_close', 'close', 'reject'].includes(verb)) { if (verb === 'reject') this.incidentRejectReason = ''; this.incidentConfirmVerb = verb; return; }
             this.runIncidentVerb(inc, verb);
         },
         async runIncidentVerb(inc, verb) {
             if (this.incidentActing || !inc) return;
             this.incidentActing = true;
             try {
+                if (verb === 'reject') { await this.actIncidentVerb(inc, 'reject', { note: this.incidentRejectReason.trim() }); return; }
                 if (verb !== 'resolve_close') { await this.actIncidentVerb(inc, verb); return; }
                 // One confirmation, two steps. A close that fails after the
                 // resolve went through leaves the incident Resolved, and says so.
@@ -1557,7 +1560,7 @@
                 if (this.commandIncidents.length) this.setCommandIncidents(this.commandIncidents);
                 this.showEscalateForm = false;
                 this.showAssignForm = false;
-                const done = { validate: 'validated', assign: 'assigned', dispatch: 'dispatched', escalate: 'escalated', resolve: 'marked resolved', close: 'closed' }[verb] || verb;
+                const done = { validate: 'validated', assign: 'assigned', dispatch: 'dispatched', escalate: 'escalated', resolve: 'marked resolved', close: 'closed', reject: 'marked not valid; the reporter was told why' }[verb] || verb;
                 if (!opts.quiet) this.toast(inc.ref + ' ' + done + '.', 'success');
                 return true;
             } catch (err) {
@@ -1829,6 +1832,7 @@
                 'Processing': 'Dispatched',
                 'Completed': 'Resolved',
                 'Archived': 'Closed',
+                'Rejected': 'Not valid',
             })[st] || st;
         },
     }"

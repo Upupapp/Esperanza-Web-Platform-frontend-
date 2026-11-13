@@ -1611,6 +1611,8 @@ const INCIDENT_STATUS = {
     Processing: ['Dispatched', 'Papunta na ang tutugon', 'bg-violet-50 text-violet-800 ring-violet-200'],
     Completed: ['Resolved', 'Naresolba', 'bg-emerald-50 text-emerald-800 ring-emerald-200'],
     Archived: ['Closed', 'Isinara', 'bg-slate-100 text-slate-700 ring-slate-200'],
+    // Not valid (2026-11-13): a duplicate or a report the office could not confirm.
+    Rejected: ['Not confirmed', 'Hindi nakumpirma', 'bg-rose-50 text-rose-800 ring-rose-200'],
 };
 // The staff alert levels (Alerts tab), in the resident's language.
 const ALERT_LEVELS = { Information: 'Impormasyon', Advisory: 'Abiso', Watch: 'Pagbabantay', Warning: 'Babala', Critical: 'Kritikal' };
@@ -1624,6 +1626,7 @@ const INCIDENT_STEPS = {
     escalate: ['Marked more serious', 'Itinaas ang antas ng panganib'],
     resolve: ['Resolved', 'Naresolba na'],
     close: ['Closed', 'Isinara na'],
+    reject: ['Not confirmed by the office', 'Hindi nakumpirma ng opisina'],
 };
 const MAX_INCIDENT_PHOTOS = 3;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
