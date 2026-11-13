@@ -142,7 +142,7 @@ class FlowGuideFixesTest extends TestCase
         $this->assertStringContainsString("['Citizen Portal', 'Mobile App'].includes(m.source)", $this->source('resources/js/sakuna-map.js'));
         $this->assertStringContainsString("' released to ' + n + (n === 1 ? ' resident.' : ' residents.')", $sakuna);
         $this->assertStringContainsString("'Cancellation sent to ' + n + (n === 1 ? ' resident.' : ' residents.')", $sakuna);
-        $this->assertStringNotContainsString("recipient(s)", $sakuna);
+        $this->assertStringNotContainsString('recipient(s)', $sakuna);
     }
 
     public function test_a_scheduled_post_can_be_changed(): void
