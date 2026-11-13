@@ -103,4 +103,54 @@ class FlowGuideFixesTest extends TestCase
         $this->assertStringContainsString('<template x-for="(event, i) in selectedEvents" :key="event.uid">', $events);
         $this->assertStringNotContainsString('event.key + event.title', $events);
     }
+
+    public function test_the_to_verify_cards_count_what_the_server_has(): void
+    {
+        $page = $this->source('resources/views/admin/constituents.blade.php');
+        $tab = $this->source('resources/views/admin/constituents/tab-citizen-verification.blade.php');
+
+        // Under Verification is a Pending Review account whose ID is confirmed;
+        // the server has no such account status, so the card read 0 forever.
+        $this->assertStringContainsString("if (a.status === 'Pending Review' && a.identity_status === 'Verified') return 'Under Verification';", $page);
+        $this->assertStringContainsString("underVerification: n('Under Verification'),", $page);
+        $this->assertStringContainsString('x-text="cvStatusOf(i)"', $tab);
+        // Families and households have no Rejected or Missing Documents.
+        $this->assertStringContainsString("return ['Unverified', 'For Validation', 'Partially Verified', 'Verified'];", $page);
+        $this->assertStringNotContainsString('cvFamilyCounts.rejected', $tab);
+        $this->assertStringNotContainsString('cvHouseholdCounts.rejected', $tab);
+        // An imported, untouched record is not waiting on anyone.
+        $this->assertStringContainsString("const started = r => ['For Validation', 'Partially Verified'].includes(r.verification);", $page);
+        // No reminder is sent, so none is claimed.
+        $this->assertStringNotContainsString('Already Notified', $tab);
+        $this->assertStringContainsString('Waiting for them to register', $tab);
+    }
+
+    public function test_indigenous_peoples_can_be_tagged_and_filtered(): void
+    {
+        $this->assertStringContainsString('<option value="ip">Indigenous Peoples</option>', $this->source('resources/views/admin/constituents.blade.php'));
+        $this->assertStringContainsString('<option value="ip">Indigenous Peoples</option>', $this->source('resources/views/admin/constituents/tab-citizen-verification.blade.php'));
+        $this->assertStringContainsString("{ key: 'ip', label: 'Indigenous Peoples'", $this->source('resources/views/admin/constituents/modal-add-individual.blade.php'));
+        $this->assertStringContainsString("'farmer','high_risk','ip']", $this->source('resources/views/admin/constituents/modal-individual-detail.blade.php'));
+    }
+
+    public function test_app_reports_count_as_residents_and_alert_toasts_count_people(): void
+    {
+        $tab = $this->source('resources/views/admin/partials/sakuna/tab-incidents.blade.php');
+        $sakuna = $this->source('resources/views/admin/sakuna.blade.php');
+
+        $this->assertStringContainsString("x-show=\"['Citizen Portal', 'Mobile App'].includes(inc.source)\"", $tab);
+        $this->assertStringContainsString("['Citizen Portal', 'Mobile App'].includes(m.source)", $this->source('resources/js/sakuna-map.js'));
+        $this->assertStringContainsString("' released to ' + n + (n === 1 ? ' resident.' : ' residents.')", $sakuna);
+        $this->assertStringContainsString("'Cancellation sent to ' + n + (n === 1 ? ' resident.' : ' residents.')", $sakuna);
+        $this->assertStringNotContainsString("recipient(s)", $sakuna);
+    }
+
+    public function test_a_scheduled_post_can_be_changed(): void
+    {
+        $js = $this->source('resources/js/scope-admin-records.js');
+        $view = $this->source('resources/views/admin/communications/balita.blade.php');
+
+        $this->assertStringContainsString("moved = (await this.move(post, 'Draft')) === true;", $js);
+        $this->assertStringContainsString('x-show="isScheduled(a) && canMove(a, \'Draft\') && can(\'edit\')" @click="changeScheduled(a)"', $view);
+    }
 }

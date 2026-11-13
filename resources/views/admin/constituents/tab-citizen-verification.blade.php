@@ -50,27 +50,25 @@
 
     {{-- ── SUMMARY STAT CARDS — Individual ─────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4" x-show="cvType === 'Individual'">
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Pending Review'" class="cursor-pointer" label="Pending Review" valueBind="cvCounts.pending" icon="clock" color="orange" :delay="0" />
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Under Verification'" class="cursor-pointer" label="Under Verification" valueBind="cvCounts.underVerification" icon="search" color="brand" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Pending Review'" class="cursor-pointer" label="Pending Review" sublabel="ID not confirmed yet" valueBind="cvCounts.pending" icon="clock" color="orange" :delay="0" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Under Verification'" class="cursor-pointer" label="Under Verification" sublabel="ID confirmed; ready to verify" valueBind="cvCounts.underVerification" icon="search" color="brand" :delay="75" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Approved'" class="cursor-pointer" label="Approved" valueBind="cvCounts.verified" icon="badge-check" color="green" :delay="150" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvCounts.rejected" icon="circle-x" color="red" :delay="225" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Not Registered'" class="cursor-pointer" label="Not Registered" sublabel="No Citizen Portal account on file" valueBind="cvCounts.notRegistered" icon="user-round-x" color="slate" :delay="300" />
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Family ─────────────────────────────────────── --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Family'" x-cloak>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-show="cvType === 'Family'" x-cloak>
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvFamilyCounts.unverified" icon="shield-x" color="orange" :delay="0" />
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" sublabel="For Validation or Partially Verified" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvFamilyCounts.verified" icon="shield-check" color="green" :delay="150" />
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvFamilyCounts.rejected" icon="circle-x" color="red" :delay="225" />
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Household ──────────────────────────────────── --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Household'" x-cloak>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-show="cvType === 'Household'" x-cloak>
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvHouseholdCounts.unverified" icon="shield-x" color="orange" :delay="0" />
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" sublabel="For Validation or Partially Verified" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvHouseholdCounts.verified" icon="shield-check" color="green" :delay="150" />
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvHouseholdCounts.rejected" icon="circle-x" color="red" :delay="225" />
     </div>
 
     {{-- ── FILTER BAR ──────────────────────────────────────────────────────── --}}
@@ -153,6 +151,7 @@
                     <option value="osy">Out-of-School Youth</option>
                     <option value="farmer">Farmer</option>
                     <option value="high_risk">High Risk</option>
+                    <option value="ip">Indigenous Peoples</option>
                 </select>
                 <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -258,22 +257,22 @@
                                     x-show="i.citizen_account"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"
                                     :class="{
-                                        'bg-emerald-50 text-emerald-700 ring-emerald-200': i.citizen_account?.status === 'Approved',
-                                        'bg-amber-50 text-amber-700 ring-amber-200': i.citizen_account?.status === 'Pending Review',
-                                        'bg-indigo-50 text-indigo-700 ring-indigo-200': i.citizen_account?.status === 'Under Verification',
-                                        'bg-rose-50 text-rose-700 ring-rose-200': i.citizen_account?.status === 'Rejected',
+                                        'bg-emerald-50 text-emerald-700 ring-emerald-200': cvStatusOf(i) === 'Approved',
+                                        'bg-amber-50 text-amber-700 ring-amber-200': cvStatusOf(i) === 'Pending Review',
+                                        'bg-indigo-50 text-indigo-700 ring-indigo-200': cvStatusOf(i) === 'Under Verification',
+                                        'bg-rose-50 text-rose-700 ring-rose-200': cvStatusOf(i) === 'Rejected',
                                     }"
                                 >
                                     <span
                                         class="w-1.5 h-1.5 rounded-full"
                                         :class="{
-                                            'bg-emerald-500': i.citizen_account?.status === 'Approved',
-                                            'bg-amber-500': i.citizen_account?.status === 'Pending Review',
-                                            'bg-indigo-500': i.citizen_account?.status === 'Under Verification',
-                                            'bg-rose-500': i.citizen_account?.status === 'Rejected',
+                                            'bg-emerald-500': cvStatusOf(i) === 'Approved',
+                                            'bg-amber-500': cvStatusOf(i) === 'Pending Review',
+                                            'bg-indigo-500': cvStatusOf(i) === 'Under Verification',
+                                            'bg-rose-500': cvStatusOf(i) === 'Rejected',
                                         }"
                                     ></span>
-                                    <span x-text="i.citizen_account?.status"></span>
+                                    <span x-text="cvStatusOf(i)"></span>
                                 </span>
                                 <span x-show="i.citizen_account?.registry_match === 'pending'" x-cloak title="Registration recognised this resident as a record the registry already had. Open the account to confirm it."
                                       class="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200 whitespace-nowrap"><i data-lucide="user-search" class="w-3 h-3"></i>Found in registry</span>
@@ -302,18 +301,17 @@
         tabindex="0"
         @keydown.enter.prevent="openAccount(i)"
         @keydown.space.prevent="openAccount(i)">View</span>
-                                {{-- No citizen_account at all — this resident was never
-                                     verified because they haven't signed up on the portal.
-                                     There is nothing for an officer to approve/reject yet,
-                                     so this is a status readout, not a button: the reminder
-                                     already went out automatically when the record was
-                                     added, and re-sends periodically until they register. --}}
+                                {{-- No citizen_account at all: this resident has not signed
+                                     up yet, so there is nothing to approve or reject. A
+                                     status readout, not a button. It used to say a
+                                     registration reminder had been sent; nothing sends one
+                                     (flow guide 2026-11-13, Residents bug 3). --}}
                                 <span
                                     x-show="!i.citizen_account"
                                     class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted cursor-default"
-                                    title="An automated Citizen Portal registration reminder was sent to this resident's contact on file."
+                                    title="This resident has no Citizen Portal account yet. Once they register, the account shows up here for review."
                                 >
-                                    <i data-lucide="send" class="w-3.5 h-3.5"></i> Already Notified for Account Verification
+                                    <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> Waiting for them to register
                                 </span>
                             </td>
                         </tr>

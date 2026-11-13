@@ -575,7 +575,7 @@ function sakunaCommandMap() {
                 ['Status: ' + (this.incidentStatusLabel ? this.incidentStatusLabel(m.status) : m.status)],
                 [[m.sitio, m.barangay ? 'Brgy. ' + m.barangay : ''].filter(Boolean).join(', ')],
                 [[m.ref, when].filter(Boolean).join(' · '), 'text-slate-500 font-mono text-[11px]'],
-                [m.source === 'Citizen Portal' ? 'Reported by a resident' : '', 'text-sky-800 text-[11px] font-semibold'],
+                [['Citizen Portal', 'Mobile App'].includes(m.source) ? 'Reported by a resident' : '', 'text-sky-800 text-[11px] font-semibold'],
             ], {
                 label: 'Open incident',
                 run: () => {

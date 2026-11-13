@@ -115,6 +115,7 @@
                                                     'bg-rose-100 text-rose-700': tag === 'solo_parent',
                                                     'bg-lime-100 text-lime-700': tag === 'farmer',
                                                     'bg-red-100 text-red-700': tag === 'high_risk',
+                                                    'bg-teal-100 text-teal-700': tag === 'ip',
                                                 }"
                                                 x-text="tag === 'solo_parent' ? 'Solo Parent' : tag === 'high_risk' ? 'High Risk' : tag.toUpperCase()"
                                             ></span>

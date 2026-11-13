@@ -63,7 +63,7 @@
             (!incidentSeverityFilter || inc.severity === incidentSeverityFilter) &&
             (!incidentStatusFilter || inc.status === incidentStatusFilter) &&
             (!incidentBarangayFilter || inc.barangay === incidentBarangayFilter) &&
-            (!incidentSourceFilter || (incidentSourceFilter === 'resident') === (inc.source === 'Citizen Portal')) &&
+            (!incidentSourceFilter || (incidentSourceFilter === 'resident') === ['Citizen Portal', 'Mobile App'].includes(inc.source)) &&
             (!incidentAssignedFilter || (incidentAssignedFilter === 'none' ? !inc.assigned_name && !['Completed', 'Archived', 'Rejected'].includes(inc.status) : !!inc.assigned_name))
         ).sort(order);
     },
@@ -196,7 +196,7 @@
                         <div class="flex items-center gap-1.5">
                             <i :data-lucide="incidentTypeIcon(inc.type)" class="w-3.5 h-3.5 text-[#1D4ED8] flex-shrink-0"></i>
                             <span class="sk-b" x-text="inc.type"></span>
-                            <span x-show="inc.source === 'Citizen Portal'" class="sk-pill sk-p-blue ml-1" style="font-weight: 500;">Resident</span>
+                            <span x-show="['Citizen Portal', 'Mobile App'].includes(inc.source)" class="sk-pill sk-p-blue ml-1" style="font-weight: 500;">Resident</span>
                         </div>
                         <div class="sk-sub" x-text="inc.reported ? new Date(inc.reported).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></div>
                     </td>

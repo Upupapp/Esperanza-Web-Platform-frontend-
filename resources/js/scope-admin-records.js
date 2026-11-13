@@ -635,6 +635,26 @@ function adminBalita(barangays = []) {
                 this.processing = false;
             }
         },
+        // A scheduled post is changed from Drafts: back there first (the
+        // server lets an approved post go back to Draft, and the scheduler
+        // releases only approved ones), then the editor opens on it, where
+        // the text or the time can change, or the time be cleared. It could
+        // not be changed or stopped at all before (flow guide 2026-11-13,
+        // MIO bug 5).
+        async changeScheduled(post) {
+            if (this.processing) return;
+            this.processing = true;
+            let moved = false;
+            try {
+                moved = (await this.move(post, 'Draft')) === true;
+                if (moved) await this.load();
+            } finally {
+                this.processing = false;
+            }
+            if (!moved) return;
+            balitaToast('Back in Drafts: it will not go out at its time. Change it, then send it for review again.', 'info');
+            this.openEdit(this.posts.find((p) => p.id === post.id) || { ...post, status: 'Draft' });
+        },
         // Asked in the page: a post that is on Facebook may go from there too.
         deletePost(post) {
             if (this.processing) return;

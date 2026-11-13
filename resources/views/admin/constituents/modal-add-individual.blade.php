@@ -497,6 +497,7 @@
                             { key: 'solo_parent', label: 'Solo Parent', icon: 'heart', color: 'rose' },
                             { key: 'farmer', label: 'Farmer / Fisher', icon: 'leaf', color: 'lime' },
                             { key: 'high_risk', label: 'High-Risk', icon: 'alert-triangle', color: 'red' },
+                            { key: 'ip', label: 'Indigenous Peoples', icon: 'mountain', color: 'teal' },
                         ]" :key="sector.key">
                             <label
                                 @click="toggleTag(sector.key)"
@@ -512,6 +513,7 @@
                                         'border-rose-400 bg-rose-50': sector.color === 'rose',
                                         'border-lime-400 bg-lime-50': sector.color === 'lime',
                                         'border-red-400 bg-red-50': sector.color === 'red',
+                                        'border-teal-400 bg-teal-50': sector.color === 'teal',
                                       }
                                     : 'border-slate-200 bg-white hover:border-slate-300'"
                             >
@@ -528,6 +530,7 @@
                                             'border-rose-500 bg-rose-500': sector.color === 'rose',
                                             'border-lime-600 bg-lime-600': sector.color === 'lime',
                                             'border-red-500 bg-red-500': sector.color === 'red',
+                                            'border-teal-500 bg-teal-500': sector.color === 'teal',
                                           }
                                         : 'border-slate-300 bg-white'"
                                 >

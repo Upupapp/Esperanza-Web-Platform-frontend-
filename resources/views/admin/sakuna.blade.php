@@ -1222,7 +1222,10 @@
                 const idx = this.alertsList.findIndex(x => x.ref === res.data.ref);
                 if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data };
                 if (this.selectedAlert?.ref === res.data.ref) this.selectedAlert = { ...this.selectedAlert, ...res.data };
-                this.toast(a.ref + ' published to ' + res.data.recipients + ' recipient(s).', 'success');
+                // The list's own word and unit: Released, residents (flow guide
+                // 2026-11-13, MDRRMO bug 9).
+                const n = res.data.recipients;
+                this.toast(a.ref + ' released to ' + n + (n === 1 ? ' resident.' : ' residents.'), 'success');
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not publish this alert.', 'error');
             }
@@ -1241,7 +1244,10 @@
                 const idx = this.alertsList.findIndex(x => x.ref === res.data.ref);
                 if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data };
                 this.showCancelAlert = false;
-                this.toast('Cancellation reached ' + res.data.cancellation_reached + ' recipient(s).', 'success');
+                // People, as the list counts them; the server counted rows per
+                // channel before (MDRRMO bug 4).
+                const n = res.data.cancellation_reached;
+                this.toast('Cancellation sent to ' + n + (n === 1 ? ' resident.' : ' residents.'), 'success');
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not cancel this alert.', 'error');
             } finally { this.cancelSaving = false; }

@@ -419,12 +419,29 @@
         // The badge says what it is counting (live test 2026-10-07, UX-4): it
         // read 2 while every account was approved, because it also counts the
         // family and household records not confirmed yet.
+        // Family and household records count only once someone has started
+        // checking them (For Validation, Partially Verified). A plain
+        // Unverified record is not waiting on anyone, and counting those let
+        // one import of a barangay's list push the badge into the hundreds
+        // (flow guide 2026-11-13, Residents bug 6).
         get verificationQueueParts() {
+            const started = r => ['For Validation', 'Partially Verified'].includes(r.verification);
             return {
-                accounts: this.citizenAccountList.filter(i => i.citizen_account && ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length,
-                families: this.cvFamilyList.filter(f => f.verification !== 'Verified').length,
-                households: this.cvHouseholdList.filter(h => h.verification !== 'Verified').length,
+                accounts: this.citizenAccountList.filter(i => ['Pending Review', 'Under Verification'].includes(this.cvStatusOf(i))).length,
+                families: this.cvFamilyList.filter(started).length,
+                households: this.cvHouseholdList.filter(started).length,
             };
+        },
+        // The server's account statuses are Pending Review, Approved, Rejected
+        // and Archived. The queue splits Pending Review in two by the identity
+        // check, so the Under Verification card means something: the ID is
+        // confirmed and only the officer's Verify account is left. It read 0
+        // forever before (flow guide 2026-11-13, Residents bug 1).
+        cvStatusOf(i) {
+            const a = i?.citizen_account;
+            if (!a) return 'Not Registered';
+            if (a.status === 'Pending Review' && a.identity_status === 'Verified') return 'Under Verification';
+            return a.status;
         },
         get pendingCitizenVerificationCount() {
             const p = this.verificationQueueParts;
@@ -437,21 +454,18 @@
         },
         get cvCounts() {
             const list = this.citizenAccountList;
+            const n = s => list.filter(i => this.cvStatusOf(i) === s).length;
             return {
-                pending: list.filter(i => i.citizen_account?.status === 'Pending Review').length,
-                underVerification: list.filter(i => i.citizen_account?.status === 'Under Verification').length,
-                verified: list.filter(i => i.citizen_account?.status === 'Approved').length,
-                rejected: list.filter(i => i.citizen_account?.status === 'Rejected').length,
-                notRegistered: list.filter(i => !i.citizen_account).length,
+                pending: n('Pending Review'),
+                underVerification: n('Under Verification'),
+                verified: n('Approved'),
+                rejected: n('Rejected'),
+                notRegistered: n('Not Registered'),
             };
         },
         get filteredCitizenAccounts() {
             let list = this.citizenAccountList.filter(i => {
-                if (this.cvStatusFilter === 'Not Registered') {
-                    if (i.citizen_account) return false;
-                } else if (this.cvStatusFilter && i.citizen_account?.status !== this.cvStatusFilter) {
-                    return false;
-                }
+                if (this.cvStatusFilter && this.cvStatusOf(i) !== this.cvStatusFilter) return false;
                 if (this.cvBarangayFilter && i.barangay !== this.cvBarangayFilter) return false;
                 if (this.cvTagFilter && !(i.tags || []).includes(this.cvTagFilter)) return false;
                 if (this.cvSearch) {
@@ -462,7 +476,7 @@
             });
             const priority = i => {
                 if (!i.citizen_account) return 2;
-                return ['Pending Review', 'Under Verification'].includes(i.citizen_account.status) ? 0 : 1;
+                return ['Pending Review', 'Under Verification'].includes(this.cvStatusOf(i)) ? 0 : 1;
             };
             return [...list].sort((a, b) => priority(a) - priority(b));
         },
@@ -495,26 +509,28 @@
         get cvHouseholdList() {
             return this.households.filter(h => this.$store.session.inScope(h.barangay));
         },
+        // A family or household record is Unverified, For Validation,
+        // Partially Verified or Verified (DataQualityVocabulary::VERIFICATION);
+        // the server has no Rejected or Missing Documents for them, so those
+        // cards and filter options never matched anything (Residents bug 2).
         get cvFamilyCounts() {
             const list = this.cvFamilyList;
             return {
                 unverified: list.filter(f => f.verification === 'Unverified').length,
-                partial: list.filter(f => ['Partially Verified', 'For Validation', 'Missing Documents'].includes(f.verification)).length,
+                partial: list.filter(f => ['Partially Verified', 'For Validation'].includes(f.verification)).length,
                 verified: list.filter(f => f.verification === 'Verified').length,
-                rejected: list.filter(f => f.verification === 'Rejected').length,
             };
         },
         get cvHouseholdCounts() {
             const list = this.cvHouseholdList;
             return {
                 unverified: list.filter(h => h.verification === 'Unverified').length,
-                partial: list.filter(h => ['Partially Verified', 'For Validation', 'Missing Documents'].includes(h.verification)).length,
+                partial: list.filter(h => ['Partially Verified', 'For Validation'].includes(h.verification)).length,
                 verified: list.filter(h => h.verification === 'Verified').length,
-                rejected: list.filter(h => h.verification === 'Rejected').length,
             };
         },
         get cvVerificationOptions() {
-            return ['Unverified', 'Partially Verified', 'For Validation', 'Missing Documents', 'Verified', 'Rejected'];
+            return ['Unverified', 'For Validation', 'Partially Verified', 'Verified'];
         },
         get filteredCvFamilies() {
             let list = this.cvFamilyList.filter(f => {
@@ -1038,6 +1054,7 @@
                             <option value="osy">Out-of-School Youth</option>
                             <option value="farmer">Farmer</option>
                             <option value="high_risk">High Risk</option>
+                            <option value="ip">Indigenous Peoples</option>
                         </select>
                     </div>
                     <button x-show="search||barangayFilter||verificationFilter||tagFilter" @click="clearFilters()"

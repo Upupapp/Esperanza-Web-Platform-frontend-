@@ -190,7 +190,7 @@
                             <a :href="hasMapPin(selectedIncident) ? window.sakunaGeo.osmUrl(selectedIncident.lat, selectedIncident.lng) : '#'" target="_blank" rel="noopener" class="font-semibold text-brand-600 hover:underline">Open in OpenStreetMap</a>
                             <a :href="hasMapPin(selectedIncident) ? window.sakunaGeo.directionsUrl(selectedIncident.lat, selectedIncident.lng) : '#'" target="_blank" rel="noopener" class="font-semibold text-brand-600 hover:underline">Directions</a>
                         </div>
-                        <p x-show="selectedIncident?.source === 'Citizen Portal'" class="text-xs text-ink-muted mt-1">Pinned by the resident who reported it. Where it matters, confirm the place when you call back.</p>
+                        <p x-show="['Citizen Portal', 'Mobile App'].includes(selectedIncident?.source)" class="text-xs text-ink-muted mt-1">Pinned by the resident who reported it. Where it matters, confirm the place when you call back.</p>
                     </div>
                     <p x-show="!hasMapPin(selectedIncident)" class="text-xs text-ink-muted">No map location was saved with this incident. Use the barangay and sitio above.</p>
                     <button x-show="can('sakuna_incidents', 'edit')" type="button" @click="startIncidentLocation()" :disabled="incidentDetailFailed || onLastCopy" :title="incidentDetailFailed || onLastCopy ? 'Waits for the connection' : ''"

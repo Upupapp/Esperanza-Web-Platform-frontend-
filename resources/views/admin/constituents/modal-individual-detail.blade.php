@@ -122,6 +122,7 @@
                                 <span x-text="
                                     tag === 'solo_parent' ? 'Solo Parent' :
                                     tag === 'high_risk' ? 'High Risk' :
+                                    tag === 'ip' ? 'Indigenous Peoples' :
                                     tag === 'osy' ? 'Out-of-School Youth' :
                                     tag === '4ps' ? '4Ps' :
                                     tag === 'osca' ? 'OSCA' :
@@ -244,12 +245,14 @@
                                     'bg-rose-100 text-rose-800 ring-1 ring-rose-200': tag === 'solo_parent',
                                     'bg-lime-100 text-lime-800 ring-1 ring-lime-200': tag === 'farmer',
                                     'bg-red-100 text-red-800 ring-1 ring-red-200': tag === 'high_risk',
+                                    'bg-teal-100 text-teal-800 ring-1 ring-teal-200': tag === 'ip',
                                 }"
                             >
                                 <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                                 <span x-text="
                                     tag === 'solo_parent' ? 'Solo Parent' :
                                     tag === 'high_risk' ? 'High Risk' :
+                                    tag === 'ip' ? 'Indigenous Peoples' :
                                     tag === 'osy' ? 'Out-of-School Youth' :
                                     tag === '4ps' ? '4Ps Beneficiary' :
                                     tag === 'osca' ? 'OSCA' :
@@ -376,13 +379,13 @@
                                 <span
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset"
                                     :class="{
-                                        'bg-emerald-50 text-emerald-700 ring-emerald-200': selectedIndividual?.citizen_account?.status === 'Approved',
-                                        'bg-amber-50 text-amber-700 ring-amber-200': selectedIndividual?.citizen_account?.status === 'Pending Review',
-                                        'bg-indigo-50 text-indigo-700 ring-indigo-200': selectedIndividual?.citizen_account?.status === 'Under Verification',
-                                        'bg-rose-50 text-rose-700 ring-rose-200': selectedIndividual?.citizen_account?.status === 'Rejected',
-                                        'bg-slate-100 text-ink-muted ring-slate-200': !['Approved','Pending Review','Under Verification','Rejected'].includes(selectedIndividual?.citizen_account?.status),
+                                        'bg-emerald-50 text-emerald-700 ring-emerald-200': cvStatusOf(selectedIndividual) === 'Approved',
+                                        'bg-amber-50 text-amber-700 ring-amber-200': cvStatusOf(selectedIndividual) === 'Pending Review',
+                                        'bg-indigo-50 text-indigo-700 ring-indigo-200': cvStatusOf(selectedIndividual) === 'Under Verification',
+                                        'bg-rose-50 text-rose-700 ring-rose-200': cvStatusOf(selectedIndividual) === 'Rejected',
+                                        'bg-slate-100 text-ink-muted ring-slate-200': !['Approved','Pending Review','Under Verification','Rejected'].includes(cvStatusOf(selectedIndividual)),
                                     }"
-                                    x-text="selectedIndividual?.citizen_account?.status"
+                                    x-text="cvStatusOf(selectedIndividual)"
                                 ></span>
                             </dd>
                         </div>
@@ -541,7 +544,7 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-2">Vulnerable Sector Tags</label>
                         <div class="flex flex-wrap gap-2">
-                            <template x-for="tag in ['senior','osca','pwd','youth','child','osy','4ps','solo_parent','farmer','high_risk']" :key="tag">
+                            <template x-for="tag in ['senior','osca','pwd','youth','child','osy','4ps','solo_parent','farmer','high_risk','ip']" :key="tag">
                                 <button type="button" @click="toggleEditTag(tag)" class="text-xs font-medium rounded-full px-2.5 py-1 border transition-colors" :class="edit.tags.includes(tag) ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-slate-200 text-ink-muted'" x-text="tag"></button>
                             </template>
                         </div>
