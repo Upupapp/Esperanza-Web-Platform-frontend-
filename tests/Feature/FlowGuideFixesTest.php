@@ -77,4 +77,15 @@ class FlowGuideFixesTest extends TestCase
     {
         $this->assertStringContainsString('Verify your identity above first.', $this->source('resources/views/auth/citizen-register.blade.php'));
     }
+
+    public function test_two_events_with_one_name_on_one_day_still_list(): void
+    {
+        $events = $this->source('resources/views/citizen/events.blade.php');
+
+        // The list was keyed by date + title: a repeated key stopped Alpine
+        // drawing any card, so Kaganapan showed none while counting three.
+        $this->assertStringContainsString("uid: (e.key || e.date + ' ' + (e.title || e.name)) + '#' + i,", $events);
+        $this->assertStringContainsString('<template x-for="(event, i) in selectedEvents" :key="event.uid">', $events);
+        $this->assertStringNotContainsString('event.key + event.title', $events);
+    }
 }

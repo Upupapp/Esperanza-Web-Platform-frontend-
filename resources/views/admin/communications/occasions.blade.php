@@ -136,7 +136,7 @@
     </x-ui.modal>
     </div>
 
-    {{-- The composer: a six-step wizard (2026-10-21) in a compact window. One
+    {{-- The composer: a five-step wizard (2026-10-21) in a compact window. One
          step shows at a time; the others stay in the page (x-show), so nothing
          typed or uploaded is lost moving between them. Next checks the step;
          Save Draft is there on every step; Save and activate only on Review. --}}
