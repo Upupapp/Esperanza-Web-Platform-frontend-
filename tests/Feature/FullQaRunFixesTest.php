@@ -111,7 +111,8 @@ class FullQaRunFixesTest extends TestCase
         }
 
         $this->assertStringContainsString(
-            "['Under Verification', 'Under Review'].includes(this.selected.status) && this.may('reject')",
+            // Resubmitted too, since 2026-11-13: the server allows it.
+            "['Under Verification', 'Under Review', 'Resubmitted'].includes(this.selected.status) && this.may('reject')",
             $this->source('resources/views/admin/document-requests.blade.php'),
         );
     }

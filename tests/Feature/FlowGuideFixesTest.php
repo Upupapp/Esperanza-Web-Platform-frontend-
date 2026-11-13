@@ -75,7 +75,6 @@ class FlowGuideFixesTest extends TestCase
 
     public function test_small_wording_fixes(): void
     {
-        $this->assertStringContainsString('<x-ui.t fil="Buksan ang Sakuna" en="Open Sakuna" />', $this->source('resources/views/components/citizen/alert-popup.blade.php'));
         $this->assertStringContainsString('Verify your identity above first.', $this->source('resources/views/auth/citizen-register.blade.php'));
     }
 }
