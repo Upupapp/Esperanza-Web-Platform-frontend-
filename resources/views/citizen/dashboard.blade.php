@@ -350,12 +350,23 @@
                             <x-ui.t fil="Mga Kamakailang Kahilingan" en="My Recent Requests" />
                         </h3>
 
-                        <a
-                            href="{{ route('citizen.document-requests') }}"
-                            class="tap text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
-                        >
-                            <x-ui.t fil="Tingnan Lahat" en="View All" />
-                        </a>
+                        {{-- The list mixes Dokyu and Tulong, so each has its own way in:
+                             one View All opened Dokyu even for a Tulong request (2026-11-13). --}}
+                        <div class="flex items-center gap-3 shrink-0">
+                            <a
+                                href="{{ route('citizen.document-requests') }}"
+                                class="tap text-[13.5px] font-bold text-brand-600 hover:text-brand-700"
+                            >
+                                <x-ui.t fil="Lahat ng Dokyu" en="All Dokyu" />
+                            </a>
+                            <span class="text-ink-faint" aria-hidden="true">·</span>
+                            <a
+                                href="{{ route('citizen.assistance-requests') }}"
+                                class="tap text-[13.5px] font-bold text-brand-600 hover:text-brand-700"
+                            >
+                                <x-ui.t fil="Lahat ng Tulong" en="All Tulong" />
+                            </a>
+                        </div>
                     </div>
 
                     <div class="divide-y divide-brand-600/[.08]">
