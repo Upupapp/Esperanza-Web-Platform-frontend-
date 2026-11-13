@@ -246,6 +246,18 @@ function adminBanners(contract = {}, barangayNames = [], maxImageBytes = 1048576
                 toast(errText(err, 'Could not update this banner.'), 'error');
             }
         },
+        // Back to the writer with remarks; they get "Sent back" with them.
+        async sendBack(b) {
+            const remarks = (b._remarks || '').trim();
+            if (remarks.length < 5) return;
+            try {
+                await api.post('/admin/banners/' + b.id + '/transition', { to: 'Rejected', remarks });
+                await this.load();
+                toast('Sent back to the writer with your remarks.');
+            } catch (err) {
+                toast(errText(err, 'Could not send this banner back.'), 'error');
+            }
+        },
         // Draft, then reviewed, approved and published, as far as this
         // officer may: the same steps as one at a time.
         async publish(b) {
@@ -806,6 +818,22 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
                 row = (await api.post('/admin/occasions/' + row.id + '/transition', { to: next })).data;
             }
             return row;
+        },
+
+        // Back to the writer with remarks; they get "Sent back" with them.
+        async sendBack(o) {
+            const remarks = (o._remarks || '').trim();
+            if (remarks.length < 5 || this.processing) return;
+            this.processing = true;
+            try {
+                await api.post('/admin/occasions/' + o.id + '/transition', { to: 'Rejected', remarks });
+                await this.load();
+                toast('Sent back to the writer with your remarks.');
+            } catch (err) {
+                toast(errText(err, 'Could not send this occasion back.'), 'error');
+            } finally {
+                this.processing = false;
+            }
         },
 
         // -- The list's actions

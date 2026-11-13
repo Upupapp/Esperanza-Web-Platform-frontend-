@@ -2123,7 +2123,7 @@
                     const flagged = (this.selected.requirements || []).filter(r => r.status === 'Flagged for Replacement').length;
                     const resubmitted = (this.selected.requirements || []).filter(r => r.status === 'Resubmitted').length;
                     if (flagged === 0 && resubmitted > 0) {
-                        return { icon: 'circle-check', tone: 'sky', title: 'Ready to Approve', message: 'The citizen resubmitted corrected documents and everything now checks out. You can approve this request directly.' };
+                        return { icon: 'circle-check', tone: 'sky', title: 'Ready to Approve', message: 'The citizen sent corrected documents. Check and approve each replaced document, then approve the request.' };
                     }
                     return { icon: 'clock', tone: 'amber', title: 'Awaiting Citizen', message: (flagged ? flagged + ' document(s) flagged for replacement — ' : '') + 'this request is waiting for the citizen to resubmit corrected documents.' };
                 }
@@ -2150,7 +2150,8 @@
             // unsalvageable, shouldn't be stuck waiting forever for a
             // resubmission that may never come.
             get canReject() {
-                return this.selected && ['Under Verification', 'Under Review'].includes(this.selected.status) && this.may('reject');
+                // Resubmitted too: the server allows it, and a resubmission can still be wrong (2026-11-13).
+                return this.selected && ['Under Verification', 'Under Review', 'Resubmitted'].includes(this.selected.status) && this.may('reject');
             },
             // Approve waits until every document is accepted, as the server
             // does (Esperanza bugs QA, 2026-10-06: a permit reached Released
@@ -2254,6 +2255,7 @@
                 'Submitted': 'Begin Verification',
                 'Under Verification': 'Approve Request',
                 'Under Review': 'Approve Request',
+                'Resubmitted': 'Approve Request',
                 'Approved': 'Mark to Release',
                 'Mark to Release': 'Release to Citizen',
             },

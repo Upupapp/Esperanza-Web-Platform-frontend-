@@ -251,6 +251,20 @@
             // declares it (tests/Feature/TulongLifecycleTest.php pins the two).
             // A side state sits on the step it branches from.
             stepOrder: ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'],
+            // The steps in the resident's words, as on the Dokyu page (2026-11-13).
+            stepWords: {
+                'Submitted': ['Naisumite', 'Submitted'],
+                'Initial Screening': ['Sinusuri', 'Screening'],
+                'Assessment': ['Tinatasa', 'Assessment'],
+                'For Approval': ['Para sa Pag-apruba', 'For approval'],
+                'Assistance Processing': ['Inihahanda', 'Being prepared'],
+                'Ready for Release': ['Handa nang Ibigay', 'Ready to receive'],
+                'Completed': ['Natanggap', 'Received'],
+            },
+            stepText(step) {
+                const w = this.stepWords[step];
+                return w ? w[this.$store.lang.current === 'en' ? 1 : 0] : step;
+            },
             stepIndex(status) {
                 const side = { 'Needs Requirements': 'Initial Screening', 'Returned for Reassessment': 'For Approval' };
                 // An unknown status sits on no step (it is flagged below the steps).
@@ -1288,7 +1302,7 @@
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
                                             <span x-show="stepIndex(selectedRequest.status) <= i" x-text="i + 1"></span>
                                         </span>
-                                        <span class="text-xs max-w-[76px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="label"></span>
+                                        <span class="text-xs max-w-[76px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="stepText(label)"></span>
                                     </div>
                                     <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
                                 </div>

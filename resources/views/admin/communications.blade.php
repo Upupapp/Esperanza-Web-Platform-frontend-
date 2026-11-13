@@ -173,7 +173,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-1.5 mb-1 flex-wrap">
                                     <span class="text-[10px] font-semibold text-white rounded-full px-2 py-0.5" :class="categoryColor[e.category] || 'bg-slate-400'" x-text="e.category"></span>
-                                    <x-ui.badge statusBind="e.status" />
+                                    <x-ui.badge statusBind="e.status" labelBind="({ 'Released': 'Published', 'Rejected': 'Sent back', 'Pending Review': 'Waiting for review' })[e.status] || e.status" />
                                     <span x-show="e.status === 'Released' && !e.upcoming" class="text-[10px] font-medium text-ink-muted bg-slate-100 rounded-full px-2 py-0.5">Ended</span>
                                 </div>
                                 <p class="text-sm font-semibold text-ink leading-snug line-clamp-2" x-text="e.title || e.name"></p>
@@ -338,7 +338,7 @@
                 </template>
 
                 <x-slot:footer>
-                    <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Request changes</x-ui.button>
+                    <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Send back</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="approveAndPublish()">Approve &amp; Publish</x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>

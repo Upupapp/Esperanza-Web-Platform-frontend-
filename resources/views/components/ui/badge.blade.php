@@ -8,7 +8,7 @@
     tests/Feature/StatusVocabularyTest.php, which asserts against the PHP
     side and would need the same addition here noted if it grows a JS check.
 --}}
-@props(['status' => 'Draft', 'statusBind' => null])
+@props(['status' => 'Draft', 'statusBind' => null, 'labelBind' => null])
 
 @php
     // Universal status system — colors are fixed per status name across the whole
@@ -77,7 +77,8 @@
         :data-unknown-status="!known ? {{ $statusBind }} : null"
     >
         <span class="w-1.5 h-1.5 rounded-full" :class="style.dot"></span>
-        <span x-text="{{ $statusBind }}"></span>
+        {{-- labelBind: the words shown, where a screen names a status its own way (colour still follows the status). --}}
+        <span x-text="{{ $labelBind ?? $statusBind }}"></span>
     </span>
 @else
     <span {{ $attributes->merge($badgeAttributes) }}>

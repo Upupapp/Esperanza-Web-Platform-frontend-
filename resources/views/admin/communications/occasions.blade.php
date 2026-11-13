@@ -60,6 +60,15 @@
                         <li x-show="o.banner" class="flex items-start gap-1.5"><i data-lucide="gallery-horizontal" class="w-3 h-3 mt-0.5 shrink-0"></i><span class="line-clamp-1" :title="o.banner ? o.banner.title : ''" x-text="o.banner ? (o.banner_sync ? 'Banner shown with it' : 'Banner attached') : ''"></span></li>
                     </ul>
                 </div>
+                {{-- Send back with remarks: the server takes it, the page had no way to (2026-11-13). --}}
+                <div x-show="o._back" x-cloak class="px-3 pb-2 space-y-1.5">
+                    <label class="block text-[11px] font-semibold text-ink-body" :for="'back-o-' + o.id">Remarks for the writer (required to send it back)</label>
+                    <textarea :id="'back-o-' + o.id" x-model="o._remarks" rows="2" class="w-full text-xs rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:ring-4 focus:ring-brand-100 outline-none" placeholder="What to change, at least 5 characters"></textarea>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" @click="o._back = false" class="px-3 py-1.5 rounded-xl text-[11px] font-medium text-ink-muted hover:bg-white/70">Cancel</button>
+                        <button type="button" @click="sendBack(o)" :disabled="processing || (o._remarks || '').trim().length < 5" class="px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40">Send back</button>
+                    </div>
+                </div>
                 <div class="flex items-center gap-1 px-2 py-1.5 border-t border-brand-600/10">
                     <button type="button" x-show="o.editable && can('edit')" @click="openEdit(o)" class="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-brand-700 hover:bg-brand-50 inline-flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                     <button type="button" x-show="!(o.editable && can('edit'))" @click="view(o)" class="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-brand-700 hover:bg-brand-50 inline-flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i>View</button>
@@ -73,6 +82,7 @@
                             <button type="button" role="menuitem" x-show="(o.state === 'active' || o.state === 'scheduled') && can('approve')" @click="menu = false; act(o, 'pause')" :disabled="processing" class="w-full px-3 py-2 rounded-xl text-left text-xs text-amber-800 hover:bg-amber-50 inline-flex items-center gap-2 disabled:opacity-50"><i data-lucide="pause" class="w-3.5 h-3.5"></i>Pause</button>
                             <button type="button" role="menuitem" x-show="o.state === 'paused' && can('approve')" @click="menu = false; act(o, 'resume')" :disabled="processing" class="w-full px-3 py-2 rounded-xl text-left text-xs text-emerald-700 hover:bg-emerald-50 inline-flex items-center gap-2 disabled:opacity-50"><i data-lucide="play" class="w-3.5 h-3.5"></i>Resume</button>
                             <button type="button" role="menuitem" x-show="o.state === 'draft' && (canMove(o, 'Pending Review') || canMove(o, 'Approved') || canMove(o, 'Released') || canMove(o, 'Draft'))" @click="menu = false; act(o, 'activate')" :disabled="processing" class="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50 inline-flex items-center gap-2 disabled:opacity-50"><i data-lucide="circle-play" class="w-3.5 h-3.5"></i><span x-text="can('approve') ? 'Activate' : 'Send for review'"></span></button>
+                            <button type="button" role="menuitem" x-show="o.status === 'Pending Review' && canMove(o, 'Rejected')" @click="menu = false; o._back = true" class="w-full px-3 py-2 rounded-xl text-left text-xs text-rose-700 hover:bg-rose-50 inline-flex items-center gap-2"><i data-lucide="undo-2" class="w-3.5 h-3.5"></i>Send back</button>
                             <button type="button" role="menuitem" x-show="canMove(o, 'Archived')" @click="menu = false; act(o, 'archive')" :disabled="processing" class="w-full px-3 py-2 rounded-xl text-left text-xs text-ink-muted hover:bg-slate-50 inline-flex items-center gap-2 disabled:opacity-50"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
                         </div>
                     </div>

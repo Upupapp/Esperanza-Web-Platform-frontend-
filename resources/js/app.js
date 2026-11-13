@@ -1002,6 +1002,15 @@ document.addEventListener('alpine:init', () => {
         summary: ['calendar-range', 'indigo'],
     };
 
+    // The server links a request's notice as /citizen/document-requests/{ref}
+    // (the app's form); this site has no page there - it opens a request from
+    // its list with ?ref= - so a tapped notice ended on "page not found"
+    // (2026-11-13). The same address, the way this site opens it.
+    function siteLink(link) {
+        const m = typeof link === 'string' && link.match(/^\/citizen\/(document-requests|assistance-requests)\/([^/?#]+)\/?$/);
+        return m ? '/citizen/' + m[1] + '?ref=' + m[2] : link;
+    }
+
     function notificationItem(n) {
         const [icon, color] = notificationStyle[n.category] || ['bell', 'brand'];
         const lang = window.Alpine?.store('lang')?.current || 'fil';
@@ -1014,7 +1023,7 @@ document.addEventListener('alpine:init', () => {
             titleFil: n.title?.fil, titleEn: n.title?.en,
             body: n.body?.[lang] || n.body?.en || '',
             bodyFil: n.body?.fil, bodyEn: n.body?.en,
-            pill: n.pill, ref: n.ref, link: n.link,
+            pill: n.pill, ref: n.ref, link: siteLink(n.link),
             pinned: n.pinned, unread: n.unread,
             popup: n.popup === true,
             createdAt: n.time,

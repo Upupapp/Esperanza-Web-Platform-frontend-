@@ -55,7 +55,7 @@
                 <div class="flex-1 p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 mb-1">
-                            <x-ui.badge statusBind="b.status" />
+                            <x-ui.badge statusBind="b.status" labelBind="({ 'Released': 'Published', 'Rejected': 'Sent back', 'Pending Review': 'Waiting for review' })[b.status] || b.status" />
                             <span class="text-[10px] text-ink-muted font-mono" x-text="'#' + b.id"></span>
                         </div>
                         <p class="text-sm font-semibold text-ink truncate" x-text="b.title"></p>
@@ -66,6 +66,15 @@
                             <i data-lucide="users" class="w-3 h-3"></i><span x-text="audienceText(b)"></span>
                         </p>
                         <p x-show="(b.used_by || []).length" x-cloak class="text-[11px] text-gold-700 mt-1 flex items-center gap-1.5"><i data-lucide="party-popper" class="w-3 h-3"></i><span x-text="'Used by ' + (b.used_by || []).map(o => o.name).join(', ')"></span></p>
+                        {{-- Send back with remarks: the server takes it, the page had no way to (2026-11-13). --}}
+                        <div x-show="b._back" x-cloak class="mt-2 space-y-1.5">
+                            <label class="block text-[11px] font-semibold text-ink-body" :for="'back-' + b.id">Remarks for the writer (required to send it back)</label>
+                            <textarea :id="'back-' + b.id" x-model="b._remarks" rows="2" class="w-full text-xs rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:ring-4 focus:ring-brand-100 outline-none" placeholder="What to change, at least 5 characters"></textarea>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" @click="b._back = false" class="px-3 py-1.5 rounded-xl text-[11px] font-medium text-ink-muted hover:bg-white/70">Cancel</button>
+                                <button type="button" @click="sendBack(b)" :disabled="(b._remarks || '').trim().length < 5" class="px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40">Send back</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="flex items-center gap-1 shrink-0 self-start sm:self-center">
                         <div class="flex flex-col mr-1">
@@ -73,6 +82,7 @@
                             <button aria-label="Move down" type="button" @click="move(b, 1)" :disabled="idx === filtered.length - 1" class="p-1 rounded text-ink-muted hover:text-navy-700 hover:bg-white/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
                         </div>
                         <button type="button" x-show="b.status === 'Draft' && canMove(b, 'Pending Review')" @click="transition(b, 'Pending Review')" title="Submit for review" aria-label="Submit for review" class="p-2 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="send" class="w-4 h-4"></i></button>
+                        <button type="button" x-show="b.status === 'Pending Review' && canMove(b, 'Rejected')" @click="b._back = !b._back" title="Send back" aria-label="Send back" class="p-2 rounded-xl text-ink-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"><i data-lucide="undo-2" class="w-4 h-4"></i></button>
                         <button type="button" x-show="b.status === 'Pending Review' && canMove(b, 'Approved')" @click="transition(b, 'Approved')" title="Approve" aria-label="Approve" class="p-2 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>
                         <button type="button" x-show="b.status === 'Approved' && canMove(b, 'Released')" @click="transition(b, 'Released')" title="Publish to the carousel" aria-label="Publish to the carousel" class="p-2 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="upload" class="w-4 h-4"></i></button>
                         <button type="button" x-show="b.status !== 'Archived' && canMove(b, 'Archived')" @click="transition(b, 'Archived')" title="Archive (remove from the carousel)" aria-label="Archive" class="p-2 rounded-xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="archive" class="w-4 h-4"></i></button>

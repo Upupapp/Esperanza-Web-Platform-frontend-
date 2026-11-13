@@ -565,7 +565,7 @@
                     <x-ui.badge status="Pending Review" />
                 </div>
                 <p class="mt-2 text-sm text-ink-muted" x-text="hosted && signedIn && !identityVerified
-                    ? t('Esperanza LGU reviews your residency once your identity is verified. Verify your identity below first.', 'Susuriin ng Esperanza LGU ang iyong paninirahan kapag na-verify na ang iyong pagkakakilanlan. I-verify muna ang iyong pagkakakilanlan.')
+                    ? t('Esperanza LGU reviews your residency once your identity is verified. Verify your identity above first.', 'Susuriin ng Esperanza LGU ang iyong paninirahan kapag na-verify na ang iyong pagkakakilanlan. I-verify muna ang iyong pagkakakilanlan.')
                     : t('Esperanza LGU is reviewing your submitted information. This usually takes 1–3 business days — no action needed from you right now.', 'Sinusuri ng Esperanza LGU ang iyong ipinasang impormasyon. Karaniwang 1–3 araw ng trabaho ito — wala ka pang kailangang gawin ngayon.')"></p>
             </div>
 

@@ -303,6 +303,19 @@
                 } finally { this.resubmitting = false; }
             },
             stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
+            // The steps in the resident's words: the stepper showed the office's
+            // own Mark to Release, in English, on a Filipino-first page (2026-11-13).
+            stepWords: {
+                'Submitted': ['Naisumite', 'Submitted'],
+                'Under Verification': ['Sinusuri', 'Being checked'],
+                'Approved': ['Naaprubahan', 'Approved'],
+                'Mark to Release': ['Handa nang Kunin', 'Ready to pick up'],
+                'Released': ['Naibigay', 'Released'],
+            },
+            stepText(step) {
+                const w = this.stepWords[step];
+                return w ? w[this.$store.lang.current === 'en' ? 1 : 0] : step;
+            },
             stepIndex(status) {
                 const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
                 // An unknown status sits on no step (it is flagged below the steps).
@@ -1809,7 +1822,7 @@
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
                                             <span x-show="stepIndex(selectedRequest.status) <= i" x-text="i + 1"></span>
                                         </span>
-                                        <span class="text-xs max-w-[76px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="label"></span>
+                                        <span class="text-xs max-w-[76px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="stepText(label)"></span>
                                     </div>
                                     <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
                                 </div>
