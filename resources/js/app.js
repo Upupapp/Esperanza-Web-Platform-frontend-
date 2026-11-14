@@ -1232,7 +1232,8 @@ document.addEventListener('alpine:init', () => {
                 const topics = Object.keys(t).filter((k) => t[k] !== before[k]);
                 if (!topics.length) return;
                 topics.forEach((topic) => window.dispatchEvent(new CustomEvent('live:' + topic, { detail: { topics } })));
-                window.dispatchEvent(new CustomEvent('live:any', { detail: { topics } }));
+                // "other" alone (a sign-in, a setting) changes nothing a dashboard counts.
+                if (topics.some((topic) => topic !== 'other')) window.dispatchEvent(new CustomEvent('live:any', { detail: { topics } }));
             } catch {
                 // No news: offline, the file not there yet, or no answer in time.
             } finally {
