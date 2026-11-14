@@ -97,9 +97,10 @@
                                             <template x-if="sdScheduled() && sdCan('edit')">
                                                 <span>
                                                     {{-- Taken off, the case waits again; its row is archived, never deleted (2026-11-14). --}}
-                                                    <button type="button" x-show="!p._confirmRemove" @click="p._confirmRemove = true" class="text-rose-600 hover:underline">Take off</button>
+                                                    {{-- Not red: nothing is lost, so it reads like the other archive actions. --}}
+                                                    <button type="button" x-show="!p._confirmRemove" @click="p._confirmRemove = true" class="text-ink-body hover:underline">Take off</button>
                                                     <span x-show="p._confirmRemove" class="inline-flex items-center gap-2">
-                                                        <button type="button" :disabled="sdBusy" @click="sdRemove(p)" class="font-semibold text-rose-700 hover:underline">Yes, take off</button>
+                                                        <button type="button" :disabled="sdBusy" @click="sdRemove(p)" class="font-semibold text-brand-700 hover:underline">Yes, take off</button>
                                                         <button type="button" @click="p._confirmRemove = false" class="text-ink-muted">Keep</button>
                                                     </span>
                                                 </span>

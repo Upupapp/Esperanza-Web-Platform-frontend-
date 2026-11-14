@@ -333,16 +333,17 @@
          2026-11-14); a post that went to Facebook can be taken off there too
          (remove_from_facebook on the move to Archived). --}}
     <div x-data="{ get open() { return archOpen; }, set open(v) { if (!processing) archOpen = v; } }">
-    <x-ui.modal title="Archive This Post?" maxWidth="sm">
+    <x-ui.modal title="Archive Post" maxWidth="sm">
         <div class="space-y-3 text-sm text-ink-body">
-            <p>Archive <span class="font-semibold text-ink" x-text="'“' + (archPost?.title || '') + '”'"></span>? Residents no longer see it. It stays here under Archived, with its comments and likes.</p>
+            {{-- Only a published (Released) post was ever seen by residents. --}}
+            <p>Archive <span class="font-semibold text-ink" x-text="'“' + (archPost?.title || '') + '”'"></span>? <span x-text="archPost?.status === 'Released' ? 'Residents no longer see it. It stays here under Archived, with its comments and likes.' : 'It moves to Archived. Residents never saw it, and nothing is deleted.'"></span></p>
             <label x-show="archPost?.facebook?.status === 'posted'" class="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 cursor-pointer">
                 <input type="checkbox" x-model="archFromFb" class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
                 <span><span class="block font-semibold text-ink">Also remove it from the Facebook Page</span><span class="block text-xs text-ink-muted">Left unticked, the post stays on the Facebook Page.</span></span>
             </label>
         </div>
         <x-slot:footer>
-            <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="archOpen = false">Cancel</x-ui.button>
+            <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="archOpen = false">Keep it</x-ui.button>
             <x-ui.button variant="primary" size="sm" icon="archive" x-bind:disabled="processing" @click="confirmArchive()"><span x-text="processing ? 'Archiving…' : 'Archive'"></span></x-ui.button>
         </x-slot:footer>
     </x-ui.modal>

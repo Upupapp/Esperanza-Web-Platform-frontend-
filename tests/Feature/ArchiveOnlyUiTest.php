@@ -26,7 +26,7 @@ class ArchiveOnlyUiTest extends TestCase
         $this->assertStringNotContainsString('deletePost(', $js.$view);
         $this->assertStringNotContainsString('delete_on_facebook', $js);
         $this->assertStringContainsString('@click="archivePost(a)"', $view);
-        $this->assertStringContainsString('<x-ui.modal title="Archive This Post?"', $view);
+        $this->assertStringContainsString('<x-ui.modal title="Archive Post"', $view);
         $this->assertStringContainsString('x-show="archPost?.facebook?.status === \'posted\'"', $view);
         $this->assertStringContainsString('Also remove it from the Facebook Page', $view);
         $this->assertStringContainsString("{ to: 'Archived', remove_from_facebook: fromFb || undefined }", $js);
