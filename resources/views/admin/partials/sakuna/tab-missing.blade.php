@@ -26,7 +26,7 @@
                     <i data-lucide="info"></i>
                 </button>
                 <div class="sk-btngrp" x-show="can('sakuna_missing','edit')" role="group" aria-label="Casualty list">
-                    <button type="button" class="sk-btn" @click="exportList('csv')" title="The casualty list in the NDRRMC name list's columns"><i data-lucide="download"></i> Casualty list</button>
+                    <button type="button" class="sk-btn" @click="exportList('csv')" title="The casualty list in the NDRRMC name list's columns"><i data-lucide="download"></i> Casualty list (CSV)</button>
                     <button type="button" class="sk-btn" @click="exportList('pdf')" aria-label="Casualty list as PDF">PDF</button>
                 </div>
                 <button type="button" class="sk-btn sk-btn-p disabled:opacity-50" x-show="can('sakuna_missing','create')" @click="startAdd()" :disabled="onLastCopy" :title="onLastCopy ? 'Waits for the connection' : ''">
@@ -108,10 +108,10 @@
                     <tbody>
                         <template x-for="r in rows" :key="r.ref">
                             <tr @click="show(r.ref)" @keydown.enter.prevent="show(r.ref)" tabindex="0">
-                                <td><span class="sk-mono" x-text="r.ref"></span><span class="sk-sub" x-text="r.incident ? r.incident.ref : 'No incident'"></span></td>
-                                <td><span class="sk-b" x-text="personName(r)"></span><span class="sk-sub" x-text="livesLine(r)"></span></td>
-                                <td><span class="sk-pill" :class="categoryTone[r.category]" x-text="categoryLabel[r.category] || r.category"></span><span class="sk-sub" x-text="r.status"></span></td>
-                                <td x-text="ageSex(r)"></td>
+                                <td class="whitespace-nowrap"><span class="sk-mono block" x-text="r.ref"></span><span class="sk-sub block" x-text="r.incident ? r.incident.ref : 'No incident'"></span></td>
+                                <td><span class="sk-b block" x-text="personName(r)"></span><span class="sk-sub block" x-text="livesLine(r)"></span></td>
+                                <td class="whitespace-nowrap"><span class="sk-pill" :class="categoryTone[r.category]" x-text="categoryLabel[r.category] || r.category"></span><span class="sk-sub block" x-show="statusDiffers(r)" x-text="r.status"></span></td>
+                                <td class="whitespace-nowrap" x-text="ageSex(r)"></td>
                                 <td x-text="placeLine(r)"></td>
                                 <td x-text="r.cause || '—'"></td>
                                 <td><span class="sk-pill" :class="r.validation === 'Validated' ? 'sk-p-teal' : 'sk-p-slate'" x-text="r.validation"></span></td>
@@ -174,7 +174,7 @@
                             <div class="sm:col-span-2"><dt class="sk-ssub">Remains</dt><dd x-text="[open.remains_ref ? 'Body ref. ' + open.remains_ref : null, open.remains_location, open.released_to ? 'Released to ' + open.released_to + (open.released_at ? ' on ' + when(open.released_at) : '') : null, open.death_registry_no ? 'Death registry no. ' + open.death_registry_no : null].filter(Boolean).join(' · ') || '—'"></dd></div>
                         </template>
                         <template x-if="open && open.kind === 'missing'">
-                            <div class="sm:col-span-2"><dt class="sk-ssub">Last seen, found</dt><dd x-text="(open.last_seen_place || '—') + (open.found_place ? ' · found at ' + open.found_place : '') + (open.found_at ? ' · ' + when(open.found_at) : '')"></dd></div>
+                            <div class="sm:col-span-2"><dt class="sk-ssub" x-text="open.found_place || open.found_at ? 'Last seen, and found' : 'Last seen'"></dt><dd x-text="(open.last_seen_place || '—') + (open.found_place ? ' · found at ' + open.found_place : '') + (open.found_at ? ' · ' + when(open.found_at) : '')"></dd></div>
                         </template>
                     </dl>
                 </div>
@@ -186,10 +186,10 @@
                         <span class="text-xs sk-muted" x-text="open ? 'Source of data: ' + (open.source || 'not given') : ''"></span>
                     </div>
                     <p class="text-xs" x-show="open && open.validation === 'Validated'" x-text="open ? 'Validated ' + when(open.validated_at) + (open.validated_by ? ' by ' + open.validated_by : '') + (open.validation_note ? ' · ' + open.validation_note : '') : ''"></p>
-                    <p class="text-xs sk-muted" x-show="open && open.validation !== 'Validated'">For validation. A death counts as validated once a death certificate shows it was caused by the disaster (MHO), or a police report confirms it.</p>
+                    <p class="text-xs sk-muted" x-show="open && open.validation !== 'Validated'" x-text="open ? validationHelp(open) : ''"></p>
                     <div class="flex flex-wrap items-center gap-2" x-show="can('sakuna_missing','edit')">
                         <label class="sr-only" for="mp-valid-note">Validation note</label>
-                        <input id="mp-valid-note" type="text" x-model="validNote" maxlength="255" placeholder="e.g. Death certificate no. 2026-114" class="sk-sel flex-1" style="min-width: 200px;" x-show="open && open.validation !== 'Validated'">
+                        <input id="mp-valid-note" type="text" x-model="validNote" maxlength="255" :placeholder="open ? validationExample(open) : ''" class="sk-sel flex-1" style="min-width: 200px;" x-show="open && open.validation !== 'Validated'">
                         <button type="button" class="sk-btn sk-btn-sm sk-btn-p" x-show="open && open.validation !== 'Validated'" :disabled="saving" @click="setValidation('Validated')"><i data-lucide="badge-check"></i> Mark validated</button>
                         <button type="button" class="sk-btn sk-btn-sm" x-show="open && open.validation === 'Validated'" :disabled="saving" @click="setValidation('For validation')">Back to For validation</button>
                     </div>
@@ -201,14 +201,14 @@
                         <template x-for="s in (open ? open.next_statuses : [])" :key="s">
                             <button type="button" @click="move.status = s" :aria-pressed="move.status === s"
                                     x-show="s !== 'Closed' || can('sakuna_missing','close')"
-                                    class="sk-btn sk-btn-sm" :class="move.status === s ? 'sk-btn-soft' : ''" x-text="s"></button>
+                                    class="sk-btn sk-btn-sm" :class="move.status === s ? 'sk-btn-soft' : ''" x-text="s === 'Closed' ? 'Close the case' : s"></button>
                         </template>
                     </div>
                     <div class="grid gap-2 sm:grid-cols-2" x-show="move.status">
                         <input type="text" x-show="move.status.startsWith('Found')" x-model="move.found_place" placeholder="Where found" aria-label="Where found" class="sk-sel w-full">
                         <input type="text" x-model="move.note" placeholder="Note for the history" aria-label="Note for the history" class="sk-sel w-full">
                     </div>
-                    <button type="button" class="sk-btn sk-btn-sm sk-btn-p" x-show="move.status" :disabled="saving" @click="moveTo()"><i data-lucide="check"></i><span x-text="saving ? 'Saving…' : 'Mark as ' + move.status"></span></button>
+                    <button type="button" class="sk-btn sk-btn-sm sk-btn-p" x-show="move.status" :disabled="saving" @click="moveTo()"><i data-lucide="check"></i><span x-text="saving ? 'Saving…' : (move.status === 'Closed' ? 'Close the case' : 'Mark as ' + move.status)"></span></button>
                 </div>
 
                 {{-- Balita (owner, 2026-10-30): never for an injured person, and only
@@ -218,7 +218,7 @@
                         <p class="text-xs font-semibold text-slate-800">Balita posts</p>
                         <button type="button" class="sk-btn sk-btn-sm" x-show="open && open.post_consent && open.status !== 'Closed' && can('sakuna_missing','edit') && can('comm_news','create')" :disabled="saving" @click="draftPost('{{ route('admin.communications') }}')"><i data-lucide="newspaper"></i> Prepare a Balita post</button>
                     </div>
-                    <p class="text-xs sk-muted">Nothing is posted by itself. A draft holds only what may be made public (no description, address or contact details) and needs approval by the Information Officer, the Super Administrator or the MDRRMO Head.</p>
+                    <p class="text-xs sk-muted">Nothing is posted by itself. A draft holds only what may be made public (no description, address or contact details) and needs approval by the Information Officer, the Super Admin or the MDRRMO Head.</p>
                     <p class="text-xs" x-show="open && open.post_consent" x-text="open ? 'Written consent to post recorded ' + when(open.post_consent_at) + (open.post_consent_by ? ', given by ' + open.post_consent_by : '') + '.' : ''"></p>
                     <div class="flex flex-wrap items-center gap-2" x-show="open && !open.post_consent && open.status !== 'Closed' && can('sakuna_missing','edit')">
                         <label class="sr-only" for="mp-consent">Who gave written consent</label>
@@ -261,7 +261,7 @@
                     <div class="grid gap-2 grid-cols-2 sm:grid-cols-4">
                         <template x-for="k in kindChoices" :key="k[0]">
                             <button type="button" @click="form.kind = k[0]" :aria-pressed="form.kind === k[0]"
-                                    class="text-left rounded-2xl border px-3 py-2 transition-colors" :class="form.kind === k[0] ? 'border-brand-600 bg-brand-50' : 'border-[#E3E8F1] bg-white hover:bg-slate-50'">
+                                    class="flex flex-col justify-start text-left rounded-2xl border px-3 py-2 transition-colors" :class="form.kind === k[0] ? 'border-brand-600 bg-brand-50' : 'border-[#E3E8F1] bg-white hover:bg-slate-50'">
                                 <span class="block text-[13px] font-semibold text-ink" x-text="k[1]"></span>
                                 <span class="block text-[11.5px] text-ink-muted" x-text="k[2]"></span>
                             </button>
@@ -310,7 +310,7 @@
                         <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.lives !== 'unknown'" :class="form.lives === 'outside' && 'sm:col-span-2'"><span x-text="form.lives === 'outside' ? 'Street and barangay' : 'Purok, sitio or street'"></span>
                             <input type="text" x-model="form.home_address" maxlength="255" class="sk-sel w-full">
                         </label>
-                        <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.lives === 'outside'">Town or city <span class="text-rose-600" aria-hidden="true">*</span>
+                        <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.lives === 'outside'"><span>Town or city <span class="text-rose-600" aria-hidden="true">*</span></span>
                             <input type="text" x-model="form.home_town" maxlength="120" placeholder="e.g. Bulan" class="sk-sel w-full">
                         </label>
                         <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.lives === 'outside'">Province
@@ -342,7 +342,7 @@
                                 @foreach($barangays as $b)<option value="{{ is_array($b) ? $b['name'] : $b }}">{{ is_array($b) ? $b['name'] : $b }}</option>@endforeach
                             </select>
                         </label>
-                        <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.place_scope === 'outside'">Town or city <span class="text-rose-600" aria-hidden="true">*</span>
+                        <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.place_scope === 'outside'"><span>Town or city <span class="text-rose-600" aria-hidden="true">*</span></span>
                             <input type="text" x-model="form.place_town" maxlength="120" placeholder="e.g. Masbate City" class="sk-sel w-full">
                         </label>
                         <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.place_scope === 'outside'">Province

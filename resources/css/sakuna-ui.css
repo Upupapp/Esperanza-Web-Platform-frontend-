@@ -336,3 +336,8 @@
 .sk input::placeholder, .sk textarea::placeholder { color: #556074; opacity: 1; }
 /* Report cards are as tall as what they hold. */
 .sk .sk-g4 { align-items: start; }
+
+/* A text field with suggestions (Casualties: cause, source of data) looks like
+   every other text field: no browser arrow; the suggestions still open as you
+   type (2026-11-15). */
+.sk-sel[list]::-webkit-calendar-picker-indicator { display: none !important; }

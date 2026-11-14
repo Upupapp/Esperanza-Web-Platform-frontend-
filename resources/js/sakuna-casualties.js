@@ -64,7 +64,7 @@ function sakunaCasualties() {
             ['deceased', 'Dead', 'The person died'],
             ['injured', 'Injured', 'Hurt or fell ill'],
             ['missing', 'Missing', 'Not found yet'],
-            ['unidentified', 'Body not identified', 'Remains with no name yet'],
+            ['unidentified', 'Body not identified', 'No name yet'],
         ],
         // Causes as the situation reports write them; free text is fine too.
         causes: ['Drowning', 'Landslide', 'Flooding', 'Storm surge', 'Electrocution', 'Falling debris', 'Falling tree', 'Collapsed structure', 'Lightning', 'Blunt trauma', 'Vehicular accident', 'Fire or burns', 'Hypothermia'],
@@ -119,6 +119,20 @@ function sakunaCasualties() {
             return (h.barangay ? 'Brgy. ' + h.barangay : '—') + (h.detail ? ' · ' + h.detail : '');
         },
         ageSex(r) { return [r.sex, r.age !== null && r.age !== undefined ? r.age + ' yrs' : null].filter(Boolean).join(' · ') || '—'; },
+        /** The status under the category pill only when it says more ("Found deceased", "Unidentified"). */
+        statusDiffers(r) { return !['Missing', 'Injured', 'Deceased', this.categoryLabel[r.category]].includes(r.status); },
+        /** What validates a case, by category (a death certificate is only for a death). */
+        validationHelp(o) {
+            return {
+                dead: 'For validation. A death counts as validated once a death certificate shows it was caused by the disaster (MHO), or a police report confirms it.',
+                injured: 'For validation. An injury counts as validated once a hospital or Rural Health Unit record confirms it.',
+                missing: 'For validation. A missing person counts as validated once a police (PNP) or barangay report confirms it.',
+                safe: 'For validation. Validated once the family or the barangay confirms the person is safe.',
+            }[o.category] || 'For validation.';
+        },
+        validationExample(o) {
+            return { dead: 'e.g. Death certificate no. 2026-114', injured: 'e.g. RHU record no. 2026-031', missing: 'e.g. PNP blotter no. 2026-07', safe: 'e.g. Barangay report' }[o.category] || 'Note';
+        },
         whenOf(r) { return r.occurred_at || r.last_seen_at; },
 
         async show(ref) {
@@ -272,8 +286,8 @@ function sakunaCasualties() {
             try {
                 const res = await api.get('/admin/sakuna/missing/export', { params: this.filters() });
                 const data = res.data || {};
-                const rows = (data.rows || []).map((r, n) => ({
-                    'No.': n + 1,
+                // The NDRRMC name list's order (... Cause, Remarks, Source of data, Validated), then ours.
+                const rows = (data.rows || []).map((r) => ({
                     Category: this.categoryLabel[r.category] || r.category,
                     Province: r.province || '',
                     'City/Municipality': r.municipality || '',
@@ -283,12 +297,11 @@ function sakunaCasualties() {
                     Sex: r.sex || '',
                     Address: r.address || (r.lives === 'outside' ? 'Not from Esperanza' : ''),
                     Cause: r.cause || '',
-                    'Date and time': r.when ? this.when(r.when) : '',
-                    Details: r.details || '',
-                    Status: r.status,
+                    Remarks: r.remarks || '',
                     'Source of data': r.source || '',
                     Validated: r.validated ? 'Yes' : 'No',
-                    Remarks: r.remarks || '',
+                    'Date and time': r.when ? this.when(r.when) : '',
+                    Details: r.details || '',
                 }));
                 if (!rows.length) { this.toast?.('No records to export.', 'warning'); return; }
                 if (as === 'csv') { this.exportCSV(rows, 'casualty-list.csv'); return; }
@@ -297,8 +310,10 @@ function sakunaCasualties() {
                 await window.tablePdf(rows, {
                     filename: 'casualty-list.pdf',
                     title: 'Sakuna · Casualty list',
-                    subtitle: [data.municipality, data.province].filter(Boolean).join(', ') + (this.f.incident ? ' · ' + this.f.incident : ''),
-                    summary: [[line('dead', 'Dead'), line('injured', 'Injured'), line('missing', 'Missing')].join('   ·   ')],
+                    subtitle: [data.municipality, data.province].filter(Boolean).join(', ') + ' · ' + (this.f.incident ? 'Incident ' + this.f.incident : 'All incidents'),
+                    // A space after the slash lets the narrow heading break there, not mid-word.
+                    columns: Object.keys(rows[0]).map((key) => ({ key, label: key === 'City/Municipality' ? 'City/ Municipality' : key })),
+                    summary: [[line('dead', 'Dead'), line('injured', 'Injured'), line('missing', 'Missing'), 'Found safe: ' + (c.safe ?? 0)].join('   ·   ')],
                 });
                 this.toast?.('PDF downloaded.', 'success');
             } catch (err) { this.failedWith(err, 'Could not make the casualty list.'); }
