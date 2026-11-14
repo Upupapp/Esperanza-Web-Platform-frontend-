@@ -156,8 +156,7 @@
                     <p x-show="isScheduled(a)" class="flex-1 h-10 inline-flex items-center justify-center gap-2 px-2 text-sm font-medium text-sky-800 text-center"><i data-lucide="calendar-clock" class="w-[18px] h-[18px] shrink-0"></i><span x-text="goesLiveText(a)"></span></p>
                     {{-- Change it, its time, or stop it: back to Drafts, then the editor (MIO bug 5). --}}
                     <button type="button" x-show="isScheduled(a) && canMove(a, 'Draft') && can('edit')" @click="changeScheduled(a)" :disabled="processing" title="Takes it back to Drafts so it does not go out at its time, and opens it to change" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-brand-700 hover:bg-slate-100 disabled:opacity-50 whitespace-nowrap"><i data-lucide="pencil" class="w-[18px] h-[18px]"></i>Change</button>
-                    <button type="button" x-show="canMove(a, 'Archived')" @click="quick(a, 'Archived', 'Archived. Residents no longer see it.')" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-ink-body hover:bg-slate-100 whitespace-nowrap"><i data-lucide="archive" class="w-[18px] h-[18px]"></i>Archive</button>
-                    <button type="button" x-show="canDelete(a)" @click="deletePost(a)" :disabled="processing" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50 whitespace-nowrap"><i data-lucide="trash-2" class="w-[18px] h-[18px]"></i>Delete</button>
+                    <button type="button" x-show="canMove(a, 'Archived')" @click="archivePost(a)" :disabled="processing" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-ink-body hover:bg-slate-100 whitespace-nowrap"><i data-lucide="archive" class="w-[18px] h-[18px]"></i>Archive</button>
                     <button type="button" x-show="can('create')" @click="useAsTemplate(a)" :disabled="processing" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-ink-body hover:bg-slate-100 disabled:opacity-50 whitespace-nowrap"><i data-lucide="copy" class="w-[18px] h-[18px]"></i>Use as template</button>
                 </div>
             </article>
@@ -330,20 +329,21 @@
     </x-ui.modal>
     </div>
 
-    {{-- Delete, asked in the page (welfare round 2026-10-29): a post that went to
-         Facebook can be taken off there too (delete_on_facebook=1). --}}
-    <div x-data="{ get open() { return delOpen; }, set open(v) { if (!processing) delOpen = v; } }">
-    <x-ui.modal title="Delete this post?" maxWidth="sm">
+    {{-- Archive, asked in the page. Posts are archived, never deleted (owner,
+         2026-11-14); a post that went to Facebook can be taken off there too
+         (remove_from_facebook on the move to Archived). --}}
+    <div x-data="{ get open() { return archOpen; }, set open(v) { if (!processing) archOpen = v; } }">
+    <x-ui.modal title="Archive This Post?" maxWidth="sm">
         <div class="space-y-3 text-sm text-ink-body">
-            <p>Delete <span class="font-semibold text-ink" x-text="'“' + (delPost?.title || '') + '”'"></span> for good? Its comments and likes go with it. This cannot be undone.</p>
-            <label x-show="delPost?.facebook?.status === 'posted'" class="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 cursor-pointer">
-                <input type="checkbox" x-model="delFromFb" class="mt-0.5 rounded border-slate-300 text-rose-600 focus:ring-rose-500">
-                <span><span class="block font-semibold text-ink">Also remove it from Facebook</span><span class="block text-xs text-ink-muted">Left unticked, the post stays on the Facebook Page.</span></span>
+            <p>Archive <span class="font-semibold text-ink" x-text="'“' + (archPost?.title || '') + '”'"></span>? Residents no longer see it. It stays here under Archived, with its comments and likes.</p>
+            <label x-show="archPost?.facebook?.status === 'posted'" class="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 cursor-pointer">
+                <input type="checkbox" x-model="archFromFb" class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                <span><span class="block font-semibold text-ink">Also remove it from the Facebook Page</span><span class="block text-xs text-ink-muted">Left unticked, the post stays on the Facebook Page.</span></span>
             </label>
         </div>
         <x-slot:footer>
-            <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="delOpen = false">Cancel</x-ui.button>
-            <x-ui.button variant="danger" size="sm" icon="trash-2" x-bind:disabled="processing" @click="confirmDelete()"><span x-text="processing ? 'Deleting…' : 'Delete'"></span></x-ui.button>
+            <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="archOpen = false">Cancel</x-ui.button>
+            <x-ui.button variant="primary" size="sm" icon="archive" x-bind:disabled="processing" @click="confirmArchive()"><span x-text="processing ? 'Archiving…' : 'Archive'"></span></x-ui.button>
         </x-slot:footer>
     </x-ui.modal>
     </div>

@@ -566,7 +566,7 @@
                 open: false,
                 creating: false,
                 createError: '',
-                confirmDelete: null,
+                confirmArchive: null,
                 newRole: { name: '', description: '', from: '', color: 'text-slate-600 bg-slate-100' },
                 colors: ['text-slate-600 bg-slate-100', 'text-brand-700 bg-brand-50', 'text-purple-700 bg-purple-50', 'text-emerald-700 bg-emerald-50', 'text-orange-700 bg-orange-50', 'text-rose-700 bg-rose-50', 'text-teal-700 bg-teal-50'],
                 async loadRoles() {
@@ -603,17 +603,19 @@
                         this.createError = err.localised ? err.localised('en') : 'Could not create the role.';
                     } finally { this.creating = false; }
                 },
-                // Two clicks: the first turns the button into Confirm delete.
-                async deleteRole(role) {
-                    if (this.confirmDelete !== role.key) { this.confirmDelete = role.key; return; }
+                // Two clicks: the first turns the button into Confirm archive.
+                // Roles are archived, never deleted (owner, 2026-11-14): an
+                // archived role leaves the list and can no longer be given.
+                async archiveRole(role) {
+                    if (this.confirmArchive !== role.key) { this.confirmArchive = role.key; return; }
                     try {
                         await $api.delete('/admin/roles/' + role.key);
-                        this.$dispatch('toast', { message: 'Role ' + role.name + ' deleted.', variant: 'success' });
+                        this.$dispatch('toast', { message: 'Archived.', variant: 'success' });
                         await this.loadRoles();
                         window.dispatchEvent(new CustomEvent('roles-changed'));
                     } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not delete the role.', variant: 'error' });
-                    } finally { this.confirmDelete = null; }
+                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not archive the role.', variant: 'error' });
+                    } finally { this.confirmArchive = null; }
                 },
                 get totalAccounts() { return this.roles.reduce((n, r) => n + (r.accounts || 0), 0); },
                 grantedCount(role) { return Object.values(role.permissions || {}).reduce((n, arr) => n + arr.length, 0); },
@@ -657,9 +659,9 @@
                                 <button
                                     type="button"
                                     x-show="role.built_in === false && !role.accounts"
-                                    @click="deleteRole(role)"
-                                    class="text-xs font-medium text-rose-600 hover:underline"
-                                    x-text="confirmDelete === role.key ? 'Confirm delete' : 'Delete'"
+                                    @click="archiveRole(role)"
+                                    class="text-xs font-medium text-ink-body hover:underline"
+                                    x-text="confirmArchive === role.key ? 'Confirm archive' : 'Archive'"
                                 ></button>
                                 <button
                                     @click="go('permissions'); window.dispatchEvent(new CustomEvent('select-role', { detail: role.key }))"

@@ -34,16 +34,17 @@ class BalitaRolesFlowUiTest extends TestCase
         $this->assertStringContainsString('goes to the Municipal Administrator, its lead', $this->source('resources/views/admin/settings.blade.php'));
     }
 
-    public function test_posts_and_events_are_deleted_only_once_residents_cannot_see_them(): void
+    /** Posts and events are archived, never deleted (owner, 2026-11-14); see ArchiveOnlyUiTest. */
+    public function test_posts_and_events_are_archived_never_deleted(): void
     {
         $js = $this->source('resources/js/scope-admin-records.js');
 
-        $this->assertStringContainsString("canDelete(post) { return ['Draft', 'Rejected', 'Archived'].includes(post.status) && this.can('delete')", $js);
-        // Since 2026-10-29 a post on the LGU's Facebook Page can be removed there too.
-        $this->assertStringContainsString("await api.delete('/admin/announcements/' + post.id, onFacebook && this.delFromFb ? { params: { delete_on_facebook: 1 } } : undefined);", $js);
-        $this->assertStringContainsString('x-show="canDelete(a)" @click="deletePost(a)"', $this->source('resources/views/admin/communications/balita.blade.php'));
-        $this->assertStringContainsString("canDelete(e) { return ['Draft', 'Rejected', 'Archived'].includes(e.status) && this.can('delete'); }", $js);
-        $this->assertStringContainsString("await api.delete('/admin/events/' + encodeURIComponent(e.key));", $js);
-        $this->assertStringContainsString('x-show="canDelete(e)" @click="deleteEvent(e)"', $this->source('resources/views/admin/communications.blade.php'));
+        // Since 2026-10-29 a post on the LGU's Facebook Page can be removed there too, now on archiving.
+        $this->assertStringContainsString("await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Archived', remove_from_facebook: fromFb || undefined });", $js);
+        $this->assertStringContainsString('@click="archivePost(a)"', $this->source('resources/views/admin/communications/balita.blade.php'));
+        $this->assertStringContainsString("if (await this.transition(e, 'Archived')) { balitaToast('Archived.'); await this.load(); }", $js);
+        $this->assertStringNotContainsString("api.delete('/admin/announcements/", $js);
+        $this->assertStringNotContainsString("api.delete('/admin/events/", $js);
+        $this->assertStringNotContainsString('canDelete(', $js);
     }
 }

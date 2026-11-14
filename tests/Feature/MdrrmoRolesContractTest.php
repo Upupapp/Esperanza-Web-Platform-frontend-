@@ -122,7 +122,7 @@ class MdrrmoRolesContractTest extends TestCase
         $this->assertStringContainsString('mayChange(post) { return post.can_change !== false && (this.approver || !!post.mine); },', $js);
         $this->assertStringContainsString('return !!action && this.can(action) && this.mayChange(post);', $js, 'approve, publish, send back, archive');
         $this->assertStringContainsString("this.can('edit') && this.mayChange(post); }", $js, 'edit');
-        $this->assertStringContainsString("this.can('delete') && this.mayChange(post); }", $js, 'delete');
+        $this->assertStringNotContainsString("this.can('delete') && this.mayChange(post); }", $js, 'no delete: posts are archived, never deleted (2026-11-14)');
         $this->assertStringContainsString("a.status === 'Rejected' && this.mayChange(a)", $js);
         $this->assertStringContainsString("this.approver && post.can_change !== false && post.status === 'Released'", $js, 'post to Facebook');
         $this->assertStringContainsString('post.available_transitions?.[to]', $js, 'the server still lists the moves');

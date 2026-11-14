@@ -108,7 +108,11 @@ function bannerForm(b = null, nextOrder = 1) {
     };
 }
 
-/** The Banners view: the list, the form with its picture and its preview, and delete. */
+/**
+ * The Banners view: the list, the form with its picture and its preview.
+ * Banners are archived, never deleted (owner, 2026-11-14: "archives only no
+ * delete"): Archive takes one off the carousel and it stays under Archived.
+ */
 function adminBanners(contract = {}, barangayNames = [], maxImageBytes = 10485760) {
     return {
         contract,
@@ -276,21 +280,6 @@ function adminBanners(contract = {}, barangayNames = [], maxImageBytes = 1048576
             }
             await this.load();
             toast(row.status === 'Released' ? 'Published to the carousel while its dates allow.' : 'Banner is now ' + this.statusLabel(row.status) + '.');
-        },
-        async remove(b) {
-            const used = (b.used_by || []).map((o) => o.name);
-            if (used.length) {
-                toast('"' + b.title + '" is used by ' + used.join(', ') + '. Remove it from those occasions first.', 'error');
-                return;
-            }
-            if (!window.confirm('Delete the banner "' + b.title + '"? This cannot be undone.')) return;
-            try {
-                await api.delete('/admin/banners/' + b.id);
-                toast('Banner deleted.');
-                await this.load();
-            } catch (err) {
-                toast(errText(err, 'Could not delete this banner.'), 'error');
-            }
         },
         async move(b, dir) {
             const list = this.filtered;

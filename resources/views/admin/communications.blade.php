@@ -204,7 +204,6 @@
                             <button x-show="e.status === 'Approved' && canMove(e, 'Released')" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
                             <button x-show="isCancel(e) && canMove(e, 'Archived')" @click="openCancel(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-red-600 hover:bg-red-50/60 transition-colors"><i data-lucide="calendar-x" class="w-3.5 h-3.5"></i>Cancel event</button>
                             <button x-show="!isCancel(e) && ['Draft', 'Approved', 'Released', 'Rejected'].includes(e.status) && canMove(e, 'Archived')" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
-                            <button x-show="canDelete(e)" @click="deleteEvent(e)" :disabled="processing" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-rose-700 hover:bg-rose-50/60 transition-colors disabled:opacity-50"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Delete</button>
                         </div>
                     </div>
                 </template>

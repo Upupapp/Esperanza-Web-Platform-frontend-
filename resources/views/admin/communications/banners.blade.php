@@ -87,7 +87,6 @@
                         <button type="button" x-show="b.status === 'Approved' && canMove(b, 'Released')" @click="transition(b, 'Released')" title="Publish to the carousel" aria-label="Publish to the carousel" class="p-2 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="upload" class="w-4 h-4"></i></button>
                         <button type="button" x-show="b.status !== 'Archived' && canMove(b, 'Archived')" @click="transition(b, 'Archived')" title="Archive (remove from the carousel)" aria-label="Archive" class="p-2 rounded-xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="archive" class="w-4 h-4"></i></button>
                         <button type="button" x-show="editable(b) && can('edit')" @click="openEdit(b)" title="Edit banner" aria-label="Edit banner" class="p-2 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                        <button type="button" x-show="b.status !== 'Released' && can('delete')" @click="remove(b)" title="Delete banner" aria-label="Delete banner" class="p-2 rounded-xl text-ink-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             </div>

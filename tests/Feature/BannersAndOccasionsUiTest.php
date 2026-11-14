@@ -71,7 +71,7 @@ class BannersAndOccasionsUiTest extends TestCase
         $this->assertStringContainsString("statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],", $js, 'Scheduled is a filter, not a status');
         // Edit, Archive, Use as Template - the template is made by the server.
         $this->assertStringContainsString('@click="openEdit(a)"', $view);
-        $this->assertStringContainsString("@click=\"quick(a, 'Archived', ", $view);
+        $this->assertStringContainsString('@click="archivePost(a)"', $view);
         $this->assertStringContainsString('@click="useAsTemplate(a)"', $view);
         $this->assertStringContainsString("api.post('/admin/announcements/' + post.id + '/duplicate')", $js);
         // No greeting kind left anywhere in Balita.
@@ -136,8 +136,10 @@ class BannersAndOccasionsUiTest extends TestCase
         $this->assertStringContainsString("toggle('sectors', s.key)", $banners);
         $this->assertStringContainsString("toggle('barangays', b)", $banners);
         $this->assertStringContainsString("previewDevice === 'mobile' ? 'aspect-ratio: 390 / 172' : 'aspect-ratio: 21 / 7'", $banners);
-        $this->assertStringContainsString('@click="remove(b)"', $banners);
-        $this->assertStringContainsString("api.delete('/admin/banners/' + b.id)", $js);
+        // Archived, never deleted (2026-11-14).
+        $this->assertStringContainsString("@click=\"transition(b, 'Archived')\"", $banners);
+        $this->assertStringNotContainsString('@click="remove(b)"', $banners);
+        $this->assertStringNotContainsString("api.delete('/admin/banners/' + b.id)", $js);
         // Real type from the first bytes, then the same upload as a Balita photo.
         $this->assertStringContainsString('export async function sniffImage(file)', $media);
         $this->assertStringContainsString('if (at(0, 0xff, 0xd8, 0xff)) return \'image/jpeg\';', $media);

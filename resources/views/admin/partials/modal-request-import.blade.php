@@ -340,7 +340,7 @@
                         <p class="text-sm font-bold text-ink"><span x-text="h.filename"></span> <span class="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1" :class="{'Completed':'bg-emerald-50 text-emerald-700 ring-emerald-200','In Progress':'bg-sky-50 text-sky-700 ring-sky-200','Undone':'bg-slate-100 text-slate-600 ring-slate-200'}[h.status]" x-text="h.status"></span></p>
                         <p class="text-xs text-ink-muted" x-text="h.ref + ' · ' + (h.created_by || '—') + ' · ' + when(h.created_at) + (h.scope ? ' · Brgy. ' + h.scope : '')"></p>
                         <p class="text-xs text-ink mt-1" x-text="h.created + ' added · ' + h.linked + ' linked to residents · ' + h.skipped + ' left out · ' + h.failed + ' not imported'"></p>
-                        <p x-show="h.status==='Undone'" class="text-xs text-amber-700 mt-1" x-text="'Undone by ' + (h.undone_by || '—') + ': ' + ((h.undo_summary || {}).removed || 0) + ' records removed' + (h.undo_reason ? ' · ' + h.undo_reason : '')"></p>
+                        <p x-show="h.status==='Undone'" class="text-xs text-amber-700 mt-1" x-text="'Undone by ' + (h.undone_by || '—') + ': ' + ((h.undo_summary || {}).removed || 0) + ' records archived' + (h.undo_reason ? ' · ' + h.undo_reason : '')"></p>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button type="button" x-show="h.status!=='Undone' && h.created" @click="showImported(h.ref)" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-700 hover:bg-brand-50">Show records</button>
@@ -348,7 +348,7 @@
                     </div>
                 </div>
                 <div x-show="undoTarget && undoTarget.ref===h.ref" x-cloak class="mt-3 rounded-xl bg-rose-50 border border-rose-200 p-3">
-                    <p class="text-xs text-rose-800 mb-2">Undo removes every record this import added, from the {{ $isTulong ? 'Tulong' : 'Dokyu' }} list and from the residents' profiles.</p>
+                    <p class="text-xs text-rose-800 mb-2">Undo archives every record this import added: they leave the {{ $isTulong ? 'Tulong' : 'Dokyu' }} list, the counts and the residents' profiles, and stay in the records. Nothing is deleted.</p>
                     <div class="flex flex-wrap gap-2">
                         <input type="text" x-model="undoReason" maxlength="500" aria-label="Why the import is undone" placeholder="Why? (at least 5 characters)" class="flex-1 min-w-[12rem] text-xs rounded-lg border-rose-200">
                         <button type="button" @click="confirmUndo()" :disabled="undoing || undoReason.trim().length < 5" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white disabled:opacity-50" x-text="undoing ? 'Undoing…' : 'Undo the import'"></button>

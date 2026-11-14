@@ -192,7 +192,7 @@
 
                     <div x-show="canS('edit') || canS('delete')" class="flex flex-wrap items-center gap-2">
                         <x-ui.button size="sm" variant="secondary" icon="pencil" x-show="canS('edit')" @click="editSchedule(s)">Edit</x-ui.button>
-                        <x-ui.button size="sm" variant="ghost" icon="trash-2" x-show="canS('delete')" @click="askDelete(s)">Delete</x-ui.button>
+                        <x-ui.button size="sm" variant="ghost" icon="archive" x-show="canS('delete') && s.active" @click="askArchive(s)">Archive</x-ui.button>
                     </div>
                 </article>
             </template>
@@ -315,17 +315,18 @@
         </x-ui.modal>
     </div>
 
-    {{-- Delete a schedule: one with bookings is switched off instead (AppointmentsController::destroySchedule). --}}
-    <div x-data="{ get open() { return delOpen }, set open(v) { delOpen = v } }">
-        <x-ui.modal title="Delete Schedule" maxWidth="sm">
+    {{-- Archive a schedule: switched off and kept, never deleted (owner,
+         2026-11-14; AppointmentsController::archiveSchedule). --}}
+    <div x-data="{ get open() { return archOpen }, set open(v) { archOpen = v } }">
+        <x-ui.modal title="Archive Schedule" maxWidth="sm">
             <div class="space-y-2 text-sm text-ink-body">
-                <p>Delete <span class="font-bold text-ink" x-text="delTarget ? delTarget.label : ''"></span>?</p>
-                <p class="text-[13px] text-ink-muted">A schedule that already has bookings is switched off instead, so their history stays. Either way residents can no longer book it.</p>
-                <p x-show="delTarget && delTarget.upcoming" class="text-[13px] text-amber-700" x-text="delTarget && delTarget.upcoming ? delTarget.upcoming + (delTarget.upcoming === 1 ? ' upcoming booking stays booked' : ' upcoming bookings stay booked') + ': cancel them under Bookings, with a reason, if the office will not receive them.' : ''"></p>
+                <p>Archive <span class="font-bold text-ink" x-text="archTarget ? archTarget.label : ''"></span>?</p>
+                <p class="text-[13px] text-ink-muted">Residents can no longer book it. It stays here, switched off, with its bookings and their history; Edit and Open for booking turn it back on.</p>
+                <p x-show="archTarget && archTarget.upcoming" class="text-[13px] text-amber-700" x-text="archTarget && archTarget.upcoming ? archTarget.upcoming + (archTarget.upcoming === 1 ? ' upcoming booking stays booked' : ' upcoming bookings stay booked') + ': cancel them under Bookings, with a reason, if the office will not receive them.' : ''"></p>
             </div>
             <x-slot:footer>
-                <x-ui.button variant="secondary" size="sm" @click="delOpen = false">Keep it</x-ui.button>
-                <x-ui.button variant="danger" size="sm" icon="trash-2" x-bind:disabled="deleting" @click="confirmDelete()"><span x-text="deleting ? 'Deleting…' : 'Delete'"></span></x-ui.button>
+                <x-ui.button variant="secondary" size="sm" @click="archOpen = false">Keep it</x-ui.button>
+                <x-ui.button variant="primary" size="sm" icon="archive" x-bind:disabled="archiving" @click="confirmArchive()"><span x-text="archiving ? 'Archiving…' : 'Archive'"></span></x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     </div>

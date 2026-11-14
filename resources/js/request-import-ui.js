@@ -484,7 +484,7 @@ export function requestImport(type, keys = [], barangayList = []) {
             try {
                 const res = await api.post('/admin/' + this.type + '/imports/' + encodeURIComponent(this.undoTarget.ref) + '/undo', { reason: this.undoReason.trim() });
                 const imp = res.data;
-                emit('toast', { message: 'Import ' + imp.ref + ' undone: ' + (imp.undo_summary?.removed || 0) + ' records removed.', variant: 'success' });
+                emit('toast', { message: 'Import ' + imp.ref + ' undone: ' + (imp.undo_summary?.removed || 0) + ' records archived.', variant: 'success' });
                 emit('requests-imported', { type: this.type, ref: imp.ref });
                 if (this.summary?.ref === imp.ref) this.summary = { ...this.summary, undone: true };
                 this.undoTarget = null;

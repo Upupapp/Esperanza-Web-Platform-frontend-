@@ -1245,7 +1245,7 @@ function directoryTab() {
         officeOpen: false,
         officeMode: 'add',
         officeForm: blankOffice(),
-        removing: null,
+        archiving: null,
         barangayOpen: false,
         selected: null,
         may,
@@ -1313,17 +1313,18 @@ function directoryTab() {
                 this.processing = false;
             }
         },
-        async confirmRemove() {
-            const o = this.removing;
+        // Archived, never deleted (owner, 2026-11-14): DELETE archives it.
+        async confirmArchive() {
+            const o = this.archiving;
             if (this.processing || !o) return;
             this.processing = true;
             try {
                 await api.delete('/admin/directory/' + o.id);
-                this.removing = null;
-                toast(o.office + ' was removed from the directory.');
+                this.archiving = null;
+                toast('Archived.');
                 await this.load();
             } catch (err) {
-                toast(errText(err, 'Could not remove the office.'), 'error');
+                toast(errText(err, 'Could not archive the office.'), 'error');
             } finally {
                 this.processing = false;
             }

@@ -32,7 +32,8 @@
                 </div>
                 <div class="shrink-0" x-show="wfMay && st.markable">
                     <button type="button" x-show="!st.done && noteFor !== st.index" @click="noteFor = st.index; note = ''" class="text-xs font-semibold rounded-xl px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100">Mark done…</button>
-                    <button type="button" x-show="st.done" @click="mark(st, false)" :disabled="busy !== null" class="text-[11px] font-medium text-ink-muted hover:text-rose-700 underline">Undo</button>
+                    {{-- Undo archives the mark, never deletes it (2026-11-14). --}}
+                    <button type="button" x-show="st.done" @click="mark(st, false)" :disabled="busy !== null" title="Marks the step not done; the mark is archived and stays in the history" class="text-[11px] font-medium text-ink-muted hover:text-rose-700 underline">Undo</button>
                 </div>
             </li>
         </template>

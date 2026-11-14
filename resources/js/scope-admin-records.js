@@ -254,9 +254,9 @@ function adminBalita(barangays = []) {
         fb: null,
         fbBusy: null,
         // Delete asks in the page, with "Also remove it from Facebook".
-        delOpen: false,
-        delPost: null,
-        delFromFb: false,
+        archOpen: false,
+        archPost: null,
+        archFromFb: false,
 
         init() {
             // A new filter starts the feed at the top again.
@@ -382,7 +382,6 @@ function adminBalita(barangays = []) {
         canEdit(post) { return ['Draft', 'Pending Review', 'Rejected'].includes(post.status) && this.can('edit') && this.mayChange(post); },
         // For good, once it is a draft, sent back or archived (2026-10-21):
         // anything residents can see is archived first.
-        canDelete(post) { return ['Draft', 'Rejected', 'Archived'].includes(post.status) && this.can('delete') && this.mayChange(post); },
         // A barangay officer writes for their own barangay only.
         get ownBarangay() {
             const account = this.$store.session.account;
@@ -655,25 +654,27 @@ function adminBalita(barangays = []) {
             balitaToast('Back in Drafts: it will not go out at its time. Change it, then send it for review again.', 'info');
             this.openEdit(this.posts.find((p) => p.id === post.id) || { ...post, status: 'Draft' });
         },
-        // Asked in the page: a post that is on Facebook may go from there too.
-        deletePost(post) {
+        // Posts are archived, never deleted (owner, 2026-11-14: "archives only
+        // no delete"). Asked in the page: a post that is on Facebook may go
+        // from there too (remove_from_facebook on the move to Archived).
+        archivePost(post) {
             if (this.processing) return;
-            this.delPost = post;
-            this.delFromFb = false;
-            this.delOpen = true;
+            this.archPost = post;
+            this.archFromFb = false;
+            this.archOpen = true;
         },
-        async confirmDelete() {
-            const post = this.delPost;
+        async confirmArchive() {
+            const post = this.archPost;
             if (this.processing || !post) return;
             this.processing = true;
             try {
-                const onFacebook = post.facebook?.status === 'posted';
-                await api.delete('/admin/announcements/' + post.id, onFacebook && this.delFromFb ? { params: { delete_on_facebook: 1 } } : undefined);
-                this.delOpen = false;
-                balitaToast(onFacebook && this.delFromFb ? 'Deleted here and on Facebook.' : 'Deleted.');
+                const fromFb = post.facebook?.status === 'posted' && this.archFromFb;
+                await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Archived', remove_from_facebook: fromFb || undefined });
+                this.archOpen = false;
+                balitaToast(fromFb ? 'Archived, and removed from the Facebook Page.' : 'Archived. Residents no longer see it.');
                 await this.load();
             } catch (err) {
-                balitaToast(errText(err, 'Could not delete this post.'), 'error');
+                balitaToast(errText(err, 'Could not archive this post.'), 'error');
             } finally {
                 this.processing = false;
             }
@@ -1336,24 +1337,10 @@ function adminEvents(barangays = []) {
         async release(e) {
             if (await this.transition(e, 'Released')) { balitaToast('Published. Residents were told.'); await this.load(); }
         },
+        // Events are archived, never deleted (owner, 2026-11-14: "archives
+        // only no delete"); an archived event stays under Archived.
         async archive(e) {
             if (await this.transition(e, 'Archived')) { balitaToast('Archived.'); await this.load(); }
-        },
-        // For good, once it is a draft, sent back, archived or cancelled
-        // (2026-10-21); its Balita post goes with it.
-        canDelete(e) { return ['Draft', 'Rejected', 'Archived'].includes(e.status) && this.can('delete'); },
-        async deleteEvent(e) {
-            if (this.processing || !window.confirm('Delete "' + (e.title || e.name) + '" for good? Its reminders' + (e.balita_post ? ' and its Balita post' : '') + ' go with it. This cannot be undone.')) return;
-            this.processing = true;
-            try {
-                await api.delete('/admin/events/' + encodeURIComponent(e.key));
-                balitaToast('Deleted.');
-                await this.load();
-            } catch (err) {
-                balitaToast(errText(err, 'Could not delete this event.'), 'error');
-            } finally {
-                this.processing = false;
-            }
         },
         openCancel(e) {
             this.selected = e;

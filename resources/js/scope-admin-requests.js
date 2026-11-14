@@ -397,9 +397,9 @@ export function appointmentsDesk() {
         formErrors: {},
         formError: '',
         saving: false,
-        delOpen: false,
-        delTarget: null,
-        deleting: false,
+        archOpen: false,
+        archTarget: null,
+        archiving: false,
 
         async init() {
             const session = this.$store.session;
@@ -736,28 +736,25 @@ export function appointmentsDesk() {
                 this.saving = false;
             }
         },
-        askDelete(s) {
-            this.delTarget = s;
-            this.delOpen = true;
+        // Schedules are archived, never deleted (owner, 2026-11-14): switched
+        // off and kept with their bookings; Edit can open one again.
+        askArchive(s) {
+            this.archTarget = s;
+            this.archOpen = true;
         },
-        async confirmDelete() {
-            const s = this.delTarget;
-            if (!s || this.deleting) return;
-            this.deleting = true;
+        async confirmArchive() {
+            const s = this.archTarget;
+            if (!s || this.archiving) return;
+            this.archiving = true;
             try {
-                const res = await api.delete('/admin/appointment-schedules/' + s.id);
-                if (res.data?.deleted) {
-                    this.schedules = this.schedules.filter((x) => x.id !== s.id);
-                    toast('Schedule deleted.');
-                } else {
-                    s.active = false;
-                    toast('It has bookings, so it was switched off instead: residents can no longer book it, and its bookings keep their history.', 'warning');
-                }
-                this.delOpen = false;
+                await api.delete('/admin/appointment-schedules/' + s.id);
+                s.active = false;
+                toast('Archived. Residents can no longer book it.');
+                this.archOpen = false;
             } catch (err) {
-                toast(says(err, 'Could not delete the schedule.'), 'error');
+                toast(says(err, 'Could not archive the schedule.'), 'error');
             } finally {
-                this.deleting = false;
+                this.archiving = false;
             }
         },
         async addClosure(s) {
@@ -781,6 +778,7 @@ export function appointmentsDesk() {
                 s._busy = false;
             }
         },
+        // Opens the day again; the closure is archived, never deleted (2026-11-14).
         async removeClosure(s, c) {
             if (s._busy) return;
             s._busy = true;
@@ -852,7 +850,7 @@ export function requestWorkflow() {
                 r.workflow = (res.data && res.data.workflow) || r.workflow;
                 this.noteFor = null;
                 this.note = '';
-                toast(done ? '“' + st.name + '” is done. The resident was told.' : '“' + st.name + '” is marked not done again.');
+                toast(done ? '“' + st.name + '” is done. The resident was told.' : '“' + st.name + '” is marked not done again. The earlier mark is archived in its history.');
             } catch (err) {
                 toast(says(err, 'Could not save the step.'), 'error');
             } finally {

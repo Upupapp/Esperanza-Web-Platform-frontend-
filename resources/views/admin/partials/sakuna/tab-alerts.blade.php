@@ -151,7 +151,7 @@
     x-data="{
         hotlines: [], hotlinesLoading: true, hotlinesFailed: false,
         hotlineForm: { id: null, office: '', position: '', contact: '' }, hotlineEditing: false, hotlineSaving: false, hotlineError: '',
-        removingHotline: null,
+        archivingHotline: null,
         async loadHotlines() {
             this.hotlinesLoading = true; this.hotlinesFailed = false;
             try { this.hotlines = (await $api.get('/admin/sakuna/hotlines')).data || []; saveCopy('hotlines', this.hotlines); }
@@ -178,14 +178,14 @@
                 this.hotlineError = err.localised ? err.localised('en') : 'Could not save this hotline.';
             } finally { this.hotlineSaving = false; }
         },
-        async removeHotline(h) {
+        async archiveHotline(h) {
             try {
                 await $api.delete('/admin/sakuna/hotlines/' + h.id);
-                this.removingHotline = null;
-                this.toast('Hotline removed.', 'success');
+                this.archivingHotline = null;
+                this.toast('Archived.', 'success');
                 await this.loadHotlines();
             } catch (err) {
-                this.toast(err.localised ? err.localised('en') : 'Could not remove this hotline.', 'error');
+                this.toast(err.localised ? err.localised('en') : 'Could not archive this hotline.', 'error');
             }
         },
     }" x-init="loadHotlines()">
@@ -230,12 +230,12 @@
                     <p class="sk-b text-[12.5px]" x-text="h.office"></p>
                     <p class="sk-sub"><span x-text="h.position" x-show="h.position"></span><span x-show="h.position"> · </span><span class="sk-mono" style="color: #1D4ED8;" x-text="h.contact"></span></p>
                 </div>
-                <button type="button" x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="startHotline(h)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Edit ' + h.office" title="Edit"><i data-lucide="pencil"></i></button>
-                <button type="button" x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="removingHotline = h.id" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Remove ' + h.office" title="Remove"><i data-lucide="trash-2"></i></button>
-                <span x-show="removingHotline === h.id" x-cloak class="flex items-center gap-2 text-xs">
-                    <span class="text-ink-body">Remove from residents' page?</span>
-                    <button type="button" @click="removeHotline(h)" class="sk-btn sk-btn-danger">Remove</button>
-                    <button type="button" @click="removingHotline = null" class="text-slate-600 hover:underline">Keep</button>
+                <button type="button" x-show="can('sakuna_alerts', 'edit') && archivingHotline !== h.id" @click="startHotline(h)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Edit ' + h.office" title="Edit"><i data-lucide="pencil"></i></button>
+                <button type="button" x-show="can('sakuna_alerts', 'edit') && archivingHotline !== h.id" @click="archivingHotline = h.id" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Archive ' + h.office" title="Archive"><i data-lucide="archive"></i></button>
+                <span x-show="archivingHotline === h.id" x-cloak class="flex items-center gap-2 text-xs">
+                    <span class="text-ink-body">Archive it? Residents no longer see it.</span>
+                    <button type="button" @click="archiveHotline(h)" class="sk-btn sk-btn-p">Archive</button>
+                    <button type="button" @click="archivingHotline = null" class="text-slate-600 hover:underline">Keep</button>
                 </span>
             </li>
         </template>

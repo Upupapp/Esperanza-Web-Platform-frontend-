@@ -54,7 +54,7 @@
                     </div>
                     <div class="flex border-t border-brand-600/10" x-show="may('comm_directory', 'edit') || may('comm_directory', 'delete')">
                         <button type="button" x-show="may('comm_directory', 'edit')" @click="openEditOffice(o)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
-                        <button type="button" x-show="may('comm_directory', 'delete')" @click="removing = o" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50/60 py-2.5 transition-colors border-l border-brand-600/10"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Remove</button>
+                        <button type="button" x-show="may('comm_directory', 'delete')" @click="archiving = o" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-ink-body hover:bg-slate-100/60 py-2.5 transition-colors border-l border-brand-600/10"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
                     </div>
                 </div>
             </template>
@@ -115,13 +115,14 @@
         </x-ui.modal>
     </div>
 
-    {{-- Remove an office, asked first --}}
-    <div x-data="{ get open() { return !!removing; }, set open(v) { if (!v) removing = null; } }">
-        <x-ui.modal title="Remove Office" maxWidth="sm">
-            <p class="text-sm text-ink-body">Remove <span class="font-semibold" x-text="removing?.office"></span> from the directory? Residents will no longer see it in Direktoryo.</p>
+    {{-- Archive an office, asked first. Archived, never deleted (owner,
+         2026-11-14): it leaves the directory and stays in the records. --}}
+    <div x-data="{ get open() { return !!archiving; }, set open(v) { if (!v) archiving = null; } }">
+        <x-ui.modal title="Archive Office" maxWidth="sm">
+            <p class="text-sm text-ink-body">Archive <span class="font-semibold" x-text="archiving?.office"></span>? Residents will no longer see it in Direktoryo. It stays in the records.</p>
             <x-slot:footer>
-                <x-ui.button variant="secondary" size="sm" @click="removing = null">Keep it</x-ui.button>
-                <x-ui.button variant="danger" size="sm" icon="trash-2" x-bind:disabled="processing" @click="confirmRemove()">Remove</x-ui.button>
+                <x-ui.button variant="secondary" size="sm" @click="archiving = null">Keep it</x-ui.button>
+                <x-ui.button variant="primary" size="sm" icon="archive" x-bind:disabled="processing" @click="confirmArchive()">Archive</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     </div>
