@@ -17,8 +17,8 @@
     // The filter sends the status on record; it shows the incident's own word
     // for it, as the Incidents tab does (critique 2026-11-03).
     $reportStatuses = ['Submitted' => 'Reported', 'Under Verification' => 'Validated', 'Assigned' => 'Assigned', 'Processing' => 'Dispatched', 'Completed' => 'Resolved', 'Archived' => 'Closed', 'Rejected' => 'Rejected'];
-    // case_kind: the Missing Persons tab's three kinds of case.
-    $reportCaseKinds = ['' => 'All cases', 'missing' => 'Missing', 'deceased' => 'Deceased', 'unidentified' => 'Unidentified'];
+    // case_kind: the Casualties tab's kinds of case (injured since 2026-11-14).
+    $reportCaseKinds = ['' => 'All cases', 'missing' => 'Missing', 'injured' => 'Injured', 'deceased' => 'Deceased', 'unidentified' => 'Unidentified'];
 @endphp
 
 <div x-data="sakunaReport" class="space-y-3">

@@ -16,7 +16,8 @@
         ['key' => 'command-center',    'label' => 'Command Center',    'icon' => 'monitor-check'],
         ['key' => 'vulnerability',      'label' => 'Vulnerability',     'icon' => 'map-pin'],
         ['key' => 'incidents',          'label' => 'Incidents',         'icon' => 'flame'],
-        ['key' => 'missing-persons',    'label' => 'Missing Persons',   'icon' => 'user-search'],
+        // Missing Persons grown into the casualty record: dead, injured, missing (2026-11-14).
+        ['key' => 'missing-persons',    'label' => 'Casualties',        'icon' => 'user-search'],
         ['key' => 'evacuation-centers', 'label' => 'Evac. Centers',    'icon' => 'house'],
         ['key' => 'evacuees',           'label' => 'Evacuees',          'icon' => 'users'],
         ['key' => 'resources',          'label' => 'Resources',         'icon' => 'truck'],

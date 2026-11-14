@@ -12,7 +12,7 @@ const loadWorkbook = () => import('./xlsx-report');
 // Incidents speak their own words for the universal statuses (sakuna.blade.php incidentStatusLabel).
 const incidentWords = { Submitted: 'Reported', 'Under Verification': 'Validated', Processing: 'Dispatched', Completed: 'Resolved', Archived: 'Closed' };
 // case_kind (sheet item 13, owner 2026-11-05): the Missing Persons tab's kinds of case.
-const caseKinds = { missing: 'Missing persons', deceased: 'Deceased persons', unidentified: 'Unidentified bodies' };
+const caseKinds = { missing: 'Missing persons', injured: 'Injured persons', deceased: 'Deceased persons', unidentified: 'Unidentified bodies' };
 const blankFilters = () => ({ barangay: '', from: '', to: '', type: '', status: '', case_kind: '', livelihood_group: '', livelihood_code: '' });
 // The person figures (missing, found, deceased, unidentified) come only to
 // whoever may see Missing Persons while it is on (2026-11-05): without them the
@@ -194,7 +194,7 @@ export function sakunaReport() {
                 ['Evacuation', 'Families checked in', e.period.families_checked_in],
                 ['Evacuation', 'Individuals evacuated', s.evacuated.individuals],
                 ['Evacuation', 'Families checked out', e.period.families_checked_out],
-                ...(hasPersons(s) ? [['Missing persons', 'Still missing', p.missing], ['Missing persons', 'Found', p.found], ['Missing persons', 'Deceased', p.deceased], ['Missing persons', 'Unidentified', p.unidentified]] : []),
+                ...(hasPersons(s) ? [['Missing persons', 'Still missing', p.missing], ['Missing persons', 'Found', p.found], ['Missing persons', 'Deceased', p.deceased], ['Missing persons', 'Unidentified', p.unidentified], ['Missing persons', 'Injured', p.injured ?? 0]] : []),
                 ['Relief', 'Families served', r.families],
                 ['Relief', 'Items released', r.released],
                 ['Relief', 'Awaiting release', r.awaiting],
@@ -243,9 +243,9 @@ export function sakunaReport() {
                 { group: 'resources', heading: 'Deployed and returned during the period', columns: [t('resource', 'Resource'), t('incident', 'Incident'), n('deployed', 'Deployed'), n('returned', 'Returned'), t('unit', 'Unit')], rows: s.resources.deployments },
                 { group: 'damage', heading: 'Damage by sector', columns: [t('sector', 'Sector'), n('reports', 'Reports'), n('units_affected', 'Units affected'), { ...n('estimated_cost', 'Estimated cost (PHP)'), money: true }], rows: s.damage.by_sector },
                 { group: 'damage', heading: 'Damage by barangay', columns: [t('barangay', 'Barangay'), n('reports', 'Reports'), n('units_affected', 'Units affected'), { ...n('estimated_cost', 'Estimated cost (PHP)'), money: true }], rows: s.damage.by_barangay },
-                ...(hasPersons(s) ? [{ group: 'missing', heading: 'Missing, found, deceased and unidentified persons', note: 'Counts only. Names stay in the Missing Persons tab.',
+                ...(hasPersons(s) ? [{ group: 'missing', heading: 'Casualties: missing, found, injured, deceased and unidentified persons', note: 'Counts only. Names stay in the Casualties tab.',
                     columns: [t('label', 'Status'), n('count', 'People')],
-                    rows: [{ label: 'Still missing', count: s.persons.missing }, { label: 'Found', count: s.persons.found }, { label: 'Deceased', count: s.persons.deceased }, { label: 'Unidentified', count: s.persons.unidentified }] }] : []),
+                    rows: [{ label: 'Still missing', count: s.persons.missing }, { label: 'Found', count: s.persons.found }, { label: 'Injured', count: s.persons.injured ?? 0 }, { label: 'Deceased', count: s.persons.deceased }, { label: 'Unidentified', count: s.persons.unidentified }] }] : []),
                 { group: 'alerts', heading: 'Public alerts', columns: [t('ref', 'Alert'), t('level', 'Level'), t('type', 'Type'), t('title', 'Title'), t('barangays', 'Barangays'), t('status', 'Status'), t('published', 'Published'), n('reached', 'Reached')],
                     rows: s.alerts.list.map((a) => ({ ...a, published: a.published_at ? new Date(a.published_at).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '' })) },
             ];

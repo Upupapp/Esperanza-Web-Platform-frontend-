@@ -341,8 +341,9 @@ class QaRunFixesTest extends TestCase
         $this->assertStringContainsString("@include('admin.partials.sakuna.tab-missing'", $page);
         $this->get('/admin/sakuna/missing-persons')->assertOk();
 
-        $tab = $this->source('resources/views/admin/partials/sakuna/tab-missing.blade.php');
-        foreach (["'/admin/sakuna/missing'", "'/missing'", "'/status'", "can('sakuna_missing','create')", "can('sakuna_missing','close')", 'FEATURE_OFF'] as $needle) {
+        // The tab's logic lives in sakuna-casualties.js since casualty records (2026-11-14).
+        $tab = $this->source('resources/views/admin/partials/sakuna/tab-missing.blade.php').$this->source('resources/js/sakuna-casualties.js');
+        foreach (["'/admin/sakuna/missing'", "'/validation'", "'/status'", "can('sakuna_missing','create')", "can('sakuna_missing','close')", 'FEATURE_OFF'] as $needle) {
             $this->assertStringContainsString($needle, $tab);
         }
         $this->assertStringContainsString("'/admin/sakuna/missing/summary'", $this->source('resources/views/admin/partials/sakuna/tab-command.blade.php'));

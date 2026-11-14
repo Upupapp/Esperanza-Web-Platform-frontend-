@@ -54,7 +54,7 @@ class RecordsAndReportsTest extends TestCase
         // The Missing Persons tab's own condition, word for word.
         $this->assertStringContainsString("x-show=\"permsReady && tabShown('{{ \$t['key'] }}')\"", $page);
         $this->assertStringContainsString('<select x-model="f.case_kind" @change="load(1)" x-show="permsReady && tabShown(\'missing-persons\')"', $tab);
-        $this->assertStringContainsString("\$reportCaseKinds = ['' => 'All cases', 'missing' => 'Missing', 'deceased' => 'Deceased', 'unidentified' => 'Unidentified'];", $tab);
+        $this->assertStringContainsString("\$reportCaseKinds = ['' => 'All cases', 'missing' => 'Missing', 'injured' => 'Injured', 'deceased' => 'Deceased', 'unidentified' => 'Unidentified'];", $tab);
         // Its labels in full at 1440px (QA 2026-11-05: it read "Missing p"): never narrower than its longest.
         $this->assertStringContainsString('aria-label="Case kind" class="sk-sel" style="flex: 1 0 auto; min-width: 118px;"', $tab);
         // Sent with the other filters to the summary, the incidents and the export, and cleared with them.
@@ -72,7 +72,8 @@ class RecordsAndReportsTest extends TestCase
     {
         $page = $this->source('resources/views/admin/sakuna.blade.php');
         $command = $this->source('resources/views/admin/partials/sakuna/tab-command.blade.php');
-        $missing = $this->source('resources/views/admin/partials/sakuna/tab-missing.blade.php');
+        // The Casualties tab's logic (2026-11-14) is sakuna-casualties.js.
+        $missing = $this->source('resources/js/sakuna-casualties.js');
         $modal = $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php');
         $js = $this->source('resources/js/sakuna-report.js');
 
@@ -85,7 +86,7 @@ class RecordsAndReportsTest extends TestCase
         $this->assertStringContainsString('this.probeMissing();', $page);
         // The requests that already ask learn it there.
         $this->assertStringContainsString("if (e?.code === 'FEATURE_OFF') return markMissingOff();", $command);
-        $this->assertStringContainsString("if (err?.code === 'FEATURE_OFF') markMissingOff();", $missing);
+        $this->assertStringContainsString("if (err?.code === 'FEATURE_OFF') this.markMissingOff?.();", $missing);
         // The Command Center's card and chip, and the incident's Record a person, hide.
         $this->assertStringContainsString('x-show="!missingOff && missingSummary?.missing"', $command);
         $this->assertStringContainsString('x-show="!missingOff && mp" x-cloak>', $command);
@@ -146,7 +147,7 @@ class RecordsAndReportsTest extends TestCase
         $this->assertStringContainsString('<td class="sk-r tabular-nums" x-show="hasPersons()" x-text="cell(r.missing)"></td>', $tab);
         // In the exports: key figures, the tables, the incident columns, the workbook's sheet and contents.
         $this->assertStringContainsString("...(hasPersons(s) ? [['Missing persons', 'Still missing', p.missing]", $js);
-        $this->assertStringContainsString("...(hasPersons(s) ? [{ group: 'missing', heading: 'Missing, found, deceased and unidentified persons'", $js);
+        $this->assertStringContainsString("...(hasPersons(s) ? [{ group: 'missing', heading: 'Casualties: missing, found, injured, deceased and unidentified persons'", $js);
         $this->assertStringContainsString('if (all && hasPersons(s)) {', $js);
         $this->assertStringContainsString("...(hasPersons(s) ? [{ key: 'missing', label: 'Missing' }", $js);
         $this->assertSame(0, substr_count($js, 'this.columns()'), 'every export passes the summary to columns()');

@@ -263,6 +263,7 @@ here before using it, exactly as with the axes above.
 | **Profiling coverage** | Not Started (Re-visit Required) · In Progress · Needs Follow-up · Complete | `barangayCoverage[].status` |
 | **Issue triage** | Open · In Review · Resolved | `dataQualityIssues[].status`, `individuals[].incident_reports[].status` |
 | **Identity verification** (2026-10-09) | Pending · In Progress · Verified · Failed · Requires Review · Revoked | `identity_status` on a citizen account, `identity.status` from `GET /citizen/verification/id` and `GET /admin/citizens/{accountNo}` (backend `CitizenAccount::IDENTITY_STATUSES`) |
+| **Sakuna casualty case** (2026-10-30; injured, 2026-11-14) | Missing · Found safe · Found injured · Found deceased · Injured · Died of injuries · Deceased · Unidentified · Identified · Closed; validation For validation · Validated; category dead · injured · missing · safe | a person on the Casualties tab (`sakuna_incident_persons`) |
 
 **Identity verification is not residency.** It says whether the person is who
 their ID says (an automated Didit check of the document, the selfie against the

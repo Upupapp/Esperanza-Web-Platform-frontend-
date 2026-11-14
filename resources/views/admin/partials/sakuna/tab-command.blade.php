@@ -293,7 +293,7 @@
                  x-show="!missingOff && mp" x-cloak>
                 <div class="sk-chead" style="border-bottom: 0; padding-bottom: 6px;">
                     <h2 class="sk-ctitle">Missing persons</h2>
-                    <button type="button" @click="setTab('missing-persons')" class="sk-link">Open Missing Persons <i data-lucide="arrow-right"></i></button>
+                    <button type="button" @click="setTab('missing-persons')" class="sk-link">Open Casualties <i data-lucide="arrow-right"></i></button>
                 </div>
                 <dl class="grid grid-cols-3 gap-x-3 gap-y-2.5 px-3.5 pb-3">
                     <div class="flex flex-col-reverse"><dt class="sk-ssub">Still missing</dt><dd class="sk-sval tabular-nums" style="font-size: 18px;" x-text="mp?.missing ?? 0"></dd></div>
