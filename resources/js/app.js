@@ -1195,9 +1195,13 @@ document.addEventListener('alpine:init', () => {
     const LIVE_URL = (() => {
         try { return new URL(api.baseUrl, window.location.href).origin + '/live/changes.json'; } catch { return '/live/changes.json'; }
     })();
-    // A field being typed in (a checkbox or a button keeps focus after a click, and is not one).
-    const LIVE_TYPING = 'textarea, select, [contenteditable]:not([contenteditable="false"]), input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="color"])';
-    const liveTyping = () => !!document.activeElement?.matches?.(LIVE_TYPING);
+    // A field being typed in: a text field with focus AND a key pressed in the
+    // last 3 s. A filter dropdown or a search box keeps focus after use; that
+    // alone must not stop the page from updating (2026-11-15).
+    const LIVE_TYPING = 'textarea, [contenteditable]:not([contenteditable="false"]), input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="color"])';
+    let liveLastKey = 0;
+    document.addEventListener('keydown', () => { liveLastKey = Date.now(); }, true);
+    const liveTyping = () => !!document.activeElement?.matches?.(LIVE_TYPING) && Date.now() - liveLastKey < 3000;
     // A dialog open anywhere on the page: x-ui.modal, Sakuna's forms, the inline confirms.
     const liveDialogOpen = () => [...document.querySelectorAll('[role="dialog"], [role="alertdialog"], [aria-modal="true"]')].some((d) => d.getClientRects().length > 0);
     let liveSeen = null;

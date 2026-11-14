@@ -120,14 +120,17 @@ function sakunaCasualties() {
         livesLine(r) {
             const l = r.lives || {};
             if (l.scope === 'outside') return 'Not from Esperanza · ' + ([l.town, l.province].filter(Boolean).join(', ') || 'town not given');
-            if (l.scope === 'esperanza') return 'Esperanza' + (r.barangay ? ' · Brgy. ' + r.barangay : '') + (r.registry_ref ? ' · ' + r.registry_ref : '');
+            // Non-breaking hyphens: a RES- number never splits across two lines.
+            if (l.scope === 'esperanza') return 'Esperanza' + (r.barangay ? ' · Brgy. ' + r.barangay : '') + (r.registry_ref ? ' · ' + r.registry_ref.replace(/-/g, '‑') : '');
             return 'Home not known';
         },
-        placeLine(r) {
+        /** Where it happened; `full` (the detail window) adds the exact place outside Esperanza too. */
+        placeLine(r, full = false) {
             const h = r.happened || {};
-            if (h.scope === 'outside') return 'Outside Esperanza · ' + ([h.town, h.province].filter(Boolean).join(', ') || '—');
+            if (h.scope === 'outside') return 'Outside Esperanza · ' + ([h.town, h.province].filter(Boolean).join(', ') || '—') + (full && h.detail ? ' · ' + h.detail : '');
             return (h.barangay ? 'Brgy. ' + h.barangay : '—') + (h.detail ? ' · ' + h.detail : '');
         },
+        whenShort(iso) { return iso ? new Date(iso).toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : ''; },
         ageSex(r) { return [r.sex, r.age !== null && r.age !== undefined ? r.age + ' yrs' : null].filter(Boolean).join(' · ') || '—'; },
         /** The status under the category pill only when it says more ("Found deceased", "Unidentified"). */
         statusDiffers(r) { return !['Missing', 'Injured', 'Deceased', this.categoryLabel[r.category]].includes(r.status); },
@@ -309,8 +312,9 @@ function sakunaCasualties() {
                     Cause: r.cause || '',
                     Remarks: r.remarks || '',
                     'Source of data': r.source || '',
-                    Validated: r.validated ? 'Yes' : 'No',
-                    'Date and time': r.when ? this.when(r.when) : '',
+                    // Found safe is not counted, so not validated either way.
+                    Validated: r.category === 'safe' ? '—' : (r.validated ? 'Yes' : 'No'),
+                    'Date and time': this.whenShort(r.when),
                     Details: r.details || '',
                 }));
                 if (!rows.length) { this.toast?.('No records to export.', 'warning'); return; }

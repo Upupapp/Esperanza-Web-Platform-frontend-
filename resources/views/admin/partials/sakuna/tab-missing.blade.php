@@ -163,7 +163,7 @@
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[.07em] text-ink-muted mb-1.5">What happened</p>
                     <dl class="grid gap-3 sm:grid-cols-2 text-[12.5px]">
-                        <div><dt class="sk-ssub">Where</dt><dd x-text="open ? placeLine(open) : ''"></dd></div>
+                        <div><dt class="sk-ssub">Where</dt><dd x-text="open ? placeLine(open, true) : ''"></dd></div>
                         <div><dt class="sk-ssub">When</dt><dd x-text="open ? when(whenOf(open)) : ''"></dd></div>
                         <div><dt class="sk-ssub">Cause</dt><dd x-text="open?.cause || '—'"></dd></div>
                         <div><dt class="sk-ssub">Incident</dt><dd x-text="open?.incident ? open.incident.ref + ' · ' + open.incident.title : 'None (happened outside Esperanza)'"></dd></div>
@@ -348,7 +348,7 @@
                         <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.place_scope === 'outside'">Province
                             <input type="text" x-model="form.place_province" maxlength="120" placeholder="e.g. Masbate" class="sk-sel w-full">
                         </label>
-                        <label class="text-xs text-[#4B5568] flex flex-col gap-1">Exact place
+                        <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.kind !== 'missing'">Exact place
                             <input type="text" x-model="form.place_detail" maxlength="255" placeholder="Sitio, landmark, road…" class="sk-sel w-full">
                         </label>
                         <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="form.kind !== 'missing'">When it happened
@@ -361,7 +361,7 @@
                             <input type="datetime-local" x-model="form.last_seen_at" class="sk-sel w-full">
                         </label>
                         <label class="text-xs text-[#4B5568] flex flex-col gap-1">Cause
-                            <input type="text" x-model="form.cause" list="mp-causes" maxlength="160" placeholder="e.g. Drowning" class="sk-sel w-full">
+                            <input type="text" x-model="form.cause" list="mp-causes" maxlength="160" :placeholder="{ injured: 'e.g. Falling debris', missing: 'e.g. Flooding' }[form.kind] || 'e.g. Drowning'" class="sk-sel w-full">
                         </label>
                         <datalist id="mp-causes"><template x-for="c in causes" :key="c"><option :value="c"></option></template></datalist>
                     </div>
