@@ -321,7 +321,7 @@
         <x-ui.modal title="Archive Schedule" maxWidth="sm">
             <div class="space-y-2 text-sm text-ink-body">
                 <p>Archive <span class="font-bold text-ink" x-text="archTarget ? archTarget.label : ''"></span>?</p>
-                <p class="text-[13px] text-ink-muted">Residents can no longer book it. It stays here, switched off, with its bookings and their history; Edit and Open for booking turn it back on.</p>
+                <p class="text-[13px] text-ink-muted">Residents can no longer book it. It stays here, switched off, with its bookings and their history. To use it again, edit it and tick Open for booking.</p>
                 <p x-show="archTarget && archTarget.upcoming" class="text-[13px] text-amber-700" x-text="archTarget && archTarget.upcoming ? archTarget.upcoming + (archTarget.upcoming === 1 ? ' upcoming booking stays booked' : ' upcoming bookings stay booked') + ': cancel them under Bookings, with a reason, if the office will not receive them.' : ''"></p>
             </div>
             <x-slot:footer>

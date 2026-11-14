@@ -654,7 +654,7 @@
                         </div>
                         <p class="text-xs text-ink-muted mt-3.5 leading-relaxed line-clamp-3" x-text="role.description"></p>
                         <div class="mt-3.5 pt-3.5 border-t border-brand-600/10 flex items-center justify-between">
-                            <span class="text-[11px] text-ink-muted"><span class="font-semibold text-slate-600" x-text="moduleCount(role)"></span> modules · <span class="font-semibold text-slate-600" x-text="grantedCount(role)"></span> permissions</span>
+                            <span class="text-[11px] text-ink-muted"><span class="font-semibold text-slate-600" x-text="moduleCount(role)"></span><span x-text="moduleCount(role) === 1 ? ' module' : ' modules'"></span> · <span class="font-semibold text-slate-600" x-text="grantedCount(role)"></span><span x-text="grantedCount(role) === 1 ? ' permission' : ' permissions'"></span></span>
                             <div class="flex items-center gap-3">
                                 <button
                                     type="button"
