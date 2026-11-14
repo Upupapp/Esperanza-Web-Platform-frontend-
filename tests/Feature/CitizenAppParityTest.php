@@ -218,7 +218,8 @@ class CitizenAppParityTest extends TestCase
         $this->assertStringContainsString("\$api.get('/site-content/' + key)", $legal);
         // Without a token, the bell, My IDs and the request counts are not asked for.
         $this->assertStringContainsString("guest: {{ \$public ? '!window.EsperanzaApi.getToken()' : 'false' }},", $topbar);
-        $this->assertStringContainsString('if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll() }', $topbar);
+        // ...and the live updates (2026-11-15) start with the bell, for a signed-in resident only.
+        $this->assertStringContainsString('if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll(); $store.live.start() }', $topbar);
         $this->assertStringContainsString('<template x-if="!guest">', $topbar);
         $this->assertStringContainsString("{{ \$public ? 'if (window.EsperanzaApi.getToken()) ' : '' }}\$store.queueCounts.load('citizen')", $this->source('resources/views/components/citizen/sidebar.blade.php'));
 
