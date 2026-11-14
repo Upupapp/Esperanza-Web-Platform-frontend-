@@ -610,7 +610,7 @@
                     if (this.confirmArchive !== role.key) { this.confirmArchive = role.key; return; }
                     try {
                         await $api.delete('/admin/roles/' + role.key);
-                        this.$dispatch('toast', { message: 'Archived.', variant: 'success' });
+                        this.$dispatch('toast', { message: 'Role ' + role.name + ' archived.', variant: 'success' });
                         await this.loadRoles();
                         window.dispatchEvent(new CustomEvent('roles-changed'));
                     } catch (err) {

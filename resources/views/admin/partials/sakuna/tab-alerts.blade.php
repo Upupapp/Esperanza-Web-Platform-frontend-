@@ -182,7 +182,7 @@
             try {
                 await $api.delete('/admin/sakuna/hotlines/' + h.id);
                 this.archivingHotline = null;
-                this.toast('Archived.', 'success');
+                this.toast('Hotline archived.', 'success');
                 await this.loadHotlines();
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not archive this hotline.', 'error');

@@ -54,11 +54,11 @@ class ArchiveOnlyUiTest extends TestCase
         $this->assertStringContainsString('<x-ui.modal title="Archive Office"', $directory);
         $this->assertStringContainsString('@click="confirmArchive()">Archive</x-ui.button>', $directory);
         $this->assertStringNotContainsString('Remove Office', $directory);
-        $this->assertStringContainsString("toast('Archived.');", $settings);
+        $this->assertStringContainsString("toast(o.office + ' archived. Residents no longer see it in Direktoryo.');", $settings);
         $this->assertStringNotContainsString('was removed from the directory', $settings);
 
         $this->assertStringContainsString('@click="archiveHotline(h)" class="sk-btn sk-btn-p">Archive</button>', $alerts);
-        $this->assertStringContainsString("this.toast('Archived.', 'success');", $alerts);
+        $this->assertStringContainsString("this.toast('Hotline archived.', 'success');", $alerts);
         $this->assertStringNotContainsString('Hotline removed.', $alerts);
     }
 
@@ -70,6 +70,7 @@ class ArchiveOnlyUiTest extends TestCase
         $this->assertStringContainsString("x-text=\"confirmArchive === role.key ? 'Confirm archive' : 'Archive'\"", $users);
         $this->assertStringNotContainsString("'Confirm delete'", $users);
         $this->assertStringNotContainsString('deleteRole(', $users);
+        $this->assertStringContainsString("message: 'Role ' + role.name + ' archived.'", $users);
     }
 
     public function test_appointment_schedules_are_archived_and_closed_days_opened_again(): void
@@ -88,8 +89,8 @@ class ArchiveOnlyUiTest extends TestCase
     public function test_session_cases_import_undo_and_step_undo_say_archived(): void
     {
         $desk = $this->source('resources/views/admin/tulong/session-desk.blade.php');
-        $this->assertStringContainsString('Take off and archive</button>', $desk);
-        $this->assertStringContainsString("' was taken off the session and archived. The case waits for a session again.'", $this->source('resources/js/welfare-admin.js'));
+        $this->assertStringContainsString('Yes, take off</button>', $desk);
+        $this->assertStringContainsString("' was taken off the session. The case waits for a session again.'", $this->source('resources/js/welfare-admin.js'));
 
         $import = $this->source('resources/views/admin/partials/modal-request-import.blade.php');
         $this->assertStringContainsString("' records archived'", $import);

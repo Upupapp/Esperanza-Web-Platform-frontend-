@@ -99,7 +99,7 @@
                                                     {{-- Taken off, the case waits again; its row is archived, never deleted (2026-11-14). --}}
                                                     <button type="button" x-show="!p._confirmRemove" @click="p._confirmRemove = true" class="text-rose-600 hover:underline">Take off</button>
                                                     <span x-show="p._confirmRemove" class="inline-flex items-center gap-2">
-                                                        <button type="button" :disabled="sdBusy" @click="sdRemove(p)" class="font-semibold text-rose-700 hover:underline">Take off and archive</button>
+                                                        <button type="button" :disabled="sdBusy" @click="sdRemove(p)" class="font-semibold text-rose-700 hover:underline">Yes, take off</button>
                                                         <button type="button" @click="p._confirmRemove = false" class="text-ink-muted">Keep</button>
                                                     </span>
                                                 </span>

@@ -950,7 +950,7 @@ export function sessionDesk() {
             window.dispatchEvent(new CustomEvent('tulong-apply', { detail: { sessionRef: this.ses.ref, serviceKey: this.ses.service_key, sessionTitle: this.ses.title || type?.name || '', knownRefs } }));
         },
         sdRemove(p) {
-            return this.sdRun(() => api.delete(this.sdUrl('/participants/' + encodeURIComponent(p.id))), p.name + ' was taken off the session and archived. The case waits for a session again.');
+            return this.sdRun(() => api.delete(this.sdUrl('/participants/' + encodeURIComponent(p.id))), p.name + ' was taken off the session. The case waits for a session again.');
         },
         sdSaveAttendance() {
             const participants = (this.ses?.participants || []).map((p) => ({ id: p.id, attended: !!p._attended }));

@@ -1321,7 +1321,7 @@ function directoryTab() {
             try {
                 await api.delete('/admin/directory/' + o.id);
                 this.archiving = null;
-                toast('Archived.');
+                toast(o.office + ' archived. Residents no longer see it in Direktoryo.');
                 await this.load();
             } catch (err) {
                 toast(errText(err, 'Could not archive the office.'), 'error');
