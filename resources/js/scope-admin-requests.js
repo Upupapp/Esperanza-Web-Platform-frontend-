@@ -411,6 +411,10 @@ export function appointmentsDesk() {
             if (this.mayBookings) {
                 this.loadBookings();
                 this.loadUpcoming();
+                // Live updates (2026-11-15): a booking made, moved or cancelled
+                // anywhere reloads the day and the upcoming list quietly; they
+                // wait while a dialog (Cancel booking) is open or a field is in use.
+                this.$store.live.on(this.$el, 'appointments', () => Promise.all([this.loadBookings(true), this.loadUpcoming(true)]), { busy: () => this.cancelOpen || !!this.actingRef });
             }
             if (this.maySchedules) this.loadSchedules();
             this.$nextTick(() => window.renderIcons?.());

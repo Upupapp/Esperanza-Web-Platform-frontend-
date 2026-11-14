@@ -74,19 +74,28 @@ function sakunaCasualties() {
             this.f.incident = new URLSearchParams(window.location.search).get('incident') || '';
             this.load(1);
             this.loadSummary();
+            // Live updates (2026-11-15): a change to Sakuna anywhere reloads this
+            // page of the list and the counts quietly; they wait while a case,
+            // the form or a dialog is open, or a field is in use.
+            this.$store.live.on(this.$el, 'sakuna', () => Promise.all([this.load(this.page, true), this.loadSummary(true)]), { busy: () => !!this.open || this.adding || !!this.editing || this.saving });
         },
 
         when(iso) { return iso ? new Date(iso).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '—'; },
         filters() { return Object.fromEntries(Object.entries(this.f).filter(([, v]) => v !== '' && v !== null)); },
         params() { return { ...this.filters(), page: this.page, per_page: 25 }; },
 
-        async load(page = 1) {
-            this.page = page; this.loading = true; this.failed = false;
+        // quiet (a live update): the rows on screen stay until the new ones
+        // come, and a failed reload keeps them.
+        async load(page = 1, quiet = false) {
+            this.page = page;
+            if (!quiet) { this.loading = true; this.failed = false; }
             try {
                 const res = await api.get('/admin/sakuna/missing', { params: this.params() });
                 this.rows = res.data || []; this.total = res.meta?.total ?? this.rows.length; this.lastPage = res.meta?.last_page || 1;
+                this.failed = false;
                 this.saveCopy?.('missing', { params: JSON.stringify(this.params()), rows: this.rows, total: this.total, lastPage: this.lastPage });
             } catch (err) {
+                if (quiet) return;
                 const copy = this.lastCopy?.('missing');
                 if (err?.code === 'FEATURE_OFF' || err?.status === 404) { this.off = true; if (err?.code === 'FEATURE_OFF') this.markMissingOff?.(); }
                 else if (copy && copy.data.params === JSON.stringify(this.params())) { this.useCopy?.('missing'); this.rows = copy.data.rows || []; this.total = copy.data.total || 0; this.lastPage = copy.data.lastPage || 1; }
@@ -94,11 +103,12 @@ function sakunaCasualties() {
             } finally { this.loading = false; }
         },
         // The stat strip: people, not cases; for the incident, barangay and dates chosen.
-        loadSummary() {
+        // quiet: a failed reload keeps the counts on screen.
+        loadSummary(quiet = false) {
             const scope = Object.fromEntries(['incident', 'barangay', 'from', 'to'].filter((k) => this.f[k]).map((k) => [k, this.f[k]]));
-            api.get('/admin/sakuna/missing/summary', { params: scope })
+            return api.get('/admin/sakuna/missing/summary', { params: scope })
                 .then((r) => { this.summary = r.data; this.saveCopy?.('missing-summary', r.data); })
-                .catch(() => { this.summary = this.lastCopy?.('missing-summary')?.data || null; });
+                .catch(() => { if (!quiet) this.summary = this.lastCopy?.('missing-summary')?.data || null; });
         },
         setCategory(c) { this.f.category = c; this.load(1); },
         filtered() { this.load(1); this.loadSummary(); },

@@ -82,8 +82,18 @@
                 return this.coverage?.meta?.municipal?.residents ?? this.coverage?.data?.[0]?.residents ?? null;
             },
             async init() {
-                this.loading = true;
-                this.failed = false;
+                // Live updates (2026-11-15): any change anywhere reloads the
+                // figures quietly, while the Overview tab is the one shown.
+                this.$store.live.on(this.$el, 'any', () => this.load(true), { busy: () => this.view !== 'overview' });
+                await this.load();
+            },
+            // quiet (a live update): the figures on screen stay until the new
+            // ones come, and a failed reload keeps them.
+            async load(quiet = false) {
+                if (!quiet) {
+                    this.loading = true;
+                    this.failed = false;
+                }
                 try {
                     const [dash, coverage] = await Promise.all([
                         $api.get('/admin/dashboard'),
@@ -91,11 +101,12 @@
                     ]);
                     this.dash = dash.data;
                     this.coverage = coverage;
+                    this.failed = false;
                 } catch {
-                    this.failed = true;
+                    if (!quiet) this.failed = true;
                 } finally {
                     this.loading = false;
-                    setTimeout(() => (this.ready = true), 150);
+                    if (!quiet) setTimeout(() => (this.ready = true), 150);
                 }
             },
         }"
@@ -138,7 +149,7 @@
         </div>
 
         <div x-show="view === 'overview'" class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-[14.5px] text-ink-body">Live counts, refreshed each time this page opens.</p>
+            <p class="text-[14.5px] text-ink-body">Live counts, updated as they change.</p>
             <x-ui.button :href="route('admin.reports')" icon="download">Export report</x-ui.button>
         </div>
 
@@ -164,7 +175,7 @@
         </div>
 
         <div x-show="failed && view === 'overview'" x-cloak>
-            <x-ui.error-state messageExpr="'Could not load the dashboard.'" retryExpr="init()" :retryable="true" />
+            <x-ui.error-state messageExpr="'Could not load the dashboard.'" retryExpr="load()" :retryable="true" />
         </div>
 
         <template x-if="view === 'department'">

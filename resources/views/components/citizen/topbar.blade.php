@@ -62,7 +62,9 @@
 
 {{-- Clay design (STYLE_GUIDE §2): no full-width bar. The title sits on the
      canvas; the clock and search are pressed wells, the buttons and the user
-     chip glass, the menus glass panels. --}}
+     chip glass, the menus glass panels. Live updates (2026-11-15) start
+     here, beside the bell: $store.live reads the API's change counters every
+     second (resources/js/app.js). --}}
 <header
     class="relative z-20 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{
@@ -72,7 +74,7 @@
         // calls answers 401 for a visitor - and a Sign In link instead.
         guest: {{ $public ? '!window.EsperanzaApi.getToken()' : 'false' }},
     }"
-    x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll() }"
+    x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll(); $store.live.start() }"
 >
     <div class="flex-1 basis-44 flex items-center gap-3 min-w-0">
         <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body shrink-0">

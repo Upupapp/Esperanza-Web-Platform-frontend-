@@ -260,6 +260,8 @@ export function deptDashboard() {
             this.readFilters(query());
             if (this.service && !this.services.some((x) => x.key === this.service)) this.service = '';
             this.load();
+            // Live updates (2026-11-15): any change anywhere reloads it quietly.
+            this.$store.live.on(this.$el, 'any', () => this.load(true));
         },
         changed() { this.load(); },
         /** Another office: its own programs, so the program chosen goes. */
@@ -268,22 +270,28 @@ export function deptDashboard() {
             this.service = '';
             this.load();
         },
-        async load() {
+        // quiet (a live update): the figures on screen stay, not dimmed, until
+        // the new ones come, and a failed reload keeps them.
+        async load(quiet = false) {
             if (!this.office) { this.loading = false; return; }
             // Only the latest answer is shown: an earlier period's, arriving late, is dropped.
             const mine = ++this.seq;
-            this.loading = true;
-            this.failed = false;
+            if (!quiet) {
+                this.loading = true;
+                this.failed = false;
+            }
             try {
                 const res = await api.get('/admin/dashboard/department', {
                     params: { office: this.office, barangay: this.barangay || '', from: this.from, to: this.to, ...this.filterParams() },
                 });
                 if (mine !== this.seq) return;
                 this.data = res.data;
+                this.failed = false;
+                if (quiet) return;
                 const entry = (this.subjects?.offices || []).find((o) => o.name === this.office);
                 remember({ view: 'department', office: entry?.short || this.office, service: this.service, sex: this.sex, age: this.age, sector: this.sector });
             } catch (e) {
-                if (mine !== this.seq) return;
+                if (mine !== this.seq || quiet) return;
                 this.failed = true;
                 this.error = e?.localised ? e.localised('en') : 'Could not load the dashboard.';
             } finally {
@@ -363,20 +371,26 @@ export function brgyDashboard() {
             const asked = query().get('barangay');
             this.barangay = list.find((b) => b.toLowerCase() === String(asked || '').toLowerCase()) || (list.includes('Poblacion') && list.length > 1 ? 'Poblacion' : list[0]) || null;
             this.load();
+            // Live updates (2026-11-15): any change anywhere reloads it quietly.
+            this.$store.live.on(this.$el, 'any', () => this.load(true));
         },
         changed() { this.load(); },
-        async load() {
+        // quiet: as the office dashboard's.
+        async load(quiet = false) {
             if (!this.barangay) { this.loading = false; return; }
             const mine = ++this.seq;
-            this.loading = true;
-            this.failed = false;
+            if (!quiet) {
+                this.loading = true;
+                this.failed = false;
+            }
             try {
                 const res = await api.get('/admin/dashboard/barangay', { params: { barangay: this.barangay, from: this.from, to: this.to } });
                 if (mine !== this.seq) return;
                 this.data = res.data;
-                remember({ view: 'barangay', barangay: (this.subjects?.barangays || []).length > 1 ? this.barangay : null });
+                this.failed = false;
+                if (!quiet) remember({ view: 'barangay', barangay: (this.subjects?.barangays || []).length > 1 ? this.barangay : null });
             } catch (e) {
-                if (mine !== this.seq) return;
+                if (mine !== this.seq || quiet) return;
                 this.failed = true;
                 this.error = e?.localised ? e.localised('en') : 'Could not load the dashboard.';
             } finally {

@@ -261,25 +261,36 @@ function adminBalita(barangays = []) {
         init() {
             // A new filter starts the feed at the top again.
             this.$watch(() => [this.search, this.status, this.scope, this.category, this.scheduledOnly].join('|'), () => { this.shown = 10; });
+            // Live updates (2026-11-15): a post, like or comment anywhere
+            // reloads the feed quietly once it has loaded, while its tab is
+            // shown and no dialog (the composer, a review) is open.
+            this.$store.live.on(this.$el, 'balita', () => (this.loadedOnce ? this.load(true) : null), { busy: () => this.composerOpen || this.reviewOpen || this.archOpen || this.processing });
         },
-        async load() {
-            this.loading = true;
-            this.failed = false;
+        loadedOnce: false,
+        // quiet (a live update): the feed on screen stays, with its filters and
+        // Show more, until the new one comes; a failed reload keeps it.
+        async load(quiet = false) {
+            if (!quiet) {
+                this.loading = true;
+                this.failed = false;
+            }
             try {
                 const [res, summary, fb] = await Promise.all([
                     api.getAll('/admin/announcements'),
-                    api.get('/admin/announcements/summary').catch(() => null),
-                    api.get('/admin/integrations/facebook').catch(() => null),
+                    api.get('/admin/announcements/summary').catch(() => (quiet ? { data: this.summary } : null)),
+                    api.get('/admin/integrations/facebook').catch(() => (quiet ? { data: this.fb } : null)),
                 ]);
                 this.posts = res.data || [];
                 this.summary = summary?.data || null;
                 this.fb = fb?.data || null;
+                this.failed = false;
+                this.loadedOnce = true;
             } catch {
-                this.failed = true;
+                if (!quiet) this.failed = true;
             } finally {
                 this.loading = false;
             }
-            this.openLinked();
+            if (!quiet) this.openLinked();
         },
         // A reviewer's notification opens /admin/communications/?tab=balita&post=ID,
         // once: the list reloads after every decision, and the link must not
@@ -1026,18 +1037,31 @@ function adminEvents(barangays = []) {
         certPresets: CERT_PRESETS,
         maxSignatories: MAX_SIGNATORIES,
 
-        async load() {
-            this.loading = true;
-            this.failed = false;
+        init() {
+            // Live updates (2026-11-15): an event changed anywhere reloads the
+            // list quietly once it has loaded, while its tab is shown and no
+            // dialog (the event form, a review, a cancel) is open.
+            this.$store.live.on(this.$el, 'balita', () => (this.loadedOnce ? this.load(true) : null), { busy: () => this.open || this.reviewOpen || this.cancelOpen || this.processing });
+        },
+        loadedOnce: false,
+        // quiet (a live update): the list on screen stays until the new one
+        // comes; a failed reload keeps it.
+        async load(quiet = false) {
+            if (!quiet) {
+                this.loading = true;
+                this.failed = false;
+            }
             try {
                 const res = await api.getAll('/admin/events');
                 this.events = res.data || [];
+                this.failed = false;
+                this.loadedOnce = true;
             } catch {
-                this.failed = true;
+                if (!quiet) this.failed = true;
             } finally {
                 this.loading = false;
             }
-            this.openLinked();
+            if (!quiet) this.openLinked();
         },
         // A reviewer's notification opens /admin/communications/?tab=events&event=KEY,
         // once (the list reloads after every decision).
@@ -2177,6 +2201,11 @@ export function register(Alpine) {
             if (!this.may) return;
             if (this.tab === 'feedback') this.start();
             else this.loadCounts();
+            // Live updates (2026-11-15): tickets count as other changes on the
+            // server, ratings as Balita. The queue reloads quietly once open
+            // (the tab's count otherwise), not while a reply or a routing is
+            // being sent.
+            this.$store.live.on(null, ['other', 'balita'], () => (this.started ? this.load(true) : this.loadCounts()), { busy: () => this.sending || this.assigning || this.routing });
         },
 
         // The first time the tab is shown: the queue, the offices, the help
@@ -2234,21 +2263,32 @@ export function register(Alpine) {
             return p;
         },
 
-        async load() {
+        // quiet (a live update): the queue on screen stays until the new first
+        // page comes, and the tickets Load more added stay below it.
+        async load(quiet = false) {
             const seq = ++this.seq;
-            this.loading = true;
-            this.failed = false;
+            if (!quiet) {
+                this.loading = true;
+                this.failed = false;
+            }
             try {
                 const res = await api.get('/admin/support/tickets', { params: this.params(1) });
                 if (seq !== this.seq) return;
-                this.rows = res.data || [];
-                this.page = 1;
-                this.lastPage = res.meta?.last_page || 1;
+                const fresh = res.data || [];
+                if (quiet && this.page > 1) {
+                    const refs = new Set(fresh.map((t) => t.ref));
+                    this.rows = [...fresh, ...this.rows.filter((t) => !refs.has(t.ref))];
+                } else {
+                    this.rows = fresh;
+                    this.page = 1;
+                }
+                this.lastPage = Math.max(this.page, res.meta?.last_page || 1);
                 this.total = res.meta?.total ?? this.rows.length;
                 this.applyMeta(res.meta);
                 this.loaded = true;
+                this.failed = false;
             } catch {
-                if (seq === this.seq) this.failed = true;
+                if (seq === this.seq && !quiet) this.failed = true;
             } finally {
                 if (seq === this.seq) this.loading = false;
             }

@@ -1138,6 +1138,9 @@ document.addEventListener('alpine:init', () => {
 
             // New notifications arrive without a reload: every minute while the
             // tab is in view. The bell only loaded once per page before.
+            // Live updates (2026-11-15): and within a second or two of one
+            // being written anywhere (live:notifications); the minute poll
+            // stays as the safety net.
             poll(ms = 60000) {
                 if (this.timer) return;
                 this.timer = setInterval(() => {
@@ -1146,6 +1149,7 @@ document.addEventListener('alpine:init', () => {
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible' && this.state !== 'loading') this.load(true);
                 });
+                Alpine.store('live').on(null, 'notifications', () => (this.state !== 'loading' ? this.load(true) : null), { dialogs: false, typing: false });
             },
 
             // A Sakuna alert the resident has not seen yet opens as a pop-up once.
@@ -1174,12 +1178,107 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('citizenNotifications', makeNotificationStore('/citizen/notifications', NOTIFICATIONS_PER_PAGE));
     Alpine.store('adminNotifications', makeNotificationStore('/admin/notifications'));
 
+    // Live updates (owner, 2026-11-15: "auto refreshing every second ... like
+    // the data changes real time"). The API keeps one small public file,
+    // <API origin>/live/changes.json: { v, t: { requests: 41, sakuna: 7, ... }, at },
+    // a counter per kind of data (requests, sakuna, balita, appointments,
+    // notifications, residents, other) that moves whenever that kind changes
+    // anywhere. Numbers only: nothing personal, no sign-in. While the tab is in
+    // view it is read every second, and at once when the tab comes back into
+    // view, one read at a time. The first read is only remembered; after that
+    // each topic whose number moved fires live:<topic> on window, then live:any
+    // with { topics }, and each page reloads its own data through $api as
+    // usual (signed in, in its scope). A plain GET with no headers of our own,
+    // so the browser sends no CORS preflight. A 404 or any failure is no news.
+    // Started by the staff and resident topbars, next to the bells.
+    const LIVE_EVERY_MS = 1000;
+    const LIVE_URL = (() => {
+        try { return new URL(api.baseUrl, window.location.href).origin + '/live/changes.json'; } catch { return '/live/changes.json'; }
+    })();
+    // A field being typed in (a checkbox or a button keeps focus after a click, and is not one).
+    const LIVE_TYPING = 'textarea, select, [contenteditable]:not([contenteditable="false"]), input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="color"])';
+    const liveTyping = () => !!document.activeElement?.matches?.(LIVE_TYPING);
+    // A dialog open anywhere on the page: x-ui.modal, Sakuna's forms, the inline confirms.
+    const liveDialogOpen = () => [...document.querySelectorAll('[role="dialog"], [role="alertdialog"], [aria-modal="true"]')].some((d) => d.getClientRects().length > 0);
+    let liveSeen = null;
+    let liveReading = false;
+    Alpine.store('live', {
+        started: false,
+        start() {
+            if (this.started) return;
+            this.started = true;
+            setInterval(() => this.read(), LIVE_EVERY_MS);
+            document.addEventListener('visibilitychange', () => this.read());
+            this.read();
+        },
+        async read() {
+            if (document.visibilityState !== 'visible' || liveReading) return;
+            liveReading = true;
+            const abort = new AbortController();
+            const slow = setTimeout(() => abort.abort(), 8000);
+            try {
+                const res = await fetch(LIVE_URL, { cache: 'no-store', signal: abort.signal });
+                if (!res.ok) return;
+                const body = await res.json();
+                const t = body && body.t && typeof body.t === 'object' ? body.t : null;
+                if (!t) return;
+                const before = liveSeen;
+                liveSeen = { ...t };
+                if (!before) return;
+                const topics = Object.keys(t).filter((k) => t[k] !== before[k]);
+                if (!topics.length) return;
+                topics.forEach((topic) => window.dispatchEvent(new CustomEvent('live:' + topic, { detail: { topics } })));
+                window.dispatchEvent(new CustomEvent('live:any', { detail: { topics } }));
+            } catch {
+                // No news: offline, the file not there yet, or no answer in time.
+            } finally {
+                clearTimeout(slow);
+                liveReading = false;
+            }
+        },
+        /**
+         * A page's quiet reload when one of its topics moves: run() once, about
+         * 700 ms after the last move, never two at once. It waits, trying again
+         * until it may, while the person is in the middle of something - a
+         * field being typed in, a dialog open (dialogs: false lets a dialog's
+         * own refresh through), or busy() says so - and while el is hidden (a
+         * tab not shown). The listener goes when el leaves the page.
+         */
+        on(el, topics, run, { busy = null, dialogs = true, typing = true, wait = 700 } = {}) {
+            const names = [].concat(topics).map((topic) => 'live:' + topic);
+            let timer = null;
+            let running = false;
+            let again = false;
+            const held = () => (typing && liveTyping()) || (dialogs && liveDialogOpen()) || !!(busy && busy()) || !!el?.closest?.('[style*="display: none"]');
+            const schedule = () => { clearTimeout(timer); timer = setTimeout(fire, wait); };
+            const fire = async () => {
+                timer = null;
+                if (held()) { timer = setTimeout(fire, wait); return; }
+                if (running) { again = true; return; }
+                running = true;
+                try {
+                    await run();
+                } catch {
+                    // What is on screen stays.
+                } finally {
+                    running = false;
+                    if (again) { again = false; schedule(); }
+                }
+            };
+            names.forEach((name) => window.addEventListener(name, schedule));
+            const off = () => { clearTimeout(timer); names.forEach((name) => window.removeEventListener(name, schedule)); };
+            if (el) Alpine.onElRemoved(el, off);
+            return off;
+        },
+    });
+
     // The sidebar's Dokyu/Tulong badges. They were fixed numbers in the markup
     // (18 and 9 for staff, 2 and 1 for residents) whatever the queues held.
     // Staff see new requests waiting to be opened (Submitted or Resubmitted)
     // in their own scope; a resident sees their own requests still in
     // progress. Each is one per_page=1 list read for meta.total, once per
-    // page; a count that cannot be read stays null and the badge stays hidden.
+    // page and again on each live update; a count that cannot be read stays
+    // null and the badge stays hidden.
     Alpine.store('queueCounts', {
         dokyu: null,
         tulong: null,
@@ -1189,7 +1288,15 @@ document.addEventListener('alpine:init', () => {
         async load(side, needsAction = null) {
             if (this.loaded) return;
             this.loaded = true;
+            // Live updates (2026-11-15): counted again when requests or
+            // appointments change anywhere; a count that fails then keeps
+            // the badge it had.
+            Alpine.store('live').on(null, ['requests', 'appointments'], () => this.recount(side, needsAction, true), { dialogs: false, typing: false });
+            await this.recount(side, needsAction);
+        },
+        async recount(side, needsAction = null, quiet = false) {
             const total = (result) => result?.meta?.total ?? null;
+            const failed = (type) => () => (quiet ? this[type] : null);
             if (side === 'admin') {
                 const session = Alpine.store('session');
                 if (!session.account) return;
@@ -1202,7 +1309,7 @@ document.addEventListener('alpine:init', () => {
                     tulong: (needsAction?.tulong || ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Returned for Reassessment', 'Assistance Processing']).join(','),
                 };
                 const count = (type) => (session.can(type)
-                    ? api.get('/admin/' + type + '/requests', { params: { status: waiting[type], per_page: 1 } }).then(total).catch(() => null)
+                    ? api.get('/admin/' + type + '/requests', { params: { status: waiting[type], per_page: 1 } }).then(total).catch(failed(type))
                     : Promise.resolve(null));
                 [this.dokyu, this.tulong] = await Promise.all([count('dokyu'), count('tulong')]);
             } else {
@@ -1213,7 +1320,7 @@ document.addEventListener('alpine:init', () => {
                     dokyu: 'Submitted,Under Verification,Under Review,Resubmitted,Approved,Mark to Release',
                     tulong: 'Submitted,Initial Screening,Needs Requirements,Assessment,For Approval,Returned for Reassessment,Assistance Processing,Ready for Release',
                 };
-                const count = (type) => api.get('/citizen/requests', { params: { type, status: open[type], per_page: 1 } }).then(total).catch(() => null);
+                const count = (type) => api.get('/citizen/requests', { params: { type, status: open[type], per_page: 1 } }).then(total).catch(failed(type));
                 [this.dokyu, this.tulong] = await Promise.all([count('dokyu'), count('tulong')]);
             }
         },

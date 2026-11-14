@@ -456,6 +456,10 @@ function citizenAppointments(links = {}) {
 
         async init() {
             const wanted = (new URLSearchParams(window.location.search).get('request') || '').trim().toUpperCase();
+            // Live updates (2026-11-15): the resident's own appointments reload
+            // quietly when the office confirms, completes or cancels one; not
+            // while a booking or a cancel is being made.
+            this.$store.live.on(this.$el, 'appointments', () => this.loadMine(true), { busy: () => this.booking || this.cancelling || !!this.cancelRef });
             this.loadMine();
             await Promise.all([this.loadSchedules(), this.loadRequests()]);
             if (wanted) this.preselect(wanted);
@@ -1695,6 +1699,10 @@ function citizenEmergency() {
             this.loadAlerts();
             this.loadDirectory();
             this.loadIncidents();
+            // Live updates (2026-11-15): alerts, hotlines, centres and the
+            // resident's own reports reload quietly when Sakuna changes
+            // anywhere; not while a report is being written or sent.
+            this.$store.live.on(this.$el, 'sakuna', () => Promise.all([this.loadAlerts(true), this.loadDirectory(true), this.loadIncidents(true)]), { busy: () => this.reportOpen || this.submitting });
             const params = new URLSearchParams(window.location.search);
             const ref = params.get('incident');
             if (ref) this.openIncident({ ref });
@@ -1708,15 +1716,17 @@ function citizenEmergency() {
         get en() { return this.$store.lang.current === 'en'; },
 
         // -- Alerts: the resident's barangay and the municipality-wide ones.
-        async loadAlerts() {
-            this.alertsState = 'loading';
+        // quiet (a live update, as the two below): what is on screen stays
+        // until the new list comes, and a failed reload keeps it.
+        async loadAlerts(quiet = false) {
+            if (!quiet) this.alertsState = 'loading';
             try {
                 const barangay = this.$store.citizenSession.account?.barangay;
                 const res = await api.get('/alerts', { params: barangay ? { barangay } : {} });
                 this.alerts = res.data || [];
                 this.alertsState = 'loaded';
             } catch {
-                this.alertsState = 'error';
+                if (!quiet) this.alertsState = 'error';
             }
             icons();
         },
@@ -1738,10 +1748,12 @@ function citizenEmergency() {
         },
 
         // -- Hotlines and evacuation centres
-        loadDirectory() {
-            this.hotlinesState = 'loading';
-            this.centresState = 'loading';
-            api.get('/hotlines')
+        loadDirectory(quiet = false) {
+            if (!quiet) {
+                this.hotlinesState = 'loading';
+                this.centresState = 'loading';
+            }
+            const hotlines = api.get('/hotlines')
                 .then((res) => {
                     this.hotlines = (res.data || []).map((h) => ({
                         office: String(h.office || h.name || '').trim() || 'Hotline',
@@ -1750,9 +1762,9 @@ function citizenEmergency() {
                     })).filter((h) => h.contact);
                     this.hotlinesState = 'loaded';
                 })
-                .catch(() => { this.hotlinesState = 'error'; })
+                .catch(() => { if (!quiet) this.hotlinesState = 'error'; })
                 .finally(icons);
-            api.getAll('/sakuna/centers')
+            const centres = api.getAll('/sakuna/centers')
                 .then((res) => {
                     const mine = this.$store.citizenSession.account?.barangay || null;
                     this.centres = (res.data || []).filter((c) => c && c.name).map((c) => ({
@@ -1773,8 +1785,9 @@ function citizenEmergency() {
                     })).sort((a, b) => (b.mine - a.mine) || (b.open - a.open) || a.barangay.localeCompare(b.barangay) || a.name.localeCompare(b.name));
                     this.centresState = 'loaded';
                 })
-                .catch(() => { this.centresState = 'error'; })
+                .catch(() => { if (!quiet) this.centresState = 'error'; })
                 .finally(icons);
+            return Promise.all([hotlines, centres]);
         },
         occupancyText(c) {
             if (c.individuals !== null && c.capacity > 0) return this.t(c.individuals + ' of ' + c.capacity + ' people', c.individuals + ' sa ' + c.capacity + ' katao');
@@ -1809,14 +1822,14 @@ function citizenEmergency() {
         },
 
         // -- My reports
-        async loadIncidents() {
-            this.incidentsState = 'loading';
+        async loadIncidents(quiet = false) {
+            if (!quiet) this.incidentsState = 'loading';
             try {
                 const res = await api.getAll('/citizen/incidents', { params: { sort: '-created_at' } });
                 this.incidents = res.data || [];
                 this.incidentsState = 'loaded';
             } catch {
-                this.incidentsState = 'error';
+                if (!quiet) this.incidentsState = 'error';
             }
             icons();
         },
@@ -2104,6 +2117,9 @@ function balitaFeed() {
         categoryLabel,
 
         async init() {
+            // Live updates (2026-11-15): new posts, edits, likes and comments
+            // appear without a reload (loadFirst(true)).
+            this.$store.live.on(this.$el, 'balita', () => this.loadFirst(true));
             await this.loadFirst();
             await this.openLinked();
         },
@@ -2133,7 +2149,8 @@ function balitaFeed() {
             list.forEach((p) => { if (!byKey.has(p.key)) byKey.set(p.key, p); });
             this.posts = [...byKey.values()].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
         },
-        async loadFirst() {
+        async loadFirst(quiet = false) {
+            if (quiet) return this.refreshFirst();
             this.loading = true;
             this.failed = false;
             this.posts = [];
@@ -2150,6 +2167,47 @@ function balitaFeed() {
                 this.failed = true;
             } finally {
                 this.loading = false;
+                icons();
+            }
+        },
+        // loadFirst(true), a live update: the first page and the events read
+        // again, and only what the server changed changes - new posts, edits,
+        // likes, comment counts, posts taken down - so what the resident has
+        // open stays: a post expanded, its comments, a comment being written,
+        // the posts Load more added. A failed reload keeps the feed as it is.
+        async refreshFirst() {
+            try {
+                const [res, ev] = await Promise.all([
+                    api.get('/announcements', { params: { per_page: FEED_PAGE, page: 1 } }),
+                    api.get('/events', { params: { per_page: 4, upcoming: 1, from: new Date().toLocaleDateString('en-CA', { timeZone: TZ }) } }).catch(() => null),
+                ]);
+                const fresh = new Map((res.data || []).map((row) => this.fromAnnouncement(row)).map((p) => [p.key, p]));
+                const last = res.meta?.last_page || 1;
+                this.more = { page: Math.max(1, this.more.page), last: Math.max(this.more.page, last) };
+                // A post newer than the first page's oldest is on it unless it was taken down.
+                const oldest = Math.min(...[...fresh.values()].map((p) => new Date(p.at || 0).getTime()));
+                const gone = (p) => !fresh.has(p.key) && (last <= 1 || new Date(p.at || 0).getTime() > oldest);
+                const SERVER = ['author', 'barangay', 'category', 'title', 'body', 'media', 'likes', 'comments_count', 'liked_by_me', 'at', 'event'];
+                const kept = this.posts.filter((p) => !gone(p));
+                kept.forEach((p) => {
+                    const f = fresh.get(p.key);
+                    if (!f || p.liking || p.sending) return;
+                    const counted = p.comments_count;
+                    SERVER.forEach((k) => { if (JSON.stringify(p[k]) !== JSON.stringify(f[k])) p[k] = f[k]; });
+                    // Open comments (the first page of them) follow new ones.
+                    if (p.showComments && p.comments !== null && p.commentsPage <= 1 && p.comments_count !== counted) {
+                        api.get(this.engagementPath(p, 'comments'), { params: { per_page: COMMENT_PAGE, page: 1 } })
+                            .then((r) => { p.comments = r.data || []; p.commentsMore = 1 < (r.meta?.last_page || 1); icons(); })
+                            .catch(() => {});
+                    }
+                });
+                const known = new Set(kept.map((p) => p.key));
+                this.posts = [...kept, ...[...fresh.values()].filter((p) => !known.has(p.key))].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+                if (ev) this.events = (ev.data || []).filter((e) => !eventEnded(e)).map((e) => ({ ...e, timeLabel: eventTimeRange(e) }));
+                this.failed = false;
+            } catch {
+                // What is on screen stays.
+            } finally {
                 icons();
             }
         },

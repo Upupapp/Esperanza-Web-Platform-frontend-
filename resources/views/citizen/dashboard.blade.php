@@ -14,12 +14,18 @@
             kpi: { dokyu: 0, dokyuReady: 0, tulong: 0, tulongApproved: 0 },
 
             async init() {
+                // Live updates (2026-11-15): each part reloads quietly when its
+                // kind of data changes (events are Balita on the server), and
+                // what is on screen stays if a reload fails.
+                this.$store.live.on(this.$el, 'requests', () => this.loadRequests(true));
+                this.$store.live.on(this.$el, 'balita', () => Promise.all([this.loadBalita(true), this.loadEvents(true)]), { busy: () => this.balitaPreview.some((p) => p.pending) });
+                this.$store.live.on(this.$el, 'sakuna', () => this.loadAlerts(true));
                 await Promise.all([this.loadRequests(), this.loadBalita(), this.loadEvents(), this.loadAlerts()]);
                 this.$store.citizenNotifications.load();
                 setTimeout(() => (this.ready = true), 250);
             },
 
-            async loadRequests() {
+            async loadRequests(quiet = false) {
                 try {
                     // The tiles count ALL of the resident's requests. They used to
                     // count only the five most recent rows fetched for the list
@@ -33,9 +39,9 @@
                     this.kpi.tulong = all.filter((r) => r.type === 'tulong').length;
                     // A Tulong case is approved once it reaches Assistance Processing.
                     this.kpi.tulongApproved = all.filter((r) => r.type === 'tulong' && ['Assistance Processing', 'Ready for Release', 'Completed'].includes(r.status) && (r.submitted || '').startsWith(thisMonth)).length;
-                } catch { this.requests = []; }
+                } catch { if (!quiet) this.requests = []; }
             },
-            async loadBalita() {
+            async loadBalita(quiet = false) {
                 try {
                     const result = await $api.get('/announcements', { params: { per_page: 4 } });
                     this.balitaPreview = (result.data || []).map((post, i) => ({
@@ -52,25 +58,25 @@
                         liked: post.liked_by_me === true,
                         commentCount: post.comments_count || 0,
                     }));
-                } catch { this.balitaPreview = []; }
+                } catch { if (!quiet) this.balitaPreview = []; }
             },
             // Published emergency alerts (Sakuna), the public feed the backend
             // has always served and no citizen page ever asked for (web backlog
             // C8). The resident's own barangay plus municipality-wide ones.
-            async loadAlerts() {
+            async loadAlerts(quiet = false) {
                 try {
                     const barangay = this.$store.citizenSession.account?.barangay;
                     const result = await $api.get('/alerts', { params: barangay ? { barangay } : {} });
                     this.alerts = result.data || [];
                     this.$nextTick(() => window.renderIcons?.());
-                } catch { this.alerts = []; }
+                } catch { if (!quiet) this.alerts = []; }
             },
             alertText(field) {
                 if (!field) return '';
                 if (typeof field === 'string') return field;
                 return this.$store.lang.current === 'en' ? (field.en || field.fil || '') : (field.fil || field.en || '');
             },
-            async loadEvents() {
+            async loadEvents(quiet = false) {
                 try {
                     // What is still to come, from today in Esperanza (the month's
                     // first events showed even after they had passed, 2026-10-21),
@@ -86,7 +92,7 @@
                         venue: e.venue || '',
                         link: e.link || null,
                     }));
-                } catch { this.events = []; }
+                } catch { if (!quiet) this.events = []; }
             },
             // The birthday greeting comes from the server now, as an occasion
             // pop-up (x-citizen.greeting-popup), on the resident's birthday in

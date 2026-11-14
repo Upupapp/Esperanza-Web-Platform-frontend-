@@ -187,9 +187,13 @@
                 const d = new Date(iso);
                 return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
-            async loadRequests() {
-                this.requestsLoading = true;
-                this.requestsFailed = false;
+            // quiet (a live update): the list on screen stays until the new
+            // one comes, and a failed reload keeps it.
+            async loadRequests(quiet = false) {
+                if (!quiet) {
+                    this.requestsLoading = true;
+                    this.requestsFailed = false;
+                }
                 try {
                     const res = await $api.getAll('/citizen/requests', { params: { sort: '-submitted_at' } });
                     this.requests = (res.data || []).filter((r) => r.type === 'dokyu').map((r) => ({
@@ -205,7 +209,8 @@
                         status: r.status,
                         requirements: null,
                     }));
-                } catch { this.requestsFailed = true; } finally {
+                    this.requestsFailed = false;
+                } catch { if (!quiet) this.requestsFailed = true; } finally {
                     this.requestsLoading = false;
                     this.$nextTick(() => window.renderIcons?.());
                 }
@@ -255,6 +260,17 @@
                     replaceable: !!q.replaceable,
                     _busy: false,
                 }));
+            },
+            // Live updates (2026-11-15): an open request follows the office's
+            // changes while the resident watches it (reading it changes nothing).
+            async refreshProgress() {
+                const r = this.selectedRequest;
+                if (!this.progressOpen || !r) return;
+                try {
+                    const res = await $api.get('/citizen/requests/' + encodeURIComponent(r.ref));
+                    if (this.progressOpen && this.selectedRequest === r) this.applyDetail(r, res.data);
+                } catch { /* what is shown stays */ }
+                this.$nextTick(() => window.renderIcons?.());
             },
             async openProgress(r) {
                 this.selectedRequest = r;
@@ -482,6 +498,12 @@
                 // the backend lifecycle itself creates one on every status
                 // change, so there is nothing left to backfill here.
                 const ref = new URLSearchParams(window.location.search).get('ref');
+                // Live updates (2026-11-15): a request changed anywhere reloads
+                // the list quietly once no window is open; an open request
+                // refreshes in place, but not while a file is uploading, a
+                // resubmission is going or a preview is open.
+                this.$store.live.on(this.$el, 'requests', () => this.loadRequests(true));
+                this.$store.live.on(this.$el, 'requests', () => this.refreshProgress(), { dialogs: false, busy: () => this.resubmitting || this.proofOpen || this.docPreviewOpen || !!this.selectedRequest?.requirements?.some((q) => q._busy) });
                 this.loadPapeles();
                 this.loadRequests().then(() => {
                     if (!ref) return;

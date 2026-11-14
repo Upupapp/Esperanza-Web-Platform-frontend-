@@ -1699,6 +1699,11 @@
                     sessionStorage.removeItem('returnToProfile');
                 }
                 this.loadOfficials();
+                // Live updates (2026-11-15): a request changed anywhere reloads
+                // the list quietly. Never the open request by itself: opening one
+                // (GET .../requests/{ref}) starts its review on the server, so
+                // the list waits while a request is open and reloads once it closes.
+                this.$store.live.on(this.$el, 'requests', () => this.loadRequests(true), { busy: () => this.open });
                 this.loadRequests().then(() => {
                     // Arriving from a notification (see components/admin/topbar.blade.php)
                     // — jump straight into that exact request, not just the filtered list.
@@ -1768,18 +1773,26 @@
             },
             // Assigned to me and Overdue go to the server (scope round
             // 2026-10-15); only the latest of loads overlapping is kept.
-            async loadRequests() {
+            // quiet (a live update): the list on screen stays, with its
+            // filters, tab and scroll, until the new one comes; a failed
+            // reload keeps it.
+            async loadRequests(quiet = false) {
                 const seq = ++this.loadSeq;
-                this.requestsLoading = true;
-                this.requestsFailed = false;
+                if (!quiet) {
+                    this.requestsLoading = true;
+                    this.requestsFailed = false;
+                }
                 try {
                     const params = { sort: '-submitted_at' };
                     if (this.mineOnly) params.assigned = 'me';
                     if (this.overdueOnly) params.overdue = 1;
                     const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params });
-                    if (seq === this.loadSeq) this.requests = (res.data || []).map((row) => this.fromApi(row));
+                    if (seq === this.loadSeq) {
+                        this.requests = (res.data || []).map((row) => this.fromApi(row));
+                        this.requestsFailed = false;
+                    }
                 } catch (err) {
-                    if (seq === this.loadSeq) this.requestsFailed = true;
+                    if (seq === this.loadSeq && !quiet) this.requestsFailed = true;
                 } finally {
                     if (seq === this.loadSeq) {
                         this.requestsLoading = false;

@@ -35,11 +35,13 @@
      glass, the menus glass panels.
      z-30, not z-20 (manual test 2026-11-06): a page card lifted to z-20 for
      its pop-over (Sakuna Reports' date range) painted over the account and
-     bell menus. Below the phone menu's overlay (z-40). --}}
+     bell menus. Below the phone menu's overlay (z-40).
+     Live updates (2026-11-15) start here, beside the bell: $store.live reads
+     the API's change counters every second (resources/js/app.js). --}}
 <header
     class="relative z-30 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{ time: '' }"
-    x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); $store.adminNotifications.load(); $store.adminNotifications.poll()"
+    x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); $store.adminNotifications.load(); $store.adminNotifications.poll(); $store.live.start()"
 >
     <div class="flex-1 basis-44 flex items-center gap-3 min-w-0">
         <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body shrink-0">

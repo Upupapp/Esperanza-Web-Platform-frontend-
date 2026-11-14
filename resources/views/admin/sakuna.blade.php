@@ -198,11 +198,14 @@
                 if (this.activeTab === 'command-center' && this.commandBoard && !this.commandLoading) this.commandBoard = board;
             } catch { this.headerFailed = true; } finally { this.headerRefreshing = false; }
         },
-        // Refresh on its own (critique 2026-11-03): every minute while the page
-        // is in view, when it comes back into view, and when the connection returns.
+        // Refresh on its own (critique 2026-11-03): when it comes back into view
+        // and when the connection returns. Live updates (2026-11-15): within a
+        // second or two of a change to Sakuna anywhere (live:sakuna, below),
+        // so the timer is now a slow safety net, every three minutes: under
+        // the five after which the bar says its figures are old.
         startHeaderRefresh() {
             setInterval(() => { this.headerNow = Date.now(); }, 30000);
-            setInterval(() => { if (document.visibilityState === 'visible') this.loadHeader(); }, 60000);
+            setInterval(() => { if (document.visibilityState === 'visible') this.loadHeader(); }, 180000);
             document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { this.headerNow = Date.now(); this.loadHeader(); } });
             window.addEventListener('online', () => this.loadHeader());
         },
@@ -216,6 +219,11 @@
             this.probeMissing();
             this.loadHeader();
             this.startHeaderRefresh();
+            // Live updates (2026-11-15): a change to Sakuna anywhere reloads the
+            // status bar and the open tab's list quietly; they wait while a
+            // form or dialog is open or a field is in use. Casualties reloads
+            // itself (resources/js/sakuna-casualties.js).
+            this.$store.live.on(this.$el, 'sakuna', () => this.liveRefresh());
             const params = new URLSearchParams(window.location.search);
             const ref = params.get('ref');
             if (ref) {
@@ -238,6 +246,24 @@
             sessionStorage.setItem('reopenResident', JSON.stringify(this.returnToProfile));
             window.location.href = '/admin/constituents';
         },
+        // The open tab's own list, read again without its loading state. The
+        // Command Center reads the status bar's board itself, so the bar takes
+        // that board instead of asking again.
+        async liveRefresh() {
+            const tab = this.activeAllowed ? this.activeTab : null;
+            if (tab === 'command-center') {
+                if (await this.loadCommandCenter(true)) {
+                    this.headerBoard = this.commandBoard;
+                    this.headerLoadedAt = this.headerNow = Date.now();
+                    this.headerFailed = false;
+                } else await this.loadHeader();
+                return;
+            }
+            const quiet = ({ incidents: () => this.loadIncidentsList(true), 'evacuation-centers': () => this.loadCenters(true),
+                alerts: () => this.loadAlerts(true), evacuees: () => this.loadEvacuees(true),
+                resources: () => this.loadResources(true), relief: () => this.loadRelief(true) })[tab];
+            await Promise.all([this.loadHeader(), quiet ? quiet() : null]);
+        },
 
         // Incident tab state
         incidentSearch: '',
@@ -257,16 +283,23 @@
         incidentForm: { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '', lat: null, lng: null },
         // GET /sakuna/incidents (full list for this tab, distinct from Command
         // Center's own severity-ranked slice of the same endpoint).
-        async loadIncidentsList() {
-            this.incidentsLoading = true;
-            this.incidentsFailed = false;
+        // quiet (a live update, as every tab's list below): what is on screen
+        // stays until the new list comes, and a failed reload keeps it.
+        async loadIncidentsList(quiet = false) {
+            if (!quiet) {
+                this.incidentsLoading = true;
+                this.incidentsFailed = false;
+            }
             try {
                 const res = await $api.getAll('/admin/sakuna/incidents');
                 this.incidentsList = res.data || [];
+                this.incidentsFailed = false;
                 this.saveCopy('incidents', this.incidentsList);
             } catch {
-                const copy = this.useCopy('incidents');
-                if (copy) this.incidentsList = copy.data; else this.incidentsFailed = true;
+                if (!quiet) {
+                    const copy = this.useCopy('incidents');
+                    if (copy) this.incidentsList = copy.data; else this.incidentsFailed = true;
+                }
             } finally { this.incidentsLoading = false; }
         },
         resetIncidentForm() {
@@ -413,17 +446,23 @@
         // GET /sakuna/centers (real, derived occupancy; lat/lng since
         // 2026-10-26 -- no manager/contact column, no inspection/room/personnel
         // sub-model; see tab-centers.blade.php's header comment).
-        async loadCenters() {
-            this.centersLoading = true;
-            this.centersFailed = false;
+        async loadCenters(quiet = false) {
+            if (!quiet) {
+                this.centersLoading = true;
+                this.centersFailed = false;
+            }
             try {
                 const res = await $api.getAll('/admin/sakuna/centers');
                 this.centersList = res.data || [];
+                this.centersFailed = false;
                 this.saveCopy('centers', this.centersList);
             } catch {
-                const copy = this.useCopy('centers');
-                if (copy) this.centersList = copy.data; else this.centersFailed = true;
+                if (!quiet) {
+                    const copy = this.useCopy('centers');
+                    if (copy) this.centersList = copy.data; else this.centersFailed = true;
+                }
             } finally { this.centersLoading = false; }
+            if (quiet) return;
             // A center opened from the Command Center's map (?center=REF).
             const ref = new URLSearchParams(window.location.search).get('center');
             const hit = ref && this.centersList.find((c) => c.ref === ref);
@@ -528,9 +567,11 @@
         checkInSaving: false,
         // GET /sakuna/evacuees (list) + GET /sakuna/centers filtered to open
         // ones, for the check-in/transfer center pickers.
-        async loadEvacuees() {
-            this.evacueesLoading = true;
-            this.evacueesFailed = false;
+        async loadEvacuees(quiet = false) {
+            if (!quiet) {
+                this.evacueesLoading = true;
+                this.evacueesFailed = false;
+            }
             try {
                 await this.$store.session.whenReady();
                 const [ev, centers] = await Promise.all([
@@ -539,10 +580,13 @@
                 ]);
                 this.evacueesList = ev.data || [];
                 this.evacueeCentersOpen = (centers.data || []).filter(c => c.status === 'Processing');
+                this.evacueesFailed = false;
                 this.saveCopy('evacuees', { list: this.evacueesList, centers: this.evacueeCentersOpen });
             } catch {
-                const copy = this.useCopy('evacuees');
-                if (copy) { this.evacueesList = copy.data.list || []; this.evacueeCentersOpen = copy.data.centers || []; } else this.evacueesFailed = true;
+                if (!quiet) {
+                    const copy = this.useCopy('evacuees');
+                    if (copy) { this.evacueesList = copy.data.list || []; this.evacueeCentersOpen = copy.data.centers || []; } else this.evacueesFailed = true;
+                }
             } finally { this.evacueesLoading = false; }
         },
         resetCheckInForm() {
@@ -723,9 +767,11 @@
         // GET /sakuna/resources -- a bulk quantity/deployed inventory, not a
         // per-unit asset with its own status/condition/fuel/personnel/serial
         // (see tab-resources.blade.php's header for what that means for the UI).
-        async loadResources() {
-            this.resourcesLoading = true;
-            this.resourcesFailed = false;
+        async loadResources(quiet = false) {
+            if (!quiet) {
+                this.resourcesLoading = true;
+                this.resourcesFailed = false;
+            }
             try {
                 await this.$store.session.whenReady();
                 const [res, incidents] = await Promise.all([
@@ -734,10 +780,13 @@
                 ]);
                 this.resourcesList = res.data || [];
                 this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived'].includes(i.status));
+                this.resourcesFailed = false;
                 this.saveCopy('resources', { list: this.resourcesList, incidents: this.resourceIncidentsOpen });
             } catch {
-                const copy = this.useCopy('resources');
-                if (copy) { this.resourcesList = copy.data.list || []; this.resourceIncidentsOpen = copy.data.incidents || []; } else this.resourcesFailed = true;
+                if (!quiet) {
+                    const copy = this.useCopy('resources');
+                    if (copy) { this.resourcesList = copy.data.list || []; this.resourceIncidentsOpen = copy.data.incidents || []; } else this.resourcesFailed = true;
+                }
             } finally { this.resourcesLoading = false; }
         },
         // category has no fixed vocabulary on the backend (a plain string
@@ -831,16 +880,21 @@
         // behind this submodule (see tab-relief.blade.php's header for what
         // that means for the UI: no inventory, request-approval or donation
         // model exists anywhere in the schema).
-        async loadRelief() {
-            this.reliefLoading = true;
-            this.reliefFailed = false;
+        async loadRelief(quiet = false) {
+            if (!quiet) {
+                this.reliefLoading = true;
+                this.reliefFailed = false;
+            }
             try {
                 const res = await $api.getAll('/admin/sakuna/relief');
                 this.reliefList = res.data || [];
+                this.reliefFailed = false;
                 this.saveCopy('relief', this.reliefList);
             } catch {
-                const copy = this.useCopy('relief');
-                if (copy) this.reliefList = copy.data || []; else this.reliefFailed = true;
+                if (!quiet) {
+                    const copy = this.useCopy('relief');
+                    if (copy) this.reliefList = copy.data || []; else this.reliefFailed = true;
+                }
             } finally { this.reliefLoading = false; }
         },
         reliefOperations() {
@@ -1039,16 +1093,21 @@
         // real audience axis -- there is no demographic/occupational
         // 'target group' concept (All Residents/Farmers/PWD Households/etc.)
         // anywhere in the schema.
-        async loadAlerts() {
-            this.alertsLoading = true;
-            this.alertsFailed = false;
+        async loadAlerts(quiet = false) {
+            if (!quiet) {
+                this.alertsLoading = true;
+                this.alertsFailed = false;
+            }
             try {
                 const res = await $api.getAll('/admin/sakuna/alerts');
                 this.alertsList = res.data || [];
+                this.alertsFailed = false;
                 this.saveCopy('alerts', this.alertsList);
             } catch {
-                const copy = this.useCopy('alerts');
-                if (copy) this.alertsList = copy.data; else this.alertsFailed = true;
+                if (!quiet) {
+                    const copy = this.useCopy('alerts');
+                    if (copy) this.alertsList = copy.data; else this.alertsFailed = true;
+                }
             } finally { this.alertsLoading = false; }
         },
         // type has no fixed vocabulary on the backend (a plain string column)
@@ -1374,9 +1433,14 @@
                 this.personnel = res.data || [];
             } catch { /* the picker stays empty */ }
         },
-        async loadCommandCenter() {
-            this.commandLoading = true;
-            this.commandFailed = false;
+        // quiet (a live update): the board and the queue on screen stay until
+        // the new ones come, the Assign picker and the hotlines are not asked
+        // for again, and a failed reload keeps what is shown. True once loaded.
+        async loadCommandCenter(quiet = false) {
+            if (!quiet) {
+                this.commandLoading = true;
+                this.commandFailed = false;
+            }
             try {
                 // The Sakuna list feeds the Assign picker; only a role that
                 // may assign asks for it (every 403 pops up).
@@ -1384,17 +1448,20 @@
                 const [board, incidents, personnel] = await Promise.all([
                     $api.get('/admin/sakuna/command-center'),
                     this.allowed('sakuna_incidents') ? $api.getAll('/admin/sakuna/incidents') : this.nothing(),
-                    this.$store.session.canPerm('sakuna_incidents', 'assign') ? $api.get('/admin/sakuna/assignees').catch(() => ({ data: [] })) : this.nothing(),
+                    !quiet && this.$store.session.canPerm('sakuna_incidents', 'assign') ? $api.get('/admin/sakuna/assignees').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.commandBoard = board.data;
+                this.commandFailed = false;
                 this.saveCopy('board', board.data);
                 // The hotlines ride along, so they are on hand if the next load fails.
-                if (this.$store.session.canPerm('sakuna_alerts', 'view')) $api.get('/admin/sakuna/hotlines').then((r) => this.saveCopy('hotlines', r.data || [])).catch(() => {});
+                if (!quiet && this.$store.session.canPerm('sakuna_alerts', 'view')) $api.get('/admin/sakuna/hotlines').then((r) => this.saveCopy('hotlines', r.data || [])).catch(() => {});
                 this.setCommandIncidents(incidents.data || []);
                 if (this.allowed('sakuna_incidents')) this.saveCopy('incidents', incidents.data || []);
                 this.commandIncidentsKnown = true;
-                this.personnel = personnel.data || [];
+                if (!quiet) this.personnel = personnel.data || [];
+                return true;
             } catch {
+                if (quiet) return false;
                 // The last board and incidents, marked with their time, rather than nothing.
                 // With no copy of the incidents, the queue and counts are unknown, not zero
                 // (critique 2026-11-03, eighth run).
