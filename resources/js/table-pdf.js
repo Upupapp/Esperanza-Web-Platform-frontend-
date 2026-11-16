@@ -182,19 +182,76 @@ function finish(st, title, filename) {
 }
 
 /**
+ * A titled part after the main table, in the same columns (the casualty list's
+ * residents hurt or killed outside Esperanza, 2026-11-16): heading, note, rows.
+ */
+function drawPart(st, columns, part) {
+    const { doc, page, margin, width } = st;
+    doc.setFontSize(8.5);
+    const note = part.note ? doc.splitTextToSize(clean(part.note), width) : [];
+    if (st.y + 20 + note.length * 3.6 > page.h - margin - 6) {
+        doc.addPage();
+        st.y = margin;
+    }
+    st.y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(11, 23, 48);
+    doc.text(clean(part.title), margin, st.y + 3);
+    st.y += 6;
+    if (note.length) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(60);
+        doc.text(note, margin, st.y + 2.5);
+        st.y += note.length * 3.6 + 2;
+    }
+    drawTable(st, columns, part.rows.map((r) => columns.map((c) => text(r[c.key]))));
+}
+
+/** Signature lines at the end, side by side: who prepares, countersigns and approves. */
+function drawSignatures(st, signatures) {
+    if (!signatures || !signatures.length) return;
+    const { doc, page, margin, width } = st;
+    if (st.y + 30 > page.h - margin - 6) {
+        doc.addPage();
+        st.y = margin;
+    }
+    st.y += 10;
+    const w = width / signatures.length;
+    signatures.forEach((s, i) => {
+        const x = margin + i * w;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(60);
+        doc.text(clean(s.label), x + 4, st.y);
+        doc.setDrawColor(120);
+        doc.line(x + 4, st.y + 12, x + w - 8, st.y + 12);
+        doc.setTextColor(30);
+        doc.text(clean(s.position || ''), x + 4, st.y + 16);
+    });
+    st.y += 20;
+}
+
+/**
  * rows: the same objects the CSV is made from.
  * options.columns: [{key, label}] or keys, in order; otherwise every key whose
  *   values are plain (not objects) in the rows, minus options.skip.
  * options.summary: paragraphs printed under the header, before the table.
+ * options.parts: [{title, note, rows}] printed after the table, same columns.
+ * options.signatures: [{label, position}] signature lines at the end.
  */
 export async function tablePdf(rows, options = {}) {
-    const { filename = 'export.pdf', title = 'Export', subtitle = '', summary = [] } = options;
+    const { filename = 'export.pdf', title = 'Export', subtitle = '', summary = [], parts = [], signatures = [] } = options;
     if (!rows || !rows.length) throw new Error('No records to export.');
     const columns = columnsOf(rows, options);
     const body = rows.map((r) => columns.map((c) => text(r[c.key])));
-    const st = await startDoc(title, (subtitle ? subtitle + '  •  ' : '') + 'Made ' + madeNow() + '  •  ' + rows.length.toLocaleString('en-PH') + (rows.length === 1 ? ' row' : ' rows'));
+    const total = rows.length + parts.reduce((n, p) => n + p.rows.length, 0);
+    const st = await startDoc(title, (subtitle ? subtitle + '  •  ' : '') + 'Made ' + madeNow() + '  •  ' + total.toLocaleString('en-PH') + (total === 1 ? ' row' : ' rows'));
     drawSummary(st, summary);
     drawTable(st, columns, body);
+    parts.filter((p) => p.rows && p.rows.length).forEach((p) => drawPart(st, columns, p));
+    drawSignatures(st, signatures);
     finish(st, title, filename);
 }
 

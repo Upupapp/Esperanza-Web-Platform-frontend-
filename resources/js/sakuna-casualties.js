@@ -53,7 +53,7 @@ function sakunaCasualties() {
         rows: [], page: 1, lastPage: 1, total: 0, loading: false, failed: false, off: false, summary: null, more: false,
         f: { ...FILTERS },
         open: null, saving: false, move: { status: '', found_place: '', note: '' },
-        validNote: '', consentBy: '',
+        validBasis: '', validNote: '', consentBy: '',
         adding: false, editing: '', incidents: [], residents: [], residentQuery: '', form: blankForm(),
 
         categories: [['', 'All'], ['dead', 'Dead'], ['injured', 'Injured'], ['missing', 'Missing'], ['safe', 'Found safe']],
@@ -114,6 +114,13 @@ function sakunaCasualties() {
         filtered() { this.load(1); this.loadSummary(); },
         clear() { this.f = { ...FILTERS }; this.filtered(); },
         cat(key) { return this.summary?.casualties?.[key] || null; },
+        /** Residents hurt, killed or missing outside Esperanza: kept, not counted (2026-11-16). */
+        elsewhereLine() {
+            const e = this.summary?.elsewhere || {};
+            const parts = [['dead', 'dead'], ['injured', 'injured'], ['missing', 'missing']].filter(([k]) => e[k]).map(([k, label]) => e[k] + ' ' + label);
+            return (e.total === 1 ? '1 Esperanza resident' : e.total + ' Esperanza residents') + ' hurt, killed or missing outside Esperanza (' + parts.join(', ') + ') '
+                + (e.total === 1 ? 'is' : 'are') + ' not in these figures: the town where it happened counts them. They are kept here for welfare follow-up.';
+        },
 
         // How a row reads.
         personName(r) { return r.name || (r.kind === 'unidentified' ? 'Unidentified body' : 'No name yet'); },
@@ -134,24 +141,32 @@ function sakunaCasualties() {
         ageSex(r) { return [r.sex, r.age !== null && r.age !== undefined ? r.age + ' yrs' : null].filter(Boolean).join(' · ') || '—'; },
         /** The status under the category pill only when it says more ("Found deceased", "Unidentified"). */
         statusDiffers(r) { return !['Missing', 'Injured', 'Deceased', this.categoryLabel[r.category]].includes(r.status); },
-        /** What validates a case, by category (a death certificate is only for a death). */
+        /**
+         * What validates a case, by category (decided 2026-11-16 from NDRRMC MC 19
+         * s.2016): the MDRRMO marks it once the document is on file. A police
+         * report alone no longer validates a death: the MHO's death certificate does.
+         */
         validationHelp(o) {
             return {
-                dead: 'For validation. A death counts as validated once a death certificate shows it was caused by the disaster (MHO), or a police report confirms it.',
-                injured: 'For validation. An injury counts as validated once a hospital or Rural Health Unit record confirms it.',
-                missing: 'For validation. A missing person counts as validated once a police (PNP) or barangay report confirms it.',
-                safe: 'For validation. Validated once the family or the barangay confirms the person is safe.',
+                dead: 'For validation. A death is validated once the death certificate is in: the Municipal Health Officer issues it (or a hospital or the DOH).',
+                injured: 'For validation. An injury is validated once a Rural Health Unit, hospital or DOH record confirms it.',
+                missing: 'For validation. A missing person is validated once the family has reported it to the police (PNP report) or the MDM missing persons form is filled in.',
+                safe: 'Found safe is not counted. Record who confirmed the person is safe.',
             }[o.category] || 'For validation.';
         },
         validationExample(o) {
-            return { dead: 'e.g. Death certificate no. 2026-114', injured: 'e.g. RHU record no. 2026-031', missing: 'e.g. PNP blotter no. 2026-07', safe: 'e.g. Barangay report' }[o.category] || 'Note';
+            return { dead: 'Certificate no., e.g. 2026-114', injured: 'Record no., e.g. RHU 2026-031', missing: 'Report or blotter no., e.g. 2026-07', safe: 'Who confirmed it, e.g. Brgy. Captain' }[o.category] || 'Document number';
+        },
+        validatedLine(o) {
+            return 'Validated ' + this.when(o.validated_at) + (o.validated_by ? ' by ' + o.validated_by : '')
+                + [o.validation_basis, o.validation_note].filter(Boolean).map((s) => ' · ' + s).join('');
         },
         whenOf(r) { return r.occurred_at || r.last_seen_at; },
 
         async show(ref) {
             try {
                 this.open = (await api.get('/admin/sakuna/missing/' + encodeURIComponent(ref))).data;
-                this.move = { status: '', found_place: '', note: '' }; this.validNote = ''; this.consentBy = '';
+                this.move = { status: '', found_place: '', note: '' }; this.validBasis = ''; this.validNote = ''; this.consentBy = '';
                 this.$nextTick(() => window.renderIcons?.());
             } catch { this.$dispatch('toast', { message: 'Could not open this case.', variant: 'error' }); }
         },
@@ -171,7 +186,12 @@ function sakunaCasualties() {
             if (this.saving || !this.open) return;
             this.saving = true;
             try {
-                await api.post('/admin/sakuna/missing/' + encodeURIComponent(this.open.ref) + '/validation', { validation: to, validation_note: this.validNote || null });
+                const validated = to === 'Validated';
+                await api.post('/admin/sakuna/missing/' + encodeURIComponent(this.open.ref) + '/validation', {
+                    validation: to,
+                    validation_basis: validated ? this.validBasis || null : null,
+                    validation_note: validated ? this.validNote.trim() || null : null,
+                });
                 this.$dispatch('toast', { message: this.open.ref + (to === 'Validated' ? ' is validated.' : ' is back to For validation.'), variant: 'success' });
                 await this.refresh();
             } catch (err) { this.failedWith(err, 'Could not change the validation.'); } finally { this.saving = false; }
@@ -294,11 +314,15 @@ function sakunaCasualties() {
 
         // ------------------------------------------------ The casualty list
         // The NDRRMC name list's columns (CSV or PDF), dead first. Audited by
-        // the server by count, never by name.
+        // the server by count, never by name. Counted where it happened
+        // (2026-11-16): residents hurt, killed or missing outside Esperanza come
+        // last, apart; the PDF ends with the signatures NDRRMC MC 19 s.2016
+        // §7.4.1 asks of the LGU's report (the Mayor, countersigned by the MHO).
         async exportList(as) {
             try {
                 const res = await api.get('/admin/sakuna/missing/export', { params: this.filters() });
                 const data = res.data || {};
+                const COUNTED = "In Esperanza's count";
                 // The NDRRMC name list's order (... Cause, Remarks, Source of data, Validated), then ours.
                 const rows = (data.rows || []).map((r) => ({
                     Category: this.categoryLabel[r.category] || r.category,
@@ -316,18 +340,31 @@ function sakunaCasualties() {
                     Validated: r.category === 'safe' ? '—' : (r.validated ? 'Yes' : 'No'),
                     'Date and time': this.whenShort(r.when),
                     Details: r.details || '',
+                    [COUNTED]: r.counted === false ? 'No' : 'Yes',
                 }));
                 if (!rows.length) { this.toast?.('No records to export.', 'warning'); return; }
                 if (as === 'csv') { this.exportCSV(rows, 'casualty-list.csv'); return; }
                 const c = this.summary?.casualties || {};
                 const line = (k, label) => label + ': ' + (c[k]?.total ?? 0) + ' (' + (c[k]?.validated ?? 0) + ' validated, ' + (c[k]?.for_validation ?? 0) + ' for validation)';
-                await window.tablePdf(rows, {
+                const here = rows.filter((r) => r[COUNTED] === 'Yes');
+                const away = rows.filter((r) => r[COUNTED] === 'No');
+                const awayTitle = 'Esperanza residents hurt, killed or missing outside Esperanza';
+                const awayNote = 'Not in the count above: the town where it happened counts them. Kept for welfare follow-up, such as burial assistance and benefit claims.';
+                await window.tablePdf(here.length ? here : away, {
                     filename: 'casualty-list.pdf',
                     title: 'Sakuna · Casualty list',
                     subtitle: [data.municipality, data.province].filter(Boolean).join(', ') + ' · ' + (this.f.incident ? 'Incident ' + this.f.incident : 'All incidents'),
                     // A space after the slash lets the narrow heading break there, not mid-word.
-                    columns: Object.keys(rows[0]).map((key) => ({ key, label: key === 'City/Municipality' ? 'City/ Municipality' : key })),
-                    summary: [[line('dead', 'Dead'), line('injured', 'Injured'), line('missing', 'Missing'), 'Found safe: ' + (c.safe ?? 0)].join('   ·   ')],
+                    columns: Object.keys(rows[0]).filter((key) => key !== COUNTED).map((key) => ({ key, label: key === 'City/Municipality' ? 'City/ Municipality' : key })),
+                    summary: here.length
+                        ? [[line('dead', 'Dead'), line('injured', 'Injured'), line('missing', 'Missing'), 'Found safe: ' + (c.safe ?? 0)].join('   ·   ') + '. Counted where it happened.']
+                        : [awayTitle + '. ' + awayNote],
+                    parts: here.length && away.length ? [{ title: awayTitle, note: awayNote, rows: away }] : [],
+                    signatures: [
+                        { label: 'Prepared by:', position: 'MDRRM Officer' },
+                        { label: 'Countersigned by:', position: 'Municipal Health Officer' },
+                        { label: 'Approved by:', position: 'Municipal Mayor' },
+                    ],
                 });
                 this.toast?.('PDF downloaded.', 'success');
             } catch (err) { this.failedWith(err, 'Could not make the casualty list.'); }

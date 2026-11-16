@@ -8,7 +8,7 @@
 <div class="space-y-3" x-data="sakunaCasualties" @sakuna-missing-reload.window="load(page); loadSummary()">
 
     <div x-show="off" x-cloak class="sk-card sk-empty" style="padding: 24px;">
-        Casualties is not switched on here yet. It holds personal details of people in a disaster, so it opens once the LGU's Data Protection Officer agrees.
+        Casualties is not switched on here yet. It holds personal details of people in a disaster, so it opens once the Municipal Mayor approves its privacy impact assessment, after the Data Protection Officer's review.
     </div>
 
     <div x-show="!off" class="space-y-3">
@@ -22,7 +22,7 @@
                 <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-amber" x-show="summary?.for_validation"></span>For validation</span><span class="sk-sval tabular-nums" x-text="summary?.for_validation ?? '—'"></span></div>
             </div>
             <div class="sk-actions">
-                <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About Casualties" title="The dead, the injured and the missing in a disaster, as the NDRRMC situation report counts them: residents and people from other towns, in Esperanza or outside it. A resolved case is closed and kept.">
+                <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About Casualties" title="The dead, the injured and the missing in a disaster, as the NDRRMC situation report counts them: counted where it happened, so a visitor hurt or killed in Esperanza counts here. Residents hurt or killed outside Esperanza are kept for welfare follow-up; the town where it happened counts them. A resolved case is closed and kept.">
                     <i data-lucide="info"></i>
                 </button>
                 <div class="sk-btngrp" x-show="can('sakuna_missing','edit')" role="group" aria-label="Casualty list">
@@ -34,6 +34,13 @@
                 </button>
             </div>
         </div>
+
+        {{-- Counted where it happened (2026-11-16, NDRRMC MC 19 s.2016): residents
+             hurt, killed or missing outside Esperanza are not in the figures above. --}}
+        <p class="text-xs sk-muted" x-show="summary?.elsewhere?.total" x-cloak>
+            <span x-text="elsewhereLine()"></span>
+            <button type="button" class="sk-clear" @click="f.happened = 'outside'; load(1)">Show them</button>
+        </p>
 
         <section class="sk-card overflow-hidden">
             <h2 class="sr-only">Dead, injured and missing persons</h2>
@@ -177,20 +184,29 @@
                             <div class="sm:col-span-2"><dt class="sk-ssub" x-text="open.found_place || open.found_at ? 'Last seen, and found' : 'Last seen'"></dt><dd x-text="(open.last_seen_place || '—') + (open.found_place ? ' · found at ' + open.found_place : '') + (open.found_at ? ' · ' + when(open.found_at) : '')"></dd></div>
                         </template>
                     </dl>
+                    <p class="text-xs sk-muted mt-2" x-show="open && open.counted === false">Not in Esperanza's count: the town where it happened counts it. Kept here for welfare follow-up, such as burial assistance and benefit claims.</p>
                 </div>
 
-                {{-- Validation, as the situation report shows it; allowed on a closed case too. --}}
+                {{-- Validation, as the situation report shows it; allowed on a closed case too.
+                     Validated names the document that validates the category, with its number
+                     (2026-11-16, NDRRMC MC 19 s.2016): the MHO's death certificate for a death,
+                     the PNP report for a missing person, the RHU or hospital record for the injured. --}}
                 <div class="rounded-lg border border-[#E3E8F1] p-3 space-y-2">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <p class="text-xs font-semibold text-slate-800">Validation</p>
                         <span class="text-xs sk-muted" x-text="open ? 'Source of data: ' + (open.source || 'not given') : ''"></span>
                     </div>
-                    <p class="text-xs" x-show="open && open.validation === 'Validated'" x-text="open ? 'Validated ' + when(open.validated_at) + (open.validated_by ? ' by ' + open.validated_by : '') + (open.validation_note ? ' · ' + open.validation_note : '') : ''"></p>
+                    <p class="text-xs" x-show="open && open.validation === 'Validated'" x-text="open ? validatedLine(open) : ''"></p>
                     <p class="text-xs sk-muted" x-show="open && open.validation !== 'Validated'" x-text="open ? validationHelp(open) : ''"></p>
                     <div class="flex flex-wrap items-center gap-2" x-show="can('sakuna_missing','edit')">
-                        <label class="sr-only" for="mp-valid-note">Validation note</label>
-                        <input id="mp-valid-note" type="text" x-model="validNote" maxlength="255" :placeholder="open ? validationExample(open) : ''" class="sk-sel flex-1" style="min-width: 200px;" x-show="open && open.validation !== 'Validated'">
-                        <button type="button" class="sk-btn sk-btn-sm sk-btn-p" x-show="open && open.validation !== 'Validated'" :disabled="saving" @click="setValidation('Validated')"><i data-lucide="badge-check"></i> Mark validated</button>
+                        <label class="sr-only" for="mp-valid-basis">Validated on</label>
+                        <select id="mp-valid-basis" x-model="validBasis" class="sk-sel" x-show="open && open.validation !== 'Validated'">
+                            <option value="">Validated on…</option>
+                            <template x-for="b in (open?.validation_bases || [])" :key="b"><option :value="b" x-text="b"></option></template>
+                        </select>
+                        <label class="sr-only" for="mp-valid-note">Document number, or who confirmed it</label>
+                        <input id="mp-valid-note" type="text" x-model="validNote" maxlength="255" :placeholder="open ? validationExample(open) : ''" class="sk-sel flex-1" style="min-width: 180px;" x-show="open && open.validation !== 'Validated'">
+                        <button type="button" class="sk-btn sk-btn-sm sk-btn-p" x-show="open && open.validation !== 'Validated'" :disabled="saving || !validBasis || !validNote.trim()" :title="!validBasis || !validNote.trim() ? 'Choose the document, then give its number' : ''" @click="setValidation('Validated')"><i data-lucide="badge-check"></i> Mark validated</button>
                         <button type="button" class="sk-btn sk-btn-sm" x-show="open && open.validation === 'Validated'" :disabled="saving" @click="setValidation('For validation')">Back to For validation</button>
                     </div>
                 </div>

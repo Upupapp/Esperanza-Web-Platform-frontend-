@@ -57,4 +57,29 @@ class SakunaCasualtiesUiTest extends TestCase
         // Archive only: nothing here deletes a case.
         $this->assertStringNotContainsString('api.delete(', $js);
     }
+
+    /**
+     * Decided 2026-11-16 (NDRRMC MC 19 s.2016; NPC Circular 2023-06): Validated
+     * names its document; casualties count where it happened, so residents hurt
+     * or killed outside Esperanza are shown apart; the list carries the Mayor's
+     * and the MHO's signature lines; the switch waits for the approved PIA.
+     */
+    public function test_validation_document_count_where_it_happened_and_the_pia_gate(): void
+    {
+        $tab = $this->source('resources/views/admin/partials/sakuna/tab-missing.blade.php');
+        $js = $this->source('resources/js/sakuna-casualties.js');
+        $pdf = $this->source('resources/js/table-pdf.js');
+
+        $this->assertStringContainsString('<template x-for="b in (open?.validation_bases || [])"', $tab);
+        $this->assertStringContainsString(':disabled="saving || !validBasis || !validNote.trim()"', $tab);
+        $this->assertStringContainsString('validation_basis: validated ? this.validBasis || null : null,', $js);
+
+        $this->assertStringContainsString('x-show="summary?.elsewhere?.total"', $tab);
+        $this->assertStringContainsString('x-show="open && open.counted === false"', $tab);
+        $this->assertStringContainsString('parts: here.length && away.length ? [{ title: awayTitle, note: awayNote, rows: away }] : [],', $js);
+        $this->assertStringContainsString("{ label: 'Countersigned by:', position: 'Municipal Health Officer' },", $js);
+        $this->assertStringContainsString('function drawSignatures(st, signatures)', $pdf);
+
+        $this->assertStringContainsString("opens once the Municipal Mayor approves its privacy impact assessment, after the Data Protection Officer's review.", $tab);
+    }
 }
