@@ -52,7 +52,7 @@
             <template x-if="b.image_url">
                 <img :src="b.image_url" :alt="b.alt_text || b.title" class="absolute inset-0 w-full h-full object-cover" loading="lazy">
             </template>
-            <div class="absolute inset-0 bg-gradient-to-r" :class="(b.theme || 'from-brand-600 to-navy-800') + (b.image_url ? ' opacity-85' : '')"></div>
+            <div class="absolute inset-0 bg-gradient-to-r" :class="(b.theme || 'from-brand-600 to-navy-800') + (b.image_url ? ' opacity-85 banner-photo-fade' : '')"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-transparent to-transparent"></div>
 
             <div class="relative h-full flex flex-col justify-end p-4 sm:py-6 sm:px-14">

@@ -1915,3 +1915,12 @@ body.dp-printing .doc-paper.faced-sheet {
         min-height: 0 !important;
     }
 }
+
+/* A banner with a photo (owner, 2026-11-17: "insert a real picture ... make the
+   look of it not plain"): the colour overlay stays strong behind the title, on
+   the left, and fades out toward the right, so the photo shows. Without a photo
+   the overlay is the whole banner, as before. */
+.banner-photo-fade {
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 32%, rgba(0, 0, 0, 0.25) 72%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 0%, #000 32%, rgba(0, 0, 0, 0.25) 72%, transparent 100%);
+}

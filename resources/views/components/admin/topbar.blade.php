@@ -51,7 +51,9 @@
             {{-- data-page-*: a page with tabs may retitle itself (Balita's Feedback tab, 2026-10-15). --}}
             <h1 data-page-title class="text-[22px] lg:text-[26px] font-extrabold tracking-[-.02em] leading-tight text-ink truncate">{{ $title }}</h1>
             @if($subtitle)
-                <p data-page-subtitle class="text-[13.5px] text-ink-muted truncate">{{ $subtitle }}</p>
+                {{-- Two lines rather than cut off (2026-11-17: beside the clock, search and
+                     profile, most subtitles lost their end, e.g. "the bara..."). --}}
+                <p data-page-subtitle class="text-[13.5px] leading-snug text-ink-muted line-clamp-2">{{ $subtitle }}</p>
             @endif
         </div>
     </div>

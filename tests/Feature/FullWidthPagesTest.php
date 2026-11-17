@@ -34,6 +34,29 @@ class FullWidthPagesTest extends TestCase
         $this->assertStringNotContainsString('max-w-4xl mx-auto', $this->source('resources/views/admin/communications/event-desk.blade.php'));
     }
 
+    /** 2026-11-17: a banner's photo shows; the colour stays behind the title only. */
+    public function test_banner_photos_show_through_the_overlay(): void
+    {
+        $this->assertStringContainsString('.banner-photo-fade {', $this->source('resources/css/app.css'));
+        $this->assertStringContainsString("(b.image_url ? ' opacity-85 banner-photo-fade' : '')", $this->source('resources/views/components/citizen/banner-carousel.blade.php'));
+        $this->assertStringContainsString("(image.url ? ' opacity-85 banner-photo-fade' : '')", $this->source('resources/views/admin/communications/banners.blade.php'));
+    }
+
+    /** 2026-11-17: beside the clock, search and profile most subtitles were cut off. */
+    public function test_header_subtitles_wrap_instead_of_being_cut(): void
+    {
+        $admin = $this->source('resources/views/components/admin/topbar.blade.php');
+        $this->assertStringContainsString('<p data-page-subtitle class="text-[13.5px] leading-snug text-ink-muted line-clamp-2">', $admin);
+        $this->assertStringNotContainsString('text-ink-muted truncate">{{ $subtitle }}', $admin);
+        $this->assertStringContainsString('<p class="text-[13.5px] leading-snug text-ink-muted line-clamp-2" x-text=', $this->source('resources/views/components/citizen/topbar.blade.php'));
+    }
+
+    /** 2026-11-17: scrolled down a long list of events, the left column was an empty band. */
+    public function test_the_events_calendar_stays_in_view(): void
+    {
+        $this->assertStringContainsString('<div class="space-y-5 min-w-0 lg:sticky lg:top-0">', $this->source('resources/views/citizen/events.blade.php'));
+    }
+
     public function test_the_profile_lists_span_the_page_under_the_two_columns(): void
     {
         $profile = $this->source('resources/views/citizen/profile.blade.php');

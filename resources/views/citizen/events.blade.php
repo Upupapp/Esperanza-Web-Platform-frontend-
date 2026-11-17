@@ -105,7 +105,9 @@
         }"
         class="animate-fade-up grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-5 items-start"
     >
-        <div class="space-y-5 min-w-0">
+        {{-- The calendar stays in view while the list scrolls (2026-11-17: scrolled
+             down a long list, the left column was an empty band). --}}
+        <div class="space-y-5 min-w-0 lg:sticky lg:top-0">
         <!-- Calendar -->
         <div class="surface-glass rounded-[26px] p-4">
             <!-- Legend: fixed at the very top so it never shifts position -->

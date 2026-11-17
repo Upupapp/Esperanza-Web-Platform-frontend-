@@ -83,7 +83,7 @@
         <div class="min-w-0">
             <h1 class="text-[22px] lg:text-[26px] font-extrabold tracking-[-.02em] leading-tight text-ink truncate" x-text="$store.lang.current === 'en' ? @js($title) : @js($filTitle)">{{ $filTitle }}</h1>
             @if($subtitle)
-                <p class="text-[13.5px] text-ink-muted truncate" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
+                <p class="text-[13.5px] leading-snug text-ink-muted line-clamp-2" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
             @endif
         </div>
 

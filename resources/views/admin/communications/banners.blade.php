@@ -206,7 +206,7 @@
                 <div :class="previewDevice === 'mobile' ? 'mx-auto w-[280px] rounded-[28px] border-[6px] border-navy-900 bg-slate-50 p-2.5' : ''">
                     <div class="relative rounded-2xl overflow-hidden shadow-card w-full" :style="previewDevice === 'mobile' ? 'aspect-ratio: 390 / 172' : 'aspect-ratio: 21 / 7'">
                         <img x-show="image.url" :src="image.url || ''" :alt="form.alt_text || form.title" class="absolute inset-0 w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-r" :class="(form.theme || 'from-brand-600 to-navy-800') + (image.url ? ' opacity-85' : '')"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r" :class="(form.theme || 'from-brand-600 to-navy-800') + (image.url ? ' opacity-85 banner-photo-fade' : '')"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-transparent to-transparent"></div>
                         <div class="relative h-full flex flex-col justify-end" :class="previewDevice === 'mobile' ? 'p-3' : 'p-4 sm:px-8'">
                             <p class="text-white font-bold leading-tight drop-shadow-sm" :class="previewDevice === 'mobile' ? 'text-sm' : 'text-base sm:text-lg'" x-text="form.title || 'Banner title'"></p>
