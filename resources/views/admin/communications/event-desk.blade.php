@@ -24,7 +24,7 @@
     <div x-data="{ get open() { return edOpen; }, set open(v) { edOpen = v; } }">
     <x-ui.modal title="Registrations" maxWidth="2xl" :fullscreen="true">
         <template x-if="edEvent">
-            <div class="space-y-4 max-w-4xl mx-auto">
+            <div class="space-y-4">
                 {{-- The event --}}
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">

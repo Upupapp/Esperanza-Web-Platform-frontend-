@@ -63,7 +63,7 @@
                 });
             },
         }"
-        class="animate-fade-up max-w-3xl"
+        class="animate-fade-up"
     >
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

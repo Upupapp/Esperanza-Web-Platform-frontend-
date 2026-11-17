@@ -36,7 +36,7 @@
                 return iso ? new Date(iso + 'T00:00:00').toLocaleDateString($store.lang.current === 'en' ? 'en-US' : 'fil-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
             },
         }"
-        class="animate-fade-up max-w-3xl"
+        class="animate-fade-up"
         x-init="load(); $nextTick(() => window.renderIcons?.())"
     >
 
@@ -72,7 +72,7 @@
                     </div>
                     <p class="text-sm text-slate-600 leading-relaxed mt-4 pb-5 border-b border-brand-600/10" x-text="docs[key].intro"></p>
 
-                    <div class="space-y-5 mt-5">
+                    <div class="grid gap-x-10 gap-y-5 mt-5 xl:grid-cols-2">
                         <template x-for="(section, i) in docs[key].sections" :key="key + '-' + i">
                             <div>
                                 <h3 class="text-sm font-semibold text-ink mb-1.5" x-text="section.heading"></h3>

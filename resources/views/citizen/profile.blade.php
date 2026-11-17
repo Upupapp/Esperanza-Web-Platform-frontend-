@@ -469,12 +469,6 @@
                         </div>
                     </div>
                 </x-ui.card>
-
-                {{-- The Dokyu and Tulong on their record, the offices' included (2026-10-13). --}}
-                <x-citizen.records />
-
-                {{-- Every file attached to their requests, from the app or the website. --}}
-                <x-citizen.uploads />
             </div>
 
             <div class="space-y-5">
@@ -604,6 +598,17 @@
                     </div>
                 </x-ui.card>
             </div>
+        </div>
+
+        {{-- The long lists span the whole page (owner, 2026-11-17: no empty space on
+             the right). Under the two columns they used to leave the right third blank
+             once the side cards ended. --}}
+        <div class="mt-5 space-y-5">
+            {{-- The Dokyu and Tulong on their record, the offices' included (2026-10-13). --}}
+            <x-citizen.records />
+
+            {{-- Every file attached to their requests, from the app or the website. --}}
+            <x-citizen.uploads />
         </div>
 
         <x-ui.modal title="I-verify ang Valid ID" titleEn="Verify Valid ID" maxWidth="md">

@@ -120,7 +120,7 @@
         </div>
 
         <!-- FAQs -->
-        <div x-show="tab === 'faqs'" class="max-w-3xl mx-auto">
+        <div x-show="tab === 'faqs'">
             <div class="surface-glass rounded-[26px] p-3 mb-4">
                 <div class="flex flex-wrap items-center gap-2 mb-2.5">
                     <div class="relative flex-1 min-w-[180px]">
@@ -154,7 +154,7 @@
                 <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'Could not load the FAQs.' : 'Hindi ma-load ang mga tanong.'" retryExpr="loadFaqs()" class="!py-10" />
             </div>
 
-            <div class="space-y-2.5" x-show="!loading && !faqsFailed" x-data="{ activeIndex: 0 }">
+            <div class="grid gap-2.5 lg:grid-cols-2 items-start" x-show="!loading && !faqsFailed" x-data="{ activeIndex: 0 }">
                 <template x-for="faq in filteredFaqs" :key="faq.i">
                     <div class="surface-glass rounded-[26px] overflow-hidden">
                         <button @click="activeIndex = activeIndex === faq.i ? null : faq.i" :aria-expanded="activeIndex === faq.i" class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
