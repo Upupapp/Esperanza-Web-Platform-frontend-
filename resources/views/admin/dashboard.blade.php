@@ -149,7 +149,7 @@
         </div>
 
         <div x-show="view === 'overview'" class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-[14.5px] text-ink-body">Live counts, updated as they change.</p>
+            <p class="text-[14.5px] text-ink-body" x-show="$store.session.can('constituents') || $store.session.can('dokyu') || $store.session.can('tulong')">Live counts, updated as they change.</p>
             <x-ui.button :href="route('admin.reports')" icon="download">Export report</x-ui.button>
         </div>
 
@@ -189,7 +189,8 @@
         <div x-show="ready && !failed && view === 'overview'" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
             <!-- KPI cards: all six in one row on a wide screen (owner, 2026-10-09), so compact -->
-            <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
+            {{-- A role with no counts (MIO, 2026-11-17) gets no empty grid: its gap left a blank band. --}}
+            <div x-show="$store.session.can('constituents') || $store.session.can('dokyu') || $store.session.can('tulong')" class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
                 <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
                 <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
@@ -199,7 +200,7 @@
             </div>
 
             <!-- Row 1: doughnuts + barangays -->
-            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
+            <div x-show="$store.session.can('constituents') || $store.session.can('dokyu') || $store.session.can('tulong')" class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
                 <div x-show="$store.session.can('dokyu')" x-cloak>
                 <x-ui.card>
                     <div class="flex items-center justify-between gap-3 mb-4">

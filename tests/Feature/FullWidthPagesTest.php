@@ -57,6 +57,16 @@ class FullWidthPagesTest extends TestCase
         $this->assertStringContainsString('<div class="space-y-5 min-w-0 lg:sticky lg:top-0">', $this->source('resources/views/citizen/events.blade.php'));
     }
 
+    /** 2026-11-17: the MIO dashboard said "Live counts" over an empty band (no count for its role). */
+    public function test_a_role_without_counts_gets_no_empty_count_grid(): void
+    {
+        $dash = $this->source('resources/views/admin/dashboard.blade.php');
+        $cond = "\$store.session.can('constituents') || \$store.session.can('dokyu') || \$store.session.can('tulong')";
+        $this->assertStringContainsString('<p class="text-[14.5px] text-ink-body" x-show="'.$cond.'">Live counts, updated as they change.</p>', $dash);
+        $this->assertStringContainsString('<div x-show="'.$cond.'" class="grid gap-4 grid-cols-2', $dash);
+        $this->assertStringContainsString('<div x-show="'.$cond.'" class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">', $dash);
+    }
+
     public function test_the_profile_lists_span_the_page_under_the_two_columns(): void
     {
         $profile = $this->source('resources/views/citizen/profile.blade.php');
