@@ -8,28 +8,31 @@
 @endphp
 
 <x-layouts.admin title="Constituents" subtitle="LGU constituent registry — residents, families, households." active="constituents">
+{{-- The notes inside this x-data are Blade comments, not JS // comments: a JS
+     comment ships in every Constituents page, and that kept the page over its
+     120 KB gz budget (gate.sh, 2026-11-18). Write new ones the same way. --}}
 <div
     x-data="{
         tab:  '{{ $tab }}',
         view: '{{ $view }}',
         loading: true,
         failed: false,
-        // Set when a registry list has more rows than one load fetches (getAll's
-        // bound), so the screen says it is a partial view instead of implying
-        // these are every resident.
+        {{-- Set when a registry list has more rows than one load fetches (getAll's
+             bound), so the screen says it is a partial view instead of implying
+             these are every resident. --}}
         registryTruncated: false,
         registryTotals: { residents: 0, households: 0, families: 0 },
-        // The six tiles' numbers from one-row pages, apart from the lists (UI
-        // sweep 2026-11-18): the tiles counted the lists, so every role read
-        // six 0s for as long as their pages took, while Occupations said 341.
+        {{-- The six tiles' numbers from one-row pages, apart from the lists (UI
+             sweep 2026-11-18): the tiles counted the lists, so every role read
+             six 0s for as long as their pages took, while Occupations said 341. --}}
         tileCounts: null,
-        // Once the registry is bigger than one load (getAll's 2,000), search
-        // and the filters go to the server, so they find every resident
-        // (live test 2026-10-12: after a 2,000-row import they missed most).
+        {{-- Once the registry is bigger than one load (getAll's 2,000), search
+             and the filters go to the server, so they find every resident
+             (live test 2026-10-12: after a 2,000-row import they missed most). --}}
         remote: { key: '', rows: null, loading: false, total: 0, page: 1, lastPage: 1, params: {} },
-        // Fifty rows a list at a time (live test 2026-10-12): with thousands
-        // of residents every list here drew them all, hidden tabs included,
-        // and the page took minutes to open. x-admin.pager draws the controls.
+        {{-- Fifty rows a list at a time (live test 2026-10-12): with thousands
+             of residents every list here drew them all, hidden tabs included,
+             and the page took minutes to open. x-admin.pager draws the controls. --}}
         pageSize: 50,
         pages: {},
         pageCount(list) { return Math.max(1, Math.ceil((list || []).length / this.pageSize)); },
@@ -39,8 +42,8 @@
         get filterKey() { return [this.tab, this.view, this.search, this.barangayFilter, this.verificationFilter, this.statusFilter, this.tagFilter, this.dqTypeFilter, this.dqStatusFilter, this.cvSearch, this.cvStatusFilter, this.cvBarangayFilter, this.cvTagFilter, this.cvType].join('|'); },
         remoteTimer: null,
         citizensByRef: {},
-        // The resident detail colours profile completeness by how far along
-        // it is; it called this helper, which did not exist, and threw.
+        {{-- The resident detail colours profile completeness by how far along
+             it is; it called this helper, which did not exist, and threw. --}}
         completionTextColor(pct) {
             const p = Number(pct) || 0;
             return p >= 80 ? 'text-emerald-700' : (p >= 50 ? 'text-amber-700' : 'text-rose-700');
@@ -53,7 +56,7 @@
         encoders:     [],
         dqScanning:   false,
         barangayCoverage: [],
-        // Occupations waiting for a DRRM classification (the Occupations tab).
+        {{-- Occupations waiting for a DRRM classification (the Occupations tab). --}}
         lvReviewCount: 0,
         coverageMunicipal: null,
         barangayOptions: @js($barangayOptions),
@@ -63,19 +66,19 @@
             this.$watch('filterKey', () => { this.pages = {}; });
             this.$watch('cvTagFilter', () => this.loadCvTagged());
             await this.loadRegistry();
-            // From the top bar's search: a resident's record (?ref=) or a
-            // barangay's registry (?barangay=).
+            {{-- From the top bar's search: a resident's record (?ref=) or a
+                 barangay's registry (?barangay=). --}}
             const params = new URLSearchParams(window.location.search);
             if (params.get('barangay')) this.barangayFilter = params.get('barangay');
             const wanted = params.get('ref');
             if (wanted) {
-                // A record past the loaded pages (Scan ID's link, 2026-10-29)
-                // opens from its own detail; the server says if it is not in scope.
+                {{-- A record past the loaded pages (Scan ID's link, 2026-10-29)
+                     opens from its own detail; the server says if it is not in scope. --}}
                 const person = this.individuals.find(i => i.ref === wanted) || (/^[A-Z]+-\d{4}-\d+$/i.test(wanted) ? { ref: wanted, name: wanted, stub: true } : null);
                 if (person) this.$nextTick(() => this.openIndividual(person));
             }
-            // Landed here via the Back to Profile link from Dokyu/Tulong — reopen
-            // exactly the resident that navigation started from, then forget the flag.
+            {{-- Landed here via the Back to Profile link from Dokyu/Tulong — reopen
+                 exactly the resident that navigation started from, then forget the flag. --}}
             const stored = sessionStorage.getItem('reopenResident');
             if (!stored) return;
             sessionStorage.removeItem('reopenResident');
@@ -90,31 +93,31 @@
             this.loading = true;
             this.failed = false;
             try {
-                // Each side list is asked for only when the role holds it: every
-                // 403 pops up 'Walang pahintulot', and five roles saw it on
-                // opening this page for the personnel list (QA run 2026-10-05).
+                {{-- Each side list is asked for only when the role holds it: every
+                     403 pops up 'Walang pahintulot', and five roles saw it on
+                     opening this page for the personnel list (QA run 2026-10-05). --}}
                 await this.$store.session.whenReady();
                 const may = (sub) => this.$store.session.canPerm(sub, 'view');
                 const none = (extra = {}) => Promise.resolve({ data: [], ...extra });
-                // Asked first, so the server answers them before the lists' pages.
+                {{-- Asked first, so the server answers them before the lists' pages. --}}
                 this.loadTileCounts(may);
                 const [residents, households, families, citizens, issues, encoders, coverage] = await Promise.all([
                     $api.getAll('/admin/residents'),
                     $api.getAll('/admin/households'),
                     $api.getAll('/admin/families'),
-                    // A citizen-verification queue's 'Not Registered' bucket needs
-                    // every resident, so this joins onto individuals below rather
-                    // than driving its own separate list.
+                    {{-- A citizen-verification queue's 'Not Registered' bucket needs
+                         every resident, so this joins onto individuals below rather
+                         than driving its own separate list. --}}
                     may('const_citizen_verification') ? $api.getAll('/admin/citizens').catch(() => ({ data: [] })) : none(),
-                    // Data Quality tab. Caught separately so a permission gap on
-                    // this one queue doesn't take down the whole Registry.
+                    {{-- Data Quality tab. Caught separately so a permission gap on
+                         this one queue doesn't take down the whole Registry. --}}
                     may('const_data_quality') ? $api.getAll('/admin/data-quality').catch(() => ({ data: [] })) : none(),
-                    // Encoder list for the Assign action -- not everyone who can
-                    // see the queue can see Personnel, so this degrades to an
-                    // empty picker rather than failing the page.
+                    {{-- Encoder list for the Assign action -- not everyone who can
+                         see the queue can see Personnel, so this degrades to an
+                         empty picker rather than failing the page. --}}
                     may('um_personnel') ? $api.getAll('/admin/users').catch(() => ({ data: [] })) : none(),
-                    // Profiling Coverage tab. `meta.municipal` is only present for
-                    // a municipality-scoped actor -- null for a barangay-scoped one.
+                    {{-- Profiling Coverage tab. `meta.municipal` is only present for
+                         a municipality-scoped actor -- null for a barangay-scoped one. --}}
                     may('const_barangay') ? $api.get('/admin/coverage').catch(() => ({ data: [], meta: null })) : none({ meta: null }),
                 ]);
                 const citizensByRef = {};
@@ -142,9 +145,9 @@
             }
         },
 
-        // One row a list: the totals are in each page's meta, and the residents'
-        // carries the confirmed and sent-in counts for the whole scope. A list
-        // the role does not hold, or a failure, leaves that tile to the lists.
+        {{-- One row a list: the totals are in each page's meta, and the residents'
+             carries the confirmed and sent-in counts for the whole scope. A list
+             the role does not hold, or a failure, leaves that tile to the lists. --}}
         async loadTileCounts(may) {
             const meta = (sub, url, params = {}) => may(sub)
                 ? $api.get(url, { params: { ...params, per_page: 1 } }).then(r => r.meta || {}).catch(() => ({}))
@@ -153,17 +156,17 @@
                 meta('const_resident', '/admin/residents', { counts: 1 }),
                 meta('const_household', '/admin/households'),
                 meta('const_family', '/admin/families'),
-                // Open work only: the tile says Needs attention.
+                {{-- Open work only: the tile says Needs attention. --}}
                 meta('const_data_quality', '/admin/data-quality', { status: 'Open,In Review' }),
             ]);
             this.tileCounts = { residents: res.total, households: hh.total, families: fam.total, verified: res.counts?.verified, pending: res.counts?.pending, issues: dq.total };
         },
 
-        // What the server is asked for while the registry is too big to hold:
-        // empty when everything is loaded or nothing is being looked for.
-        // A tag always goes to the server: the list rows carry no tags (only
-        // a resident's detail does), so filtering them here emptied the list
-        // (QA sweep 2026-11-18).
+        {{-- What the server is asked for while the registry is too big to hold:
+             empty when everything is loaded or nothing is being looked for.
+             A tag always goes to the server: the list rows carry no tags (only
+             a resident's detail does), so filtering them here emptied the list
+             (QA sweep 2026-11-18). --}}
         get remoteKey() {
             const q = this.search.trim();
             if (!this.tagFilter && (!this.registryTruncated || !(q || this.barangayFilter || this.verificationFilter))) return '';
@@ -173,9 +176,9 @@
             clearTimeout(this.remoteTimer);
             this.remoteTimer = setTimeout(() => this.searchRegistry(), delay);
         },
-        // One page of 50 from the server at a time, so any number of matches
-        // works (live test 2026-10-12: fetching them all stopped at 3,000 of
-        // an import's 4,999).
+        {{-- One page of 50 from the server at a time, so any number of matches
+             works (live test 2026-10-12: fetching them all stopped at 3,000 of
+             an import's 4,999). --}}
         async searchRegistry(page = 1) {
             const key = this.remoteKey;
             if (!key) { this.remote = { key: '', rows: null, loading: false, total: 0, page: 1, lastPage: 1, params: {} }; return; }
@@ -197,10 +200,10 @@
             this.$nextTick(() => window.renderIcons?.());
         },
         turnRemotePage(step) { this.searchRegistry(Math.min(Math.max(1, this.remote.page + step), this.remote.lastPage)); },
-        // Exports go through the server, which checks the export permission,
-        // keeps to the account's scope and logs each one (owner, 2026-10-29):
-        // hiding the buttons alone enforced nothing. A server search sends
-        // its filters; otherwise only a narrowed list sends its refs.
+        {{-- Exports go through the server, which checks the export permission,
+             keeps to the account's scope and logs each one (owner, 2026-10-29):
+             hiding the buttons alone enforced nothing. A server search sends
+             its filters; otherwise only a narrowed list sends its refs. --}}
         async exportIndividuals(format = 'csv') {
             if (this.remoteActive) return this.exportFrom('residents', { filters: this.remote.params }, format, 'individuals-export.csv');
             return this.exportShown('residents', this.filteredIndividuals, this.individuals, format, 'individuals-export.csv');
@@ -238,14 +241,14 @@
         selectedIndividual:   null,
         selectedFamily:       null,
         selectedHousehold:    null,
-        // The open family's or household's members, from the server: the page
-        // holds only the first 2,000 residents (live test 2026-10-12: a family
-        // of four showed no members at all).
+        {{-- The open family's or household's members, from the server: the page
+             holds only the first 2,000 residents (live test 2026-10-12: a family
+             of four showed no members at all). --}}
         members: { key: '', rows: [], loading: false, failed: false },
-        // The open resident's documents and assistance received, filed on the
-        // portal or imported from an office's records (2026-10-12).
+        {{-- The open resident's documents and assistance received, filed on the
+             portal or imported from an office's records (2026-10-12). --}}
         residentRequests: { ref: '', rows: [], loading: false, failed: false },
-        // One Tulong case's notes, opened from that list (owner, 2026-11-05).
+        {{-- One Tulong case's notes, opened from that list (owner, 2026-11-05). --}}
         caseNotes: { ref: '', rows: [], loading: false, failed: false, denied: false },
         selectedDQIssue:      null,
         lifecycleAction:      '',
@@ -260,10 +263,10 @@
             const s = this.$store.session.account?.scope;
             return !s || s === 'Municipal';
         },
-        // Loaded, the lists give the counts, so a change made here shows at
-        // once; past one load the server's whole-scope counts do. Until then
-        // (or if the lists failed) the one-row counts, or a dash: never a 0
-        // that is not true.
+        {{-- Loaded, the lists give the counts, so a change made here shows at
+             once; past one load the server's whole-scope counts do. Until then
+             (or if the lists failed) the one-row counts, or a dash: never a 0
+             that is not true. --}}
         get activeStats() {
             const c = this.tileCounts || {};
             const big = this.registryTruncated;
@@ -273,8 +276,8 @@
                 families: big ? this.registryTotals.families : this.families.length,
                 verified: big && c.verified != null ? c.verified : this.individuals.filter(i => i.verification === 'Verified').length,
                 pending: big && c.pending != null ? c.pending : this.individuals.filter(i => i.verification === 'For Validation').length,
-                // Needs attention: a resolved issue is done (QA sweep 2026-11-18:
-                // the tile and the tab's badge counted every issue ever raised).
+                {{-- Needs attention: a resolved issue is done (QA sweep 2026-11-18:
+                     the tile and the tab's badge counted every issue ever raised). --}}
                 issues: this.qualityIssues.filter(i => i.status !== 'Resolved').length,
             };
             if (!this.loading && !this.failed) return listed;
@@ -286,9 +289,9 @@
         cvStatusFilter: '',
         cvBarangayFilter: '',
         cvTagFilter: '',
-        // The residents carrying the tag chosen on To Verify, by ref, from the server:
-        // the list rows carry no tags, so the filter matched no one (QA sweep
-        // 2026-11-18). Asked again each time a tag is chosen.
+        {{-- The residents carrying the tag chosen on To Verify, by ref, from the server:
+             the list rows carry no tags, so the filter matched no one (QA sweep
+             2026-11-18). Asked again each time a tag is chosen. --}}
         cvTagged: { tag: '', refs: null, loading: false },
         async loadCvTagged() {
             const tag = this.cvTagFilter;
@@ -302,36 +305,36 @@
         },
         rejectAccountRemarks: '',
         processingCitizen: false,
-        // The account review (modal-citizen-account): the detail is an
-        // audited read of the account, its valid ID, selfie and photo.
+        {{-- The account review (modal-citizen-account): the detail is an
+             audited read of the account, its valid ID, selfie and photo. --}}
         showAccountReview: false,
         accountRow: null,
         accountDetail: null,
         accountLoading: false,
         photoRejectRemarks: '',
-        // Identity (2026-10-09): the reason an officer gives to verify an
-        // identity by hand, restore one, or revoke it. Kept on the record.
+        {{-- Identity (2026-10-09): the reason an officer gives to verify an
+             identity by hand, restore one, or revoke it. Kept on the record. --}}
         identityReason: '',
-        // Residency, apart from identity (2026-10-13): the reason an officer
-        // gives to withdraw an approved residency. The resident reads it.
+        {{-- Residency, apart from identity (2026-10-13): the reason an officer
+             gives to withdraw an approved residency. The resident reads it. --}}
         revokeApprovalReason: '',
-        // The registry record registration recognised the resident as, and
-        // records the account may really be (2026-10-09).
+        {{-- The registry record registration recognised the resident as, and
+             records the account may really be (2026-10-09). --}}
         registryMatch: null,
         registryBusy: false,
-        // A resident's approved photo by registry ref (from GET /admin/citizens), for
-        // the rows, the detail and household and family members.
+        {{-- A resident's approved photo by registry ref (from GET /admin/citizens), for
+             the rows, the detail and household and family members. --}}
         photoByRef: {},
         photoOf(ref) { return this.photoByRef[ref] || null; },
-        // Every resident in scope belongs here, not just the ones who signed
-        // up on the Citizen Portal — Individual/Family/Household already show
-        // everyone, so Citizen Verification's Individual list matches that
-        // same total instead of silently dropping non-portal residents.
-        // Residents with no citizen_account render as Not Registered further
-        // down, since there's nothing to approve/reject for them yet.
-        // Resident records, plus registrants with no resident record yet: a
-        // new account is not linked to one, and used to be missing from this
-        // queue entirely, so nobody could verify it from here.
+        {{-- Every resident in scope belongs here, not just the ones who signed
+             up on the Citizen Portal — Individual/Family/Household already show
+             everyone, so Citizen Verification's Individual list matches that
+             same total instead of silently dropping non-portal residents.
+             Residents with no citizen_account render as Not Registered further
+             down, since there's nothing to approve/reject for them yet.
+             Resident records, plus registrants with no resident record yet: a
+             new account is not linked to one, and used to be missing from this
+             queue entirely, so nobody could verify it from here. --}}
         get citizenAccountList() {
             const linked = new Set(this.individuals.map(i => i.ref));
             const accountOnly = (this.citizens || [])
@@ -390,10 +393,10 @@
             if (action === 'verify') await this.verifyCitizenAccount(i); else await this.rejectCitizenAccount(i);
             await this.openAccount(i);
         },
-        // Identity, apart from residency (2026-10-09). verify = by hand or
-        // restoring a revoked identity (const_citizen_verification,verify);
-        // revoke (…,reject) asks for confirmation; recheck runs a check the
-        // service could not finish. None of them approves the account.
+        {{-- Identity, apart from residency (2026-10-09). verify = by hand or
+             restoring a revoked identity (const_citizen_verification,verify);
+             revoke (…,reject) asks for confirmation; recheck runs a check the
+             service could not finish. None of them approves the account. --}}
         async decideIdentity(action) {
             const i = this.accountRow;
             if (!i || this.processingCitizen) return;
@@ -418,10 +421,10 @@
                 this.$nextTick(() => window.renderIcons?.());
             }
         },
-        // Withdraw an approved residency (const_citizen_verification,reject).
-        // The account goes back to Rejected, the Resident ID is suspended and
-        // its QR stops verifying; the identity is left as it is. Approving the
-        // account again restores it.
+        {{-- Withdraw an approved residency (const_citizen_verification,reject).
+             The account goes back to Rejected, the Resident ID is suspended and
+             its QR stops verifying; the identity is left as it is. Approving the
+             account again restores it. --}}
         async revokeApproval() {
             const i = this.accountRow;
             const reason = this.revokeApprovalReason.trim();
@@ -467,14 +470,14 @@
                 this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not decide the photo.', variant: 'error' });
             } finally { this.processingCitizen = false; }
         },
-        // The badge says what it is counting (live test 2026-10-07, UX-4): it
-        // read 2 while every account was approved, because it also counts the
-        // family and household records not confirmed yet.
-        // Family and household records count only once someone has started
-        // checking them (For Validation, Partially Verified). A plain
-        // Unverified record is not waiting on anyone, and counting those let
-        // one import of a barangay's list push the badge into the hundreds
-        // (flow guide 2026-11-13, Residents bug 6).
+        {{-- The badge says what it is counting (live test 2026-10-07, UX-4): it
+             read 2 while every account was approved, because it also counts the
+             family and household records not confirmed yet.
+             Family and household records count only once someone has started
+             checking them (For Validation, Partially Verified). A plain
+             Unverified record is not waiting on anyone, and counting those let
+             one import of a barangay's list push the badge into the hundreds
+             (flow guide 2026-11-13, Residents bug 6). --}}
         get verificationQueueParts() {
             const started = r => ['For Validation', 'Partially Verified'].includes(r.verification);
             return {
@@ -483,11 +486,11 @@
                 households: this.cvHouseholdList.filter(started).length,
             };
         },
-        // The server's account statuses are Pending Review, Approved, Rejected
-        // and Archived. The queue splits Pending Review in two by the identity
-        // check, so the Under Verification card means something: the ID is
-        // confirmed and only the officer's Verify account is left. It read 0
-        // forever before (flow guide 2026-11-13, Residents bug 1).
+        {{-- The server's account statuses are Pending Review, Approved, Rejected
+             and Archived. The queue splits Pending Review in two by the identity
+             check, so the Under Verification card means something: the ID is
+             confirmed and only the officer's Verify account is left. It read 0
+             forever before (flow guide 2026-11-13, Residents bug 1). --}}
         cvStatusOf(i) {
             const a = i?.citizen_account;
             if (!a) return 'Not Registered';
@@ -560,10 +563,10 @@
         get cvHouseholdList() {
             return this.households.filter(h => this.$store.session.inScope(h.barangay));
         },
-        // A family or household record is Unverified, For Validation,
-        // Partially Verified or Verified (DataQualityVocabulary::VERIFICATION);
-        // the server has no Rejected or Missing Documents for them, so those
-        // cards and filter options never matched anything (Residents bug 2).
+        {{-- A family or household record is Unverified, For Validation,
+             Partially Verified or Verified (DataQualityVocabulary::VERIFICATION);
+             the server has no Rejected or Missing Documents for them, so those
+             cards and filter options never matched anything (Residents bug 2). --}}
         get cvFamilyCounts() {
             const list = this.cvFamilyList;
             return {
@@ -583,9 +586,9 @@
         get cvVerificationOptions() {
             return ['Unverified', 'For Validation', 'Partially Verified', 'Verified'];
         },
-        // The Needs Review card counts For Validation and Partially Verified
-        // together, so its filter keeps both (QA sweep 2026-11-18: it kept only
-        // Partially Verified, and the records residents sent in disappeared).
+        {{-- The Needs Review card counts For Validation and Partially Verified
+             together, so its filter keeps both (QA sweep 2026-11-18: it kept only
+             Partially Verified, and the records residents sent in disappeared). --}}
         cvStatusMatches(v) {
             if (!this.cvStatusFilter) return true;
             return this.cvStatusFilter === 'Needs Review' ? ['Partially Verified', 'For Validation'].includes(v) : v === this.cvStatusFilter;
@@ -616,9 +619,9 @@
             const priority = v => v === 'Verified' ? 1 : 0;
             return [...list].sort((a, b) => priority(a.verification) - priority(b.verification));
         },
-        // A resident's submitted Resident Profile (the phone said Pending
-        // Verification with nothing here to finish it, 2026-10-06). Records
-        // staff or the barangay office, which verifies residents.
+        {{-- A resident's submitted Resident Profile (the phone said Pending
+             Verification with nothing here to finish it, 2026-10-06). Records
+             staff or the barangay office, which verifies residents. --}}
         profileReturnNote: '',
         profileReviewBusy: false,
         get mayReviewProfile() {
@@ -682,7 +685,7 @@
                 if (!this.$store.session.inScope(r.barangay)) return false;
                 if (this.barangayFilter && r.barangay !== this.barangayFilter) return false;
                 if (this.verificationFilter && r.verification !== this.verificationFilter) return false;
-                // The server's page already holds only the tagged residents.
+                {{-- The server's page already holds only the tagged residents. --}}
                 if (this.tagFilter && !this.remoteActive && !this.registryTags(r.tags).includes(this.tagFilter)) return false;
                 if (this.search) {
                     const q = this.search.toLowerCase();
@@ -699,11 +702,11 @@
                 return true;
             });
         },
-        // A resident's tags as the staff keys (senior, pwd, 4ps, solo_parent):
-        // the list rows now carry tags (QA 2026-11-18 #30/#36), and the ones a
-        // resident ticks on their own profile are stored as words ('Senior
-        // Citizen', 'PWD', '4Ps', 'Solo Parent'). Each tag once, so the chips and
-        // the filter read both the same.
+        {{-- A resident's tags as the staff keys (senior, pwd, 4ps, solo_parent):
+             the list rows now carry tags (QA 2026-11-18 #30/#36), and the ones a
+             resident ticks on their own profile are stored as words ('Senior
+             Citizen', 'PWD', '4Ps', 'Solo Parent'). Each tag once, so the chips and
+             the filter read both the same. --}}
         registryTags(tags) {
             const words = { 'senior citizen': 'senior', 'senior': 'senior', 'pwd': 'pwd', '4ps': '4ps', '4ps beneficiary': '4ps', 'solo parent': 'solo_parent', 'solo_parent': 'solo_parent', 'osca member': 'osca' };
             const out = [];
@@ -719,7 +722,7 @@
             return this.households.filter(h => {
                 if (!this.$store.session.inScope(h.barangay)) return false;
                 if (this.barangayFilter && h.barangay !== this.barangayFilter) return false;
-                // Sitio and address too, now that the list rows carry them (#35).
+                {{-- Sitio and address too, now that the list rows carry them (#35). --}}
                 if (this.search) { const q=this.search.toLowerCase(); return (h.label||'').toLowerCase().includes(q)||(h.head_name||'').toLowerCase().includes(q)||(h.ref||'').toLowerCase().includes(q)||(h.sitio||'').toLowerCase().includes(q)||(h.address||'').toLowerCase().includes(q); }
                 return true;
             });
@@ -736,9 +739,9 @@
                 return true;
             });
         },
-        // The data-quality index only returns a `record` ref (e.g. RES-2026-0042),
-        // never a name -- resolved here against what Registry already loaded
-        // instead of a second fetch per row.
+        {{-- The data-quality index only returns a `record` ref (e.g. RES-2026-0042),
+             never a name -- resolved here against what Registry already loaded
+             instead of a second fetch per row. --}}
         dqRecordName(ref) {
             if (!ref) return null;
             const person = this.dqRecord(ref);
@@ -747,9 +750,9 @@
             if (hh) return hh.label || hh.ref;
             return ref;
         },
-        // Residents fetched one by one (a merge's pair) are kept here too: the
-        // page holds the first 2,000 only, and a pair past them showed nothing
-        // but dashes to choose from (QA sweep 2026-11-18).
+        {{-- Residents fetched one by one (a merge's pair) are kept here too: the
+             page holds the first 2,000 only, and a pair past them showed nothing
+             but dashes to choose from (QA sweep 2026-11-18). --}}
         fetchedRecords: {},
         dqRecord(ref) {
             return this.individuals.find(x => x.ref === ref) || this.fetchedRecords[ref] || null;
@@ -794,8 +797,8 @@
                 this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not resolve this issue.', variant: 'error' });
             }
         },
-        // Merging IS the resolution of the issue that raised it -- the backend
-        // resolves issueRef itself when given, this just mirrors that locally.
+        {{-- Merging IS the resolution of the issue that raised it -- the backend
+             resolves issueRef itself when given, this just mirrors that locally. --}}
         get barangayStatusBreakdown() {
             const colors = { 'Complete': '#10b981', 'In Progress': '#3b82f6', 'Needs Follow-up': '#f59e0b', 'Not Started (Re-visit Required)': '#f43f5e' };
             const counts = {};
@@ -816,10 +819,10 @@
         },
 
         async openIndividual(r) {
-            // From a family's or household's members: that window closes, or
-            // the resident's opened behind it (each is teleported to the end of
-            // the page in include order) and the click seemed to do nothing
-            // (QA sweep 2026-11-18).
+            {{-- From a family's or household's members: that window closes, or
+                 the resident's opened behind it (each is teleported to the end of
+                 the page in include order) and the click seemed to do nothing
+                 (QA sweep 2026-11-18). --}}
             this.showFamilyDetail = false;
             this.showHouseholdDetail = false;
             this.selectedIndividual = r;
@@ -829,8 +832,8 @@
             this.$nextTick(() => window.renderIcons?.());
             this.loadResidentRequests(r.ref);
             this.caseNotes = { ref: '', rows: [], loading: false, failed: false, denied: false };
-            // The list row is intentionally lean (no tags/household/family/
-            // sensitive fields) -- the detail endpoint has the rest.
+            {{-- The list row is intentionally lean (no tags/household/family/
+                 sensitive fields) -- the detail endpoint has the rest. --}}
             try {
                 const res = await $api.get('/admin/residents/' + r.ref);
                 const merged = { ...res.data, citizen_account: r.citizen_account };
@@ -838,8 +841,8 @@
                 const idx = this.individuals.findIndex(x => x.ref === r.ref);
                 if (idx !== -1) this.individuals[idx] = { ...this.individuals[idx], ...merged };
             } catch {
-                // Keep the list row's fields if the detail fetch fails; a record
-                // opened by its link alone has none to keep.
+                {{-- Keep the list row's fields if the detail fetch fails; a record
+                     opened by its link alone has none to keep. --}}
                 if (r.stub) this.showIndividualDetail = false;
             }
         },
@@ -856,9 +859,9 @@
         get residentAssistanceTotal() {
             return this.residentRequests.rows.filter(q => q.type === 'tulong' && q.status === 'Completed' && q.amount).reduce((n, q) => n + Number(q.amount), 0);
         },
-        // Real cross-module navigation, not just a sub-tab switch: leaves the
-        // Constituents page entirely, lands on this resident's requests in the
-        // Dokyu/Tulong module, and remembers who to reopen when they come back.
+        {{-- Real cross-module navigation, not just a sub-tab switch: leaves the
+             Constituents page entirely, lands on this resident's requests in the
+             Dokyu/Tulong module, and remembers who to reopen when they come back. --}}
         goToDokyu(r, ref) {
             sessionStorage.setItem('returnToProfile', JSON.stringify({ ref: r.ref, name: r.name }));
             const q = ref ? 'ref=' + encodeURIComponent(ref) : 'citizen=' + encodeURIComponent(r.name);
@@ -869,12 +872,12 @@
             const q = ref ? 'ref=' + encodeURIComponent(ref) : 'citizen=' + encodeURIComponent(r.name);
             window.location.href = '/admin/assistance-requests?' + q;
         },
-        // A Tulong case's notes, read-only, in the resident's window (owner,
-        // 2026-11-05: no separate services list; the notes of the tulong the
-        // resident received). Loaded only when opened, newest first as the
-        // server sends them; a voided note shows as voided. A confidential
-        // type's notes stay with its office (the server keeps them so).
-        // Notes are written only inside the Tulong case.
+        {{-- A Tulong case's notes, read-only, in the resident's window (owner,
+             2026-11-05: no separate services list; the notes of the tulong the
+             resident received). Loaded only when opened, newest first as the
+             server sends them; a voided note shows as voided. A confidential
+             type's notes stay with its office (the server keeps them so).
+             Notes are written only inside the Tulong case. --}}
         noteModes: { office: 'At the office', home_visit: 'Home visit', field: 'In the field', online: 'Online or by phone' },
         get mayReadCaseNotes() { return this.$store.session.canPerm('tulong_records', 'view'); },
         toggleCaseNotes(ref) {
@@ -892,10 +895,10 @@
             this.$nextTick(() => window.renderIcons?.());
         },
         noteDay(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
-        // The head of a new family or household: residents already on file by
-        // that name (in the chosen barangay), to be picked and linked by ref.
-        // A name typed alone always made a new resident, a second record of
-        // someone already on file (QA sweep 2026-11-18).
+        {{-- The head of a new family or household: residents already on file by
+             that name (in the chosen barangay), to be picked and linked by ref.
+             A name typed alone always made a new resident, a second record of
+             someone already on file (QA sweep 2026-11-18). --}}
         async headMatches(name, barangay) {
             const q = (name || '').trim();
             if (q.length < 3) return [];
@@ -906,7 +909,7 @@
         },
         openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.loadMembers('family', f.ref);     this.$nextTick(()=>window.renderIcons?.()); },
         openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.loadMembers('household', h.ref);  this.$nextTick(()=>window.renderIcons?.()); },
-        // What the page already has shows at once; the server's list replaces it.
+        {{-- What the page already has shows at once; the server's list replaces it. --}}
         async loadMembers(kind, ref) {
             const key = kind + ':' + ref;
             const here = this.individuals.filter(r => r[kind]?.ref === ref);
@@ -914,7 +917,7 @@
             try {
                 const res = await $api.getAll('/admin/residents', { params: { [kind]: ref }, maxPages: 10 });
                 if (this.members.key !== key) return;
-                // The head first, then the spouse or partner, then the eldest down.
+                {{-- The head first, then the spouse or partner, then the eldest down. --}}
                 const rank = (r) => (r.relation === 'Head' ? 0 : ['Spouse', 'Partner'].includes(r.relation) ? 1 : 2);
                 const rows = (res.data || []).map(i => ({ ...i, citizen_account: this.citizensByRef[i.ref] || null }))
                     .sort((x, y) => rank(x) - rank(y) || (y.age ?? -1) - (x.age ?? -1));
@@ -926,16 +929,16 @@
         },
         openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
         openDQIssue(issue)       { this.selectedDQIssue=issue; this.showDQDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
-        // A household's electricity, water and toilet are words, not yes/no:
-        // the registry says Yes or No, a resident's profile None, Solar or Deep
-        // Well (QA sweep 2026-11-18: a household that reported None read
-        // Available). Empty is not recorded; None or No is not available.
+        {{-- A household's electricity, water and toilet are words, not yes/no:
+             the registry says Yes or No, a resident's profile None, Solar or Deep
+             Well (QA sweep 2026-11-18: a household that reported None read
+             Available). Empty is not recorded; None or No is not available. --}}
         amenityState(v) {
             const s = String(v ?? '').trim().toLowerCase();
             return !s ? 'unknown' : (['none', 'no'].includes(s) ? 'no' : 'yes');
         },
         hasAmenity(v) { return this.amenityState(v) === 'yes'; },
-        // The household's own word when it says more than yes or no.
+        {{-- The household's own word when it says more than yes or no. --}}
         amenityNote(v) { const s = String(v ?? '').trim(); return ['', 'yes', 'no', 'none'].includes(s.toLowerCase()) ? '' : s; },
         verificationBadge(v) {
             const m={'Verified':'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200','Partially Verified':'text-amber-700 bg-amber-50 ring-1 ring-amber-200','For Validation':'text-indigo-700 bg-indigo-50 ring-1 ring-indigo-200','Missing Documents':'text-orange-700 bg-orange-50 ring-1 ring-orange-200','Unverified':'text-ink-muted bg-slate-100 ring-1 ring-slate-200','Rejected':'text-rose-700 bg-rose-50 ring-1 ring-rose-200'};
@@ -952,18 +955,18 @@
         exportCSV(rows, filename) {
             if (!rows.length) { this.$dispatch('toast',{message:'No records to export.',variant:'warning'}); return; }
             const keys=Object.keys(rows[0]).filter(k=>!['services','emergency','member_ids','family_ids','citizen_account','household','family','tags'].includes(k));
-            // One plain cell a value, quoted the spreadsheet way (QA sweep
-            // 2026-11-18): a livelihood or a programs list went out as JSON and
-            // its commas split the row, a backslash-escaped quote broke it, and a
-            // name typed as =HYPERLINK(...) ran as a formula. A cell that starts
-            // like a formula is opened as text.
+            {{-- One plain cell a value, quoted the spreadsheet way (QA sweep
+                 2026-11-18): a livelihood or a programs list went out as JSON and
+                 its commas split the row, a backslash-escaped quote broke it, and a
+                 name typed as =HYPERLINK(...) ran as a formula. A cell that starts
+                 like a formula is opened as text. --}}
             const flat=v=>Array.isArray(v)?v.map(flat).filter(x=>x!=='').join('; '):(v&&typeof v==='object'?(v.full_label??v.label??v.name??v.ref??''):(v??''));
             const cell=v=>{const s=String(flat(v));const safe=/^[=+\-@\t\r]/.test(s)?'\''+s:s;return /[\x22,\n\r]/.test(safe)?'\x22'+safe.replace(/\x22/g,'\x22\x22')+'\x22':safe;};
             const csv='\uFEFF'+[keys.map(cell).join(','),...rows.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n');
             const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),download:filename});
             a.click(); this.$dispatch('toast',{message:'Exported successfully.',variant:'success'});
         },
-        // The same rows as a PDF (owner, 2026-10-15: PDF as well as the spreadsheet).
+        {{-- The same rows as a PDF (owner, 2026-10-15: PDF as well as the spreadsheet). --}}
         async exportPDF(rows, filename) {
             const say = (message, variant) => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
             if (!rows.length) { say('No records to export.', 'warning'); return; }
