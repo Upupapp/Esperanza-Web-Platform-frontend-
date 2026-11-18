@@ -33,12 +33,14 @@ class StaffTopBarDashboardUiTest extends TestCase
     public function test_recent_activity_names_the_module_in_words(): void
     {
         $view = $this->source('resources/views/admin/dashboard.blade.php');
-        $this->assertStringNotContainsString("(activity.module || '')", $view);
-        $this->assertStringContainsString("x-text=\"[moduleLabel(activity.module), activity.target].filter(Boolean).join(' · ')\"", $view);
+        // The card is one component for every view (18 Nov); the names stay on the page's x-data.
+        $card = $this->source('resources/views/components/admin/dashboards/activity.blade.php');
+        $this->assertStringNotContainsString("(activity.module || '')", $view.$card);
+        $this->assertStringContainsString("x-text=\"[moduleLabel(activity.module), activity.target].filter(Boolean).join(' · ')\"", $card);
         foreach (["user_management: 'User Management'", "communications: 'Balita'", "constituents: 'Constituents'", "dokyu: 'Dokyu'"] as $name) {
             $this->assertStringContainsString($name, $view);
         }
-        $this->assertStringNotContainsString('font-mono text-xs text-brand-600 mt-0.5 break-all', $view, 'words, not a code');
+        $this->assertStringNotContainsString('font-mono text-xs text-brand-600 mt-0.5 break-all', $view.$card, 'words, not a code');
     }
 
     /** #36: at 390px the office picker, as wide as its longest name, ran off the card and the screen. */

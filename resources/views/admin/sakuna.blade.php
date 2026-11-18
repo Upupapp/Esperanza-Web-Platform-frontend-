@@ -245,9 +245,11 @@
                 this.incidentSearch = ref;
             }
             // A Needs action chip opens Incidents showing what it counted.
+            // The dashboard's Needs your action says status and assigned (18 Nov).
             if (this.activeTab === 'incidents') {
-                if (params.get('filter_status')) this.incidentStatusFilter = params.get('filter_status');
-                if (['none', 'someone'].includes(params.get('filter_assigned'))) this.incidentAssignedFilter = params.get('filter_assigned');
+                if (params.get('filter_status') || params.get('status')) this.incidentStatusFilter = params.get('filter_status') || params.get('status');
+                const who = params.get('filter_assigned') || params.get('assigned');
+                if (['none', 'someone', 'me'].includes(who)) this.incidentAssignedFilter = who;
             }
             const stored = sessionStorage.getItem('returnToProfile');
             if (stored) {

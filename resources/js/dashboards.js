@@ -138,6 +138,25 @@ function bars(rows) {
     return rows.map((r) => ({ ...r, pct: Math.round((r.value / max) * 100) }));
 }
 
+/** Copies getters as getters: a spread reads each one once and keeps the value. */
+function mix(target, ...sources) {
+    sources.forEach((s) => Object.defineProperties(target, Object.getOwnPropertyDescriptors(s)));
+    return target;
+}
+
+/** "Nov 3" for a day (2026-11-03); a month (2026-11) is left to the trend chart. */
+const dayLabel = (d) => (/^\d{4}-\d{2}-\d{2}/.test(String(d)) ? new Date(String(d).slice(0, 10) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : d);
+const sum = (o) => Object.values(o || {}).reduce((n, v) => n + (Number(v) || 0), 0);
+
+/** How a request came in (GET /admin/dashboard/department and summary?area=desk by_channel). */
+const CHANNELS = {
+    online: { label: 'Online', color: '#2f62f5' },
+    walk_in: { label: 'Walk-in', color: '#e8c200' },
+    referral: { label: 'Referral', color: '#a855f7' },
+    record: { label: 'Recorded after the fact', color: '#94a3b8' },
+};
+const channelRows = (rows) => (rows || []).filter((r) => r.count > 0).map((r) => ({ label: CHANNELS[r.channel]?.label || r.channel, value: r.count, color: CHANNELS[r.channel]?.color || '#14b8a6' }));
+
 /** Who was helped: sex for the doughnut, age groups and sectors as bars. */
 function demographics(d) {
     if (!d) return { sex: [], ages: [], sectors: [], unknownAge: 0, people: 0 };
@@ -185,45 +204,122 @@ function remember(params) {
 
 // ---------------------------------------------------------------- Host
 
+/** The Dashboard page's views, in the words and icons of its tabs. */
+const VIEW_TABS = {
+    overview: { label: 'Overview', icon: 'layout-dashboard' },
+    department: { label: 'Departments', icon: 'building-2' },
+    barangay: { label: 'Barangays', icon: 'map-pinned' },
+    desk: { label: 'Front desk', icon: 'concierge-bell' },
+    records: { label: 'Records', icon: 'folder-search' },
+    balita: { label: 'Balita', icon: 'newspaper' },
+    sakuna: { label: 'Sakuna', icon: 'siren' },
+};
+
+/** One icon per "Needs your action" item (GET /admin/dashboard/inbox keys). */
+const INBOX_ICONS = {
+    dokyu_ready: 'file-check', tulong_ready: 'hand-heart', assigned_to_me: 'user-round-check', waiting_on_staff: 'inbox',
+    ready_to_claim: 'package-check', overdue: 'timer', payments_to_verify: 'wallet', accounts_to_verify: 'badge-check',
+    identity_to_review: 'scan-face', papeles_to_verify: 'folder-open', records_to_review: 'user-round-search',
+    dq_mine: 'triangle-alert', dq_unassigned: 'list-todo', balita_second_look: 'eye', balita_review: 'newspaper',
+    events_review: 'calendar-days', banners_review: 'gallery-horizontal', balita_sent_back: 'undo-2',
+    tickets_open: 'message-square', appointments_today: 'calendar-clock', sessions_week: 'users-round',
+    sakuna_to_validate: 'clipboard-check', incidents_mine: 'siren', sakuna_alert_drafts: 'bell-ring',
+    relief_to_release: 'package', forms_to_approve: 'clipboard-list', casualties_to_validate: 'heart-pulse', ids_lapsing: 'id-card',
+};
+/** The items of each area, for its tab when it is not the account's home (the home shows all). */
+const AREA_INBOX = {
+    balita: ['balita_second_look', 'balita_review', 'events_review', 'banners_review', 'balita_sent_back', 'tickets_open'],
+    sakuna: ['sakuna_to_validate', 'incidents_mine', 'sakuna_alert_drafts', 'relief_to_release', 'forms_to_approve', 'casualties_to_validate'],
+    records: ['records_to_review', 'dq_mine', 'dq_unassigned', 'papeles_to_verify', 'accounts_to_verify', 'identity_to_review'],
+    desk: ['waiting_on_staff', 'ready_to_claim', 'overdue', 'assigned_to_me', 'accounts_to_verify', 'identity_to_review', 'appointments_today', 'tickets_open'],
+};
+const INBOX_TONES = {
+    brand: { icon: 'bg-brand-50 text-brand-600', pill: 'bg-brand-50 text-brand-700' },
+    warning: { icon: 'bg-amber-50 text-amber-600', pill: 'bg-amber-100 text-amber-800' },
+    danger: { icon: 'bg-rose-50 text-rose-600', pill: 'bg-rose-100 text-rose-700' },
+    success: { icon: 'bg-emerald-50 text-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
+};
+
 /**
- * The Dashboard page's tabs: the overview every account has, the office
- * dashboards and the barangay dashboards. A department account lands on its
- * office, a barangay account on its barangay (GET /admin/dashboard/subjects).
+ * The Dashboard page: one view per kind of work, as tabs only when an account
+ * has more than one (owner, 18 Nov). The server says which views an account
+ * has and the home first (GET /admin/dashboard/subjects views); "Needs your
+ * action" (GET /admin/dashboard/inbox) is loaded here once for every view.
  */
 export function dashboardHost() {
     return {
         view: 'overview',
-        subjects: { home: 'overview', offices: [], barangays: [] },
+        subjects: { home: 'overview', views: [], offices: [], barangays: [], filter_barangays: [] },
         catalog: { reports: [], offices: [], barangays: [] },
         subjectsReady: false,
+        inbox: [],
+        inboxReady: false,
+        inboxSeq: 0,
         async init() {
             try {
                 const [subjects, catalog] = await Promise.all([
                     api.get('/admin/dashboard/subjects'),
                     this.$store.session.can('reports') ? api.get('/admin/reports').catch(() => null) : Promise.resolve(null),
                 ]);
-                this.subjects = subjects.data;
+                this.subjects = { ...this.subjects, ...subjects.data };
                 this.catalog = catalog?.meta?.printable || this.catalog;
             } catch {
                 // The overview still works; the other tabs simply do not show.
             }
             const asked = query().get('view');
-            const allowed = ['overview', this.subjects.offices.length ? 'department' : null, this.subjects.barangays.length ? 'barangay' : null].filter(Boolean);
-            this.view = allowed.includes(asked) ? asked : (allowed.includes(this.subjects.home) ? this.subjects.home : 'overview');
+            this.view = this.views.includes(asked) ? asked : this.views[0];
             this.subjectsReady = true;
+            this.loadInbox();
+            this.$store.live.on(this.$el, 'any', () => this.loadInbox(true));
             this.$nextTick(() => window.renderIcons?.());
         },
-        get officeTabLabel() {
-            return this.subjects.home === 'department' ? 'My Office' : 'Departments';
+        /** The views, the home first. A server without views: the overview and the tabs it had. */
+        get views() {
+            const listed = (this.subjects.views || []).filter((v) => VIEW_TABS[v]);
+            if (listed.length) return listed;
+            const old = ['overview', this.subjects.offices.length ? 'department' : null, this.subjects.barangays.length ? 'barangay' : null].filter(Boolean);
+            return old.includes(this.subjects.home) ? [this.subjects.home, ...old.filter((v) => v !== this.subjects.home)] : old;
         },
-        get barangayTabLabel() {
-            return this.subjects.barangays.length === 1 ? 'My Barangay' : 'Barangays';
+        get showTabs() { return this.subjectsReady && this.views.length > 1; },
+        get isHome() { return this.view === this.views[0]; },
+        tabLabel(v) {
+            if (v === 'department' && this.subjects.offices.length === 1) return 'My office';
+            if (v === 'barangay' && this.subjects.barangays.length === 1) return 'My barangay';
+            return VIEW_TABS[v]?.label || v;
         },
+        tabIcon(v) { return VIEW_TABS[v]?.icon || 'layout-dashboard'; },
         show(view) {
             this.view = view;
-            remember({ view: view === 'overview' ? null : view, office: null, barangay: null });
+            remember({ view: view === this.views[0] ? null : view, office: null, barangay: null });
             this.$nextTick(() => window.renderIcons?.());
         },
+        // Every item is counted and scoped by the server; a live change
+        // anywhere recounts it quietly, and only the latest answer is kept.
+        async loadInbox(quiet = false) {
+            const mine = ++this.inboxSeq;
+            try {
+                const res = await api.get('/admin/dashboard/inbox');
+                if (mine !== this.inboxSeq) return;
+                this.inbox = (res.data?.items || []).filter((i) => i.count > 0);
+            } catch {
+                if (mine !== this.inboxSeq || quiet) return;
+                this.inbox = [];
+            } finally {
+                if (mine === this.inboxSeq) {
+                    this.inboxReady = true;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
+            }
+        },
+        inboxIcon(item) { return INBOX_ICONS[item.key] || 'circle-dot'; },
+        inboxTone(item) { return INBOX_TONES[item.tone] || INBOX_TONES.brand; },
+        /** One item's count (0 when absent), for a tile that shows it. */
+        inboxCount(key) { return this.inbox.find((i) => i.key === key)?.count || 0; },
+        get shownInbox() {
+            const keys = AREA_INBOX[this.view];
+            return this.isHome || !keys ? this.inbox : this.inbox.filter((i) => keys.includes(i.key));
+        },
+        get inboxTotal() { return this.shownInbox.reduce((n, i) => n + (Number(i.count) || 0), 0); },
         /** The printable reports of one kind this account may open. */
         reportsOf(kind) {
             return (this.catalog.reports || []).filter((r) => r.kind === kind);
@@ -316,13 +412,53 @@ export function deptDashboard() {
         get hasDokyu() { return (this.data?.types || this.entry?.types || []).includes('dokyu'); },
         get k() { return this.data?.kpis || {}; },
         get servedWord() { return this.hasTulong ? 'Clients served' : 'Documents released'; },
-        get pipeline() {
-            const rows = (this.data?.pipeline || []).filter((r) => r.count > 0);
-            const max = Math.max(1, ...rows.map((r) => r.count));
-            return rows.map((r) => ({ ...r, pct: Math.round((r.count / max) * 100) }));
+        // A head (one who approves) gets the approval count, staff their own
+        // cases: kpis.ready_to_approve is sent only to an approver (18 Nov).
+        get isHead() { return !!this.k.ready_to_approve; },
+        get readyTotal() { return sum(this.k.ready_to_approve); },
+        get readySub() {
+            const r = this.k.ready_to_approve || {};
+            return [this.hasDokyu ? 'Dokyu ' + num(r.dokyu) : null, this.hasTulong ? 'Tulong ' + num(r.tulong) : null].filter(Boolean).join(' · ');
         },
+        get payments() { return this.data?.payments || null; },
+        // Payments to verify take Received's place for an office that collects
+        // fees (Dokyu only, the Treasurer), or when any wait or came in.
+        get showPayments() {
+            const p = this.payments;
+            return !!p && (!this.hasTulong || p.awaiting_verification > 0 || p.collected > 0);
+        },
+        /** The list a head approves from, and an officer's own cases (the inbox's links). */
+        get approvalUrl() {
+            const r = this.k.ready_to_approve || {};
+            return this.hasDokyu && (r.dokyu || !this.hasTulong)
+                ? '/admin/document-requests?status=Under%20Verification%2CUnder%20Review%2CResubmitted'
+                : '/admin/assistance-requests?status=For%20Approval';
+        },
+        get mineUrl() { return (this.hasTulong ? '/admin/assistance-requests' : '/admin/document-requests') + '?assigned=me'; },
+        // "Where the open cases are": all of the office's, or the account's own.
+        pipeMine: false,
+        get hasMine() { return Array.isArray(this.data?.pipeline_mine); },
+        get pipeline() {
+            const src = this.pipeMine && this.hasMine ? this.data.pipeline_mine : (this.data?.pipeline || []);
+            const both = this.hasTulong && this.hasDokyu;
+            return bars(src.filter((r) => r.count > 0).map((r) => ({
+                key: r.type + r.status, label: r.status, value: r.count, tag: both ? r.type : '',
+                tone: r.needs_action ? 'orange' : 'brand', dot: r.needs_action ? 'orange' : 'slate',
+            })));
+        },
+        /** Open cases per officer, with the overdue ones (heads: by_assignee). */
+        get team() {
+            return bars((this.data?.by_assignee || []).map((r) => ({
+                key: String(r.officer_id ?? 'none'), label: r.name, value: r.open,
+                sub: r.overdue ? plural(r.overdue, 'overdue case', 'overdue cases') : '', tone: r.officer_id ? 'brand' : 'gold',
+            })));
+        },
+        get channels() { return channelRows(this.data?.by_channel); },
         get byBarangay() {
-            return bars((this.data?.by_barangay || []).map((r) => ({ label: r.barangay, value: r.served, open: r.open, amount: r.amount_released }))).slice(0, 10);
+            return bars((this.data?.by_barangay || []).map((r) => ({
+                label: 'Brgy. ' + r.barangay, value: r.served, text: num(r.served) + ' served',
+                sub: [this.hasTulong && r.amount_released ? peso(r.amount_released) + ' released' : null, r.open ? r.open + ' still open' : null].filter(Boolean).join(' · '),
+            }))).slice(0, 10);
         },
         get demo() { return demographics(this.data?.demographics); },
         get trend() {
@@ -411,22 +547,31 @@ export function brgyDashboard() {
             }
         },
         get choosesBarangay() { return (this.subjects?.barangays || []).length > 1; },
+        /** A barangay's own account (the Barangay Secretary): its own tiles. */
+        get own() { return !this.choosesBarangay && !!this.barangay && this.$store.session.account?.scope === this.barangay; },
         get people() { return this.data?.people || null; },
         get docs() { return this.data?.documents || null; },
         get aid() { return this.data?.assistance || null; },
         get sakuna() { return this.data?.sakuna || null; },
         get docRows() { return bars((this.docs?.by_document || []).map((r) => ({ label: r.document, value: r.released }))); },
+        /** Certificate requests by stage; orange where it waits on the barangay. */
+        get stages() {
+            return bars((this.docs?.pipeline || []).filter((r) => r.count > 0).map((r) => ({
+                key: r.status, label: r.status, value: r.count, tone: r.needs_action ? 'orange' : 'brand', dot: r.needs_action ? 'orange' : 'slate',
+            })));
+        },
         get residentsDemo() { return demographics(this.people?.demographics); },
         get aidDemo() { return demographics(this.aid?.demographics); },
+        // Each series only when the account may read its module (18 Nov).
         get trend() {
             const t = this.data?.trend;
             if (!t) return { labels: [], series: [] };
             return {
                 labels: t.months || [],
                 series: [
-                    { label: 'Certificates released', values: t.documents || [], color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.3 },
-                    { label: 'Assistance completed', values: t.assistance || [], color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.42 },
-                ],
+                    t.documents ? { label: 'Certificates released', values: t.documents, color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.3 } : null,
+                    t.assistance ? { label: 'Assistance completed', values: t.assistance, color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.42 } : null,
+                ].filter(Boolean),
             };
         },
         reports() {
@@ -437,6 +582,204 @@ export function brgyDashboard() {
             openReport({ key, barangay: this.barangay, from: this.from, to: this.to });
         },
     };
+}
+
+// ------------------------------------------------------ Area dashboards
+
+// Balita, Sakuna, Records and the front desk (owner, 18 Nov): one scoped
+// answer each, GET /admin/dashboard/summary?area=. A block the account may not
+// read is absent from kpis, so its tile hides instead of showing a false 0.
+
+const AREA_TOPICS = { balita: 'balita', sakuna: 'sakuna', records: 'residents', desk: ['requests', 'appointments', 'residents'] };
+
+const POST_COLORS = { Draft: '#94a3b8', 'Pending Review': '#f59e0b', Scheduled: '#6366f1', Approved: '#10b981', Released: '#2f62f5', Rejected: '#f43f5e', Archived: '#cbd5e1' };
+const LADDER_COLORS = { Unverified: '#94a3b8', 'For Validation': '#f59e0b', 'Partially Verified': '#6366f1', Verified: '#10b981' };
+const KIND_WORDS = { post: 'Post', event: 'Event', banner: 'Banner' };
+const twoSeries = (labels, a, b) => ({
+    labels,
+    series: [
+        { ...a, color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.3 },
+        b ? { ...b, color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.42 } : null,
+    ].filter((s) => s && Array.isArray(s.values)),
+});
+const daysWord = (d) => (Number(d) < 1 ? 'Today' : plural(d, 'day', 'days'));
+
+const AREAS = {
+    balita: {
+        get editor() { return this.data?.mode === 'editor'; },
+        get partsText() {
+            const p = this.k.waiting_review_parts;
+            if (!p) return '';
+            // Only the kinds that wait: "1 post", not "1 post · 0 events · 0 banners".
+            return [['posts', 'post', 'posts'], ['events', 'event', 'events'], ['banners', 'banner', 'banners']]
+                .filter(([key]) => p[key] > 0).map(([key, one, many]) => plural(p[key], one, many)).join(' · ');
+        },
+        get statusRows() { return (this.charts.by_status || []).filter((r) => r.count > 0).map((r) => ({ label: r.label, value: r.count, color: POST_COLORS[r.status] || '#94a3b8' })); },
+        get trend() {
+            const t = this.charts.trend;
+            return t ? twoSeries(t.months || [], { label: 'Written', values: t.written }, { label: 'Published', values: t.published }) : { labels: [], series: [] };
+        },
+        get hasTrend() { return this.trend.series.some((s) => s.values.some((v) => v > 0)); },
+        get officeRows() { return bars((this.charts.by_office || []).map((r) => ({ label: r.office, value: r.count }))); },
+        get categoryRows() { return bars((this.charts.by_category || []).map((r) => ({ label: r.category, value: r.count }))); },
+        get topPosts() { return this.charts.top_posts || []; },
+        get queue() { return this.lists.review_queue || []; },
+        get sentBack() { return this.lists.sent_back || []; },
+        get myWaiting() { return this.lists.my_waiting || []; },
+        kindWord(r) { return KIND_WORDS[r.kind] || 'Post'; },
+        /** Where an item opens: a post opens itself (its review, for a reviewer); events and banners their lists. */
+        itemUrl(r, status = 'Pending Review') {
+            if (r.kind === 'event') return '/admin/communications?tab=events&status=' + encodeURIComponent(status);
+            if (r.kind === 'banner') return '/admin/communications/banners';
+            return '/admin/communications?tab=balita&post=' + r.id;
+        },
+        waited: daysWord,
+    },
+    sakuna: {
+        // Head wording for one who assigns incidents and publishes alerts;
+        // staff see their own incidents and draft alerts for the head.
+        get assigns() { return this.$store.session.canPerm('sakuna_incidents', 'assign'); },
+        get publishes() { return this.$store.session.canPerm('sakuna_alerts', 'publish'); },
+        get typeRows() { return (this.charts.by_type || []).filter((r) => r.count > 0).map((r) => ({ label: r.type, value: r.count })); },
+        get trend() {
+            const t = this.charts.trend || [];
+            return { labels: t.map((r) => dayLabel(r.label)), bars: true, series: [{ label: 'Incidents', values: t.map((r) => r.count), color: '#f43f5e' }] };
+        },
+        get barangayRows() { return bars((this.charts.by_barangay || []).filter((r) => r.count > 0).map((r) => ({ label: 'Brgy. ' + r.barangay, value: r.count, tone: 'rose' }))).slice(0, 10); },
+        get centerRows() {
+            return (this.charts.centers || []).map((r) => ({
+                key: r.name + r.barangay, label: r.name, value: r.families, pct: Math.min(100, Math.max(0, Math.round(r.pct || 0))),
+                text: r.capacity ? Math.round(r.pct || 0) + '% full' : plural(r.individuals, 'person', 'persons'),
+                sub: ['Brgy. ' + r.barangay, plural(r.families, 'family', 'families'), plural(r.individuals, 'person', 'persons'), r.capacity ? 'room for ' + num(r.capacity) : null, r.over_capacity ? 'Over capacity' : null].filter(Boolean).join(' · '),
+                tone: r.over_capacity ? 'rose' : 'teal',
+            }));
+        },
+        get sectorRows() { return bars((this.charts.damage_by_sector || []).map((r) => ({ label: r.sector, value: Number(r.estimated_cost) || 0, text: pesoTile(r.estimated_cost), sub: plural(r.reports, 'report', 'reports') }))); },
+        get feed() { return this.lists.feed || []; },
+        get alerts() { return this.lists.alerts || []; },
+        feedText(f) { return f.to ? (f.from ? f.from + ' \u2192 ' + f.to : f.to) : String(f.verb || '').replace(/_/g, ' '); },
+    },
+    records: {
+        get ladderRows() { return (this.charts.ladder || []).map((r) => ({ label: r.label, value: r.count, color: LADDER_COLORS[r.label] || '#94a3b8' })).filter((r) => r.value > 0); },
+        get coverageRows() {
+            return (this.charts.coverage_by_barangay || []).filter((r) => r.residents > 0).slice(0, 8).map((r) => ({
+                key: r.name, label: 'Brgy. ' + r.name, value: r.pct, pct: Math.round(r.pct || 0), text: Math.round(r.pct || 0) + '%',
+                sub: plural(r.residents, 'resident', 'residents'), tone: r.pct < 50 ? 'orange' : 'teal',
+            }));
+        },
+        get trend() {
+            const t = this.charts.trend;
+            return t ? twoSeries(t.months || [], { label: 'Residents added', values: t.residents_added }, t.accounts_registered ? { label: 'Accounts registered', values: t.accounts_registered } : null) : { labels: [], series: [] };
+        },
+        get dqRows() { return bars((this.charts.dq_by_type || []).filter((r) => r.count > 0).map((r) => ({ label: r.type, value: r.count, tone: 'orange' }))); },
+        get demo() { return demographics(this.charts.demographics); },
+        get toReview() { return this.lists.to_review || []; },
+        get dqMine() { return this.lists.dq_mine || []; },
+        ladder(key) { return (this.k.ladder || {})[key] || 0; },
+    },
+    desk: {
+        brgyTab: 'all',
+        get waitingTotal() { return sum(this.k.waiting); },
+        get waitingText() { return this.modules(this.k.waiting); },
+        get readyTotal() { return sum(this.k.ready_to_claim); },
+        /** "Dokyu 2 · Tulong 1", for the modules the account holds. */
+        modules(o) {
+            if (!o) return '';
+            return [this.$store.session.can('dokyu') && 'dokyu' in o ? 'Dokyu ' + num(o.dokyu) : null, this.$store.session.can('tulong') && 'tulong' in o ? 'Tulong ' + num(o.tulong) : null].filter(Boolean).join(' · ');
+        },
+        apptCount(status) { return this.k.appointments_today?.by_status?.[status] || 0; },
+        get channels() { return channelRows(this.charts.by_channel); },
+        get daily() {
+            const d = this.charts.daily;
+            if (!d) return { labels: [], series: [] };
+            const t = twoSeries((d.labels || []).map(dayLabel), this.$store.session.can('dokyu') ? { label: 'Dokyu', values: d.dokyu } : null, this.$store.session.can('tulong') ? { label: 'Tulong', values: d.tulong } : null);
+            if (t.series.length === 1 && t.series[0].label === 'Tulong') Object.assign(t.series[0], { color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.42 });
+            return t;
+        },
+        get officeRows() { return bars((this.charts.open_by_office || []).filter((r) => r.open > 0).map((r) => ({ label: r.office, value: r.open }))); },
+        get barangayRows() {
+            const key = this.brgyTab;
+            return bars((this.charts.open_by_barangay || []).map((r) => ({ label: 'Brgy. ' + r.barangay, value: (key === 'dokyu' ? r.dokyu : key === 'tulong' ? r.tulong : r.open) || 0 })).filter((r) => r.value > 0));
+        },
+        get readyList() { return this.lists.ready_to_claim || []; },
+        get appointments() { return this.lists.appointments_today || []; },
+        requestUrl(r) { return (r.type === 'tulong' ? '/admin/assistance-requests' : '/admin/document-requests') + '?ref=' + encodeURIComponent(r.ref); },
+        since: shortDate,
+    },
+};
+
+export function areaDashboard(area) {
+    const board = {
+        ...periodPicker(),
+        area,
+        barangay: '',
+        data: null,
+        loading: true,
+        failed: false,
+        error: '',
+        seq: 0,
+        liveAfter: false,
+        peso,
+        pesoTile,
+        num,
+        plural,
+        shortDate,
+        init() {
+            Object.assign(this, periodRange(this.period));
+            const asked = query().get('barangay');
+            if (asked && this.choosesBarangay && this.barangayChoices.includes(asked)) this.barangay = asked;
+            if (this.brgyTab !== undefined) this.brgyTab = this.$store.session.can('dokyu') ? 'dokyu' : (this.$store.session.can('tulong') ? 'tulong' : 'all');
+            this.load();
+            // Live updates: the area's own topics reload it quietly.
+            this.$store.live.on(this.$el, AREA_TOPICS[area], () => this.load(true));
+        },
+        changed() { this.load(); },
+        // quiet: as the office dashboard's (a live reload waits for the load the officer asked for).
+        async load(quiet = false) {
+            if (quiet && this.loading) { this.liveAfter = true; return; }
+            const mine = ++this.seq;
+            if (!quiet) {
+                this.loading = true;
+                this.failed = false;
+            }
+            try {
+                const params = { area, from: this.from, to: this.to };
+                if (this.barangay) params.barangay = this.barangay;
+                const res = await api.get('/admin/dashboard/summary', { params });
+                if (mine !== this.seq) return;
+                this.data = res.data;
+                this.failed = false;
+                if (!quiet) remember({ barangay: this.barangay || null });
+            } catch (e) {
+                if (mine !== this.seq || quiet) return;
+                this.failed = true;
+                this.error = e?.localised ? e.localised('en') : 'Could not load the dashboard.';
+            } finally {
+                if (mine === this.seq) {
+                    this.loading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                    if (this.liveAfter) { this.liveAfter = false; this.load(true); }
+                }
+            }
+        },
+        get k() { return this.data?.kpis || {}; },
+        get charts() { return this.data?.charts || {}; },
+        get lists() { return this.data?.lists || {}; },
+        /** Whether the server sent a figure (absent: the account may not read it). */
+        has(key) { return !!this.data && this.k[key] !== undefined && this.k[key] !== null; },
+        get barangayChoices() { return this.subjects?.filter_barangays?.length ? this.subjects.filter_barangays : (this.subjects?.barangays || []); },
+        /** A barangay account's own barangay: no picker, its name in the title. */
+        get fixedBarangay() { return this.barangayChoices.length === 1 ? this.barangayChoices[0] : null; },
+        // A writer's own posts are rarely for one barangay: no picker there (plan 6.8).
+        get choosesBarangay() { return this.barangayChoices.length > 1 && !(area === 'balita' && this.data?.mode === 'writer'); },
+        get scopeTitle() {
+            const b = this.data?.barangay || this.fixedBarangay || this.barangay;
+            return b ? 'Barangay ' + b : 'All barangays';
+        },
+        get periodText() { return this.data ? 'Period: ' + this.data.period.label : ''; },
+    };
+
+    return mix(board, AREAS[area] || {});
 }
 
 // ------------------------------------------------- The Reports page part

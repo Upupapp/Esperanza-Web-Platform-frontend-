@@ -7,7 +7,7 @@ import { residentImport, reasonText } from './resident-import-ui';
 import { requestImport } from './request-import-ui';
 import { citizenRecords } from './citizen-records';
 import { docTemplatesStore, verifyStrip, qrSvg } from './shared-docs';
-import { dashboardHost, deptDashboard, brgyDashboard, printableReports, reportSheet } from './dashboards';
+import { dashboardHost, deptDashboard, brgyDashboard, areaDashboard, printableReports, reportSheet } from './dashboards';
 import { sakunaReport, incidentReportPrint } from './sakuna-report';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
@@ -367,6 +367,15 @@ function formatRoleLabel(roleKey) {
 // the municipal admin included, lost every action button behind canPerm()
 // (Verify Account, Sakuna's create buttons...). Accepts either shape, so an
 // account cached before this fix is read correctly too.
+/** An office's short name from its full one: "Municipal Social Welfare & Development Office" is MSWDO. */
+function officeShort(name) {
+    const s = String(name || '');
+    const inBrackets = /\(([A-Z]{2,})\)/.exec(s);
+    if (inBrackets) return inBrackets[1];
+    const words = s.replace(/'s\b/g, '').split(/[\s&,/-]+/).filter((w) => w && !/^(of|and|the|for)$/i.test(w));
+    return words.length > 1 ? words.map((w) => w[0].toUpperCase()).join('') : s;
+}
+
 function permissionMap(raw) {
     if (!raw) return {};
     if (!Array.isArray(raw)) return raw;
@@ -732,6 +741,8 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('dashboardHost', dashboardHost);
     Alpine.data('deptDashboard', deptDashboard);
     Alpine.data('brgyDashboard', brgyDashboard);
+    // Balita, Sakuna, Records and the front desk, one scoped answer each (18 Nov).
+    Alpine.data('areaDashboard', areaDashboard);
     // Sakuna's Reports tab: one server calculation, exports checked and logged (2026-10-30).
     Alpine.data('sakunaReport', sakunaReport);
     // One incident's printed report, from the incident window (2026-11-05).
@@ -910,6 +921,16 @@ document.addEventListener('alpine:init', () => {
         // and Tulong types pages fix such an officer's office (round 2).
         deptRestricted() {
             return !!this.account && ['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff', 'mio_staff'].includes(this.account.roleKey);
+        },
+        // The scope pill under the name (sidebar, top bar). An office-bound
+        // account read "Municipality-wide" (18 Nov); it is held to its office,
+        // in every barangay: "MSWDO · all barangays".
+        scopePill() {
+            const a = this.account;
+            if (!a) return '';
+            if (a.scope && a.scope !== 'Municipal') return 'Brgy. ' + a.scope;
+            if (this.deptRestricted() && a.dept) return officeShort(a.dept) + ' · all barangays';
+            return 'Municipality-wide';
         },
         // Report-download gate: true if the account has 'export' on any
         // Reports & Analytics submodule (rep_population/assistance/document/
@@ -1782,7 +1803,12 @@ document.addEventListener('alpine:init', () => {
             hover: null,
             rows: [],
             get total() { return this.rows.reduce((n, r) => n + r.value, 0); },
-            pct(row) { return this.total ? Math.round((row.value / this.total) * 100) : 0; },
+            pct(row) {
+                if (!this.total || !row.value) return 0;
+                const p = Math.round((row.value / this.total) * 100);
+                if (p === 0) return '<1';
+                return p === 100 && row.value < this.total ? '>99' : p;
+            },
             draw(rows) {
                 let list = (rows || []).map((r) => ({ label: r.label, value: Number(r.value) || 0, color: r.color })).filter((r) => r.value > 0);
                 if (!opts.keep) list = list.sort((a, b) => b.value - a.value).map((r, i) => ({ ...r, color: CLAY_PALETTE[i % CLAY_PALETTE.length] }));

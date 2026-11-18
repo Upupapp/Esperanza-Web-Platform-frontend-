@@ -26,7 +26,7 @@
             <div class="flex flex-wrap items-center gap-3">
                 <p class="text-[12.5px] font-semibold text-ink-muted" x-show="data" x-text="data ? 'Period: ' + data.period.label : ''"></p>
                 {{-- The Barangay Summary Report: this dashboard on paper, with its graphs (2026-10-28). --}}
-                <x-ui.button icon="file-down" x-show="summary && data" x-cloak @click="print('brgy_summary')">Download report</x-ui.button>
+                <x-ui.button icon="file-down" x-show="summary && data" x-cloak @click="print('brgy_summary')">Download Report</x-ui.button>
             </div>
         </div>
     </div>
@@ -43,19 +43,49 @@
     <template x-if="data">
         <div class="flex flex-col gap-[22px] transition-opacity duration-200" :class="loading && 'opacity-60'">
 
-            <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
-                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" label="Residents" valueBind="num(people && people.residents)" icon="users" color="brand" sublabelBind="people ? num(people.households) + ' households · ' + num(people.families) + ' families' : ''" :delay="0" /></div>
-                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" label="Profiled" valueBind="people && people.profiling_pct !== null ? people.profiling_pct + '%' : '—'" icon="user-round-search" color="green" sublabelBind="people ? num(people.verified) + ' records verified' : ''" :delay="40" /></div>
-                <div x-show="docs"><x-ui.stat-card layout="compact" class="h-full" label="Certificates Released" valueBind="num(docs && docs.released)" icon="file-text" color="light" sublabelBind="docs ? num(docs.open) + ' still open · ' + num(docs.needs_action) + (docs.needs_action === 1 ? ' needs' : ' need') + ' action' : ''" :delay="80" /></div>
-                <div x-show="docs"><x-ui.stat-card layout="compact" class="h-full" label="Fees Collected" valueBind="pesoTile(docs ? docs.fees_collected + docs.fees_from_office_records : 0)" icon="wallet" color="gold" sublabelBind="docs ? plural(docs.receipts, 'receipt', 'receipts') + (docs.fees_from_office_records ? ' · ' + peso(docs.fees_from_office_records) + ' from the logbook' : '') : ''" :delay="120" /></div>
-                <div x-show="aid"><x-ui.stat-card layout="compact" class="h-full" label="Assistance Received" valueBind="num(aid && aid.people)" icon="hand-heart" color="deep" sublabelBind="aid ? (aid.people === 1 ? 'person · ' : 'persons · ') + pesoTile(aid.amount_released) : ''" :delay="160" /></div>
-                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" label="To Verify" valueBind="num(people ? people.accounts_to_verify + people.profiles_to_review : 0)" icon="user-round-check" color="orange" sublabelBind="people ? plural(people.accounts_to_verify, 'account', 'accounts') + ' · ' + plural(people.profiles_to_review, 'profile', 'profiles') : ''" :delay="200" /></div>
-                <div x-show="sakuna"><x-ui.stat-card layout="compact" class="h-full" label="Active Incidents" valueBind="num(sakuna && sakuna.active_incidents)" icon="triangle-alert" color="red" sublabelBind="sakuna ? num(sakuna.families_sheltered) + ' families sheltered' : ''" :delay="240" /></div>
+            {{-- The barangay's own account (the Barangay Secretary, 18 Nov): what
+                 waits on the barangay hall first. Municipal accounts keep the
+                 overview of the barangay. --}}
+            <div x-show="own" class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
+                <div x-show="docs"><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Certificates to act on" valueBind="num(docs && docs.needs_action)" icon="inbox" color="orange" sublabelBind="docs ? num(docs.open) + ' open in all' : ''" :delay="0" /></div>
+                <div x-show="docs"><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Certificates released" valueBind="num(docs && docs.released)" icon="file-text" color="light" sublabelBind="docs ? num(docs.received) + ' filed in the period' : ''" :delay="40" /></div>
+                <div x-show="docs"><x-ui.stat-card layout="compact" class="h-full" label="Fees collected" valueBind="pesoTile(docs ? docs.fees_collected + docs.fees_from_office_records : 0)" icon="wallet" color="gold" sublabelBind="docs ? plural(docs.receipts, 'receipt', 'receipts') + (docs.fees_from_office_records ? ' · ' + pesoTile(docs.fees_from_office_records) + ' from the logbook' : '') : ''" :delay="80" /></div>
+                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.constituents') . '?tab=citizen-verification'" label="Accounts to verify" valueBind="num(people && people.accounts_to_verify)" icon="user-round-check" color="purple" sublabelBind="people ? plural(people.profiles_to_review, 'profile', 'profiles') + ' to review' : ''" :delay="120" /></div>
+                <div x-show="inboxReady"><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.appointments')" label="Appointments today" valueBind="num(inboxCount('appointments_today'))" icon="calendar-check" color="deep" sublabel="At the barangay hall" :delay="160" /></div>
+                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.constituents')" label="Registered residents" valueBind="num(people && people.residents)" icon="users" color="brand" sublabelBind="people ? plural(people.households, 'household', 'households') + (people.profiling_pct !== null ? ' · ' + people.profiling_pct + '% profiled' : '') : ''" :delay="200" /></div>
             </div>
 
-            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
+            <div x-show="!own" class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
+                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" label="Residents" valueBind="num(people && people.residents)" icon="users" color="brand" sublabelBind="people ? num(people.households) + ' households · ' + num(people.families) + ' families' : ''" :delay="0" /></div>
+                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" label="Profiled" valueBind="people && people.profiling_pct !== null ? people.profiling_pct + '%' : '—'" icon="user-round-search" color="green" sublabelBind="people ? num(people.verified) + ' records verified' : ''" :delay="40" /></div>
+                <div x-show="docs"><x-ui.stat-card layout="compact" class="h-full" label="Certificates released" valueBind="num(docs && docs.released)" icon="file-text" color="light" sublabelBind="docs ? num(docs.open) + ' still open · ' + num(docs.needs_action) + (docs.needs_action === 1 ? ' needs' : ' need') + ' action' : ''" :delay="80" /></div>
+                <div x-show="docs"><x-ui.stat-card layout="compact" class="h-full" label="Fees collected" valueBind="pesoTile(docs ? docs.fees_collected + docs.fees_from_office_records : 0)" icon="wallet" color="gold" sublabelBind="docs ? plural(docs.receipts, 'receipt', 'receipts') + (docs.fees_from_office_records ? ' · ' + peso(docs.fees_from_office_records) + ' from the logbook' : '') : ''" :delay="120" /></div>
+                <div x-show="aid"><x-ui.stat-card layout="compact" class="h-full" label="Residents helped" valueBind="num(aid && aid.people)" icon="hand-heart" color="deep" sublabelBind="aid ? plural(aid.served, 'case', 'cases') + ' · ' + pesoTile(aid.amount_released) : ''" :delay="160" /></div>
+                <div x-show="people"><x-ui.stat-card layout="compact" class="h-full" label="To verify" valueBind="num(people ? people.accounts_to_verify + people.profiles_to_review : 0)" icon="user-round-check" color="orange" sublabelBind="people ? plural(people.accounts_to_verify, 'account', 'accounts') + ' · ' + plural(people.profiles_to_review, 'profile', 'profiles') : ''" :delay="200" /></div>
+                <div x-show="sakuna"><x-ui.stat-card layout="compact" class="h-full" label="Active incidents" valueBind="num(sakuna && sakuna.active_incidents)" icon="triangle-alert" color="red" sublabelBind="sakuna ? num(sakuna.families_sheltered) + ' families sheltered' : ''" :delay="240" /></div>
+            </div>
+
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
+                <x-admin.dashboards.action-list x-show="isHome" />
+
+                {{-- Where the barangay's certificate requests stand; orange where they wait on the barangay. --}}
+                <x-ui.card x-show="docs && docs.pipeline">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <h3 class="text-lg font-extrabold text-ink">Certificate requests by stage</h3>
+                        <span x-show="stages.length" class="flex items-center gap-1.5 text-[12px] font-semibold text-ink-muted"><span class="w-2 h-2 rounded-full bg-orange-500"></span>Waiting on the barangay</span>
+                    </div>
+                    <x-ui.clay-bars rows="stages" empty="No open certificate requests." />
+                </x-ui.card>
+
+                <x-ui.card x-show="docs">
+                    <h3 class="text-lg font-extrabold text-ink mb-4">Certificates released</h3>
+                    <x-ui.clay-bars rows="docRows" empty="No certificates released in this period." />
+                </x-ui.card>
+            </div>
+
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
                 <x-ui.card x-show="people">
-                    <div class="flex items-center justify-between gap-2 mb-4">
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-4">
                         <h3 class="text-lg font-extrabold text-ink">Residents</h3>
                         <span class="text-[12.5px] font-semibold text-ink-muted" x-text="people ? num(people.residents) + ' active' : ''"></span>
                     </div>
@@ -83,68 +113,56 @@
                     </div>
                 </x-ui.card>
 
-                <x-ui.card x-show="docs">
-                    <h3 class="text-lg font-extrabold text-ink mb-4">Certificates released</h3>
-                    <div class="space-y-3.5">
-                        <template x-for="d in docRows" :key="d.label">
-                            <div>
-                                <div class="flex items-center justify-between gap-3 mb-1.5">
-                                    <span class="text-[14px] font-semibold text-ink-body truncate" x-text="d.label"></span>
-                                    <span class="text-sm font-bold text-ink tabular-nums" x-text="d.value"></span>
+                {{-- Two shorter cards in one column beside the residents (18 Nov review). --}}
+                <div class="flex flex-col gap-5" x-show="aid || people">
+                    <x-ui.card class="flex-1" x-show="aid">
+                        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-1">
+                            <h3 class="text-lg font-extrabold text-ink">Assistance received</h3>
+                            <span class="text-[12.5px] font-semibold text-ink-muted" x-text="aid ? plural(aid.served, 'case', 'cases') : ''"></span>
+                        </div>
+                        <p class="text-[12.5px] text-ink-muted mb-3">From every office, for residents of this barangay.</p>
+                        <div class="divide-y divide-brand-600/[.08]">
+                            <template x-for="p in (aid ? aid.by_program : [])" :key="p.program">
+                                <div class="flex items-center justify-between gap-3 py-2.5">
+                                    <div class="min-w-0">
+                                        <p class="text-[14px] font-semibold text-ink-body truncate" x-text="p.program"></p>
+                                        <p class="text-[11.5px] font-bold uppercase tracking-[.05em] text-ink-faint" x-text="p.office"></p>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <p class="text-sm font-bold text-ink tabular-nums" x-text="p.served"></p>
+                                        <p class="text-[12px] text-ink-muted tabular-nums" x-text="peso(p.amount_released)"></p>
+                                    </div>
                                 </div>
-                                <div class="h-3 rounded-full bg-track shadow-pressed-sm p-[2px]"><div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600" :style="'width:' + d.pct + '%'"></div></div>
-                            </div>
-                        </template>
-                        <p x-show="!docRows.length" class="py-6 text-center text-sm text-ink-muted">No certificates released in this period.</p>
-                    </div>
-                </x-ui.card>
+                            </template>
+                            <p x-show="aid && !aid.by_program.length" class="py-6 text-center text-sm text-ink-muted">No assistance completed in this period.</p>
+                        </div>
+                    </x-ui.card>
 
-                <x-ui.card x-show="aid">
-                    <div class="flex items-center justify-between gap-2 mb-1">
-                        <h3 class="text-lg font-extrabold text-ink">Assistance received</h3>
-                        <span class="text-[12.5px] font-semibold text-ink-muted" x-text="aid ? plural(aid.served, 'case', 'cases') : ''"></span>
-                    </div>
-                    <p class="text-[12.5px] text-ink-muted mb-3">From every office, for residents of this barangay.</p>
-                    <div class="divide-y divide-brand-600/[.08]">
-                        <template x-for="p in (aid ? aid.by_program : [])" :key="p.program">
-                            <div class="flex items-center justify-between gap-3 py-2.5">
-                                <div class="min-w-0">
-                                    <p class="text-[14px] font-semibold text-ink-body truncate" x-text="p.program"></p>
-                                    <p class="text-[11.5px] font-bold uppercase tracking-[.05em] text-ink-faint" x-text="p.office"></p>
-                                </div>
-                                <div class="text-right shrink-0">
-                                    <p class="text-sm font-bold text-ink tabular-nums" x-text="p.served"></p>
-                                    <p class="text-[12px] text-ink-muted tabular-nums" x-text="peso(p.amount_released)"></p>
-                                </div>
-                            </div>
-                        </template>
-                        <p x-show="aid && !aid.by_program.length" class="py-6 text-center text-sm text-ink-muted">No assistance completed in this period.</p>
-                    </div>
-                </x-ui.card>
+                    <x-ui.card class="flex-1" x-show="people">
+                        <h3 class="text-lg font-extrabold text-ink mb-3">Records to look after</h3>
+                        <dl class="divide-y divide-brand-600/[.08] text-sm">
+                            <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Portal accounts waiting for verification</dt><dd class="font-bold tabular-nums" x-text="people ? people.accounts_to_verify : 0"></dd></div>
+                            <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Resident profiles waiting for review</dt><dd class="font-bold tabular-nums" x-text="people ? people.profiles_to_review : 0"></dd></div>
+                            <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Data quality issues open</dt><dd class="font-bold tabular-nums" x-text="people ? people.data_quality_open : 0"></dd></div>
+                            <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Accounts registered in the period</dt><dd class="font-bold tabular-nums" x-text="people ? people.accounts_registered_in_period : 0"></dd></div>
+                            <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Households profiled</dt><dd class="font-bold tabular-nums" x-text="people && people.households_profiled_pct !== null ? people.households_profiled_pct + '%' : '—'"></dd></div>
+                        </dl>
+                    </x-ui.card>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-5 gap-5 items-start">
-                <x-ui.card class="xl:col-span-3">
+            <div class="grid grid-cols-1 xl:grid-cols-5 gap-5" x-show="trend.series.length || isHome">
+                <x-ui.card class="flex flex-col" x-show="trend.series.length" ::class="isHome ? 'xl:col-span-3' : 'xl:col-span-5'">
                     <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-3">
                         <h3 class="text-lg font-extrabold text-ink">Twelve months</h3>
                         <p class="flex items-center gap-3 text-[13px] font-semibold text-ink-muted">
-                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Certificates</span>
-                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gold-600"></span>Assistance</span>
+                            <span x-show="data.trend && data.trend.documents" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Certificates</span>
+                            <span x-show="data.trend && data.trend.assistance" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gold-600"></span>Assistance</span>
                         </p>
                     </div>
-                    <x-ui.clay-trend data="trend" label="Certificates released and assistance completed in each of the last twelve months" />
+                    <x-ui.clay-trend class="my-auto" data="trend" label="Certificates released and assistance completed in each of the last twelve months" />
                 </x-ui.card>
-
-                <x-ui.card class="xl:col-span-2" x-show="people">
-                    <h3 class="text-lg font-extrabold text-ink mb-3">Records to look after</h3>
-                    <dl class="divide-y divide-brand-600/[.08] text-sm">
-                        <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Portal accounts waiting for verification</dt><dd class="font-bold tabular-nums" x-text="people ? people.accounts_to_verify : 0"></dd></div>
-                        <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Resident profiles waiting for review</dt><dd class="font-bold tabular-nums" x-text="people ? people.profiles_to_review : 0"></dd></div>
-                        <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Data quality issues open</dt><dd class="font-bold tabular-nums" x-text="people ? people.data_quality_open : 0"></dd></div>
-                        <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Accounts registered in the period</dt><dd class="font-bold tabular-nums" x-text="people ? people.accounts_registered_in_period : 0"></dd></div>
-                        <div class="flex justify-between gap-3 py-2.5"><dt class="text-ink-body">Households profiled</dt><dd class="font-bold tabular-nums" x-text="people && people.households_profiled_pct !== null ? people.households_profiled_pct + '%' : '—'"></dd></div>
-                    </dl>
-                </x-ui.card>
+                <x-admin.dashboards.activity x-show="isHome" ::class="trend.series.length ? 'xl:col-span-2' : 'xl:col-span-5'" />
             </div>
 
             <x-ui.card x-show="reports().length" x-cloak>
@@ -153,9 +171,9 @@
                     <span class="text-[12.5px] font-semibold text-ink-muted" x-text="'Brgy. ' + barangay + ' · ' + data.period.label"></span>
                 </div>
                 <p class="text-[13px] text-ink-muted mb-4">Ready to print in the LGU's report format: prepared by the Barangay Secretary, approved by the Punong Barangay.</p>
-                <div class="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                <div class="flex flex-wrap gap-3">
                     <template x-for="r in reports()" :key="r.key">
-                        <button type="button" @click="print(r.key)" class="group flex items-start text-left rounded-[18px] bg-white/60 border border-white/80 px-4 py-3.5 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200">
+                        <button type="button" @click="print(r.key)" class="group grow basis-[300px] flex items-start text-left rounded-[18px] bg-white/60 border border-white/80 px-4 py-3.5 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200">
                             <span class="flex items-start gap-3">
                                 <span class="w-10 h-10 rounded-xl grid place-items-center shrink-0 bg-brand-50 text-brand-600"><i :data-lucide="info(r.key).icon" class="w-5 h-5"></i></span>
                                 <span class="min-w-0">

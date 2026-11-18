@@ -55,7 +55,7 @@
             :class="$store.session.account?.scope === 'Municipal' ? 'bg-gold-400/15 border-gold-400/35 text-gold-400' : 'bg-purple-400/15 border-purple-300/35 text-purple-200'"
         >
             <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-3 h-3"></i>
-            <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + $store.session.account?.scope"></span>
+            <span x-text="$store.session.scopePill()"></span>
         </span>
     </div>
 

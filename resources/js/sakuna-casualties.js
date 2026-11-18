@@ -73,7 +73,10 @@ function sakunaCasualties() {
         sources: ['MHO (death certificate)', 'PNP report', 'Hospital', 'Rural Health Unit', 'Barangay', 'BFP', 'Family', 'MDRRMO'],
 
         init() {
-            this.f.incident = new URLSearchParams(window.location.search).get('incident') || '';
+            const asked = new URLSearchParams(window.location.search);
+            this.f.incident = asked.get('incident') || '';
+            // The dashboard's link: the cases still to validate (18 Nov).
+            if (['For validation', 'Validated'].includes(asked.get('validation'))) this.f.validation = asked.get('validation');
             this.load(1);
             this.loadSummary();
             // Live updates (2026-11-15): a change to Sakuna anywhere reloads this

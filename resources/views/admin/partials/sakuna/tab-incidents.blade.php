@@ -64,7 +64,7 @@
             (!incidentStatusFilter || inc.status === incidentStatusFilter) &&
             (!incidentBarangayFilter || inc.barangay === incidentBarangayFilter) &&
             (!incidentSourceFilter || (incidentSourceFilter === 'resident') === ['Citizen Portal', 'Mobile App'].includes(inc.source)) &&
-            (!incidentAssignedFilter || (incidentAssignedFilter === 'none' ? !inc.assigned_name && !['Completed', 'Archived', 'Rejected'].includes(inc.status) : !!inc.assigned_name))
+            (!incidentAssignedFilter || (incidentAssignedFilter === 'none' ? !inc.assigned_name && !['Completed', 'Archived', 'Rejected'].includes(inc.status) : (incidentAssignedFilter === 'me' ? inc.assigned_name === $store.session.account?.name : !!inc.assigned_name)))
         ).sort(order);
     },
 }" x-init="loadIncidentsList()" class="space-y-3">
@@ -137,6 +137,7 @@
         <option value="">Anyone or nobody</option>
         <option value="none">Nobody assigned (open)</option>
         <option value="someone">Someone assigned</option>
+        <option value="me">Assigned to you</option>
     </select>
     <select x-show="moreFilters || incidentBarangayFilter" aria-label="Incident barangay filter" x-model="incidentBarangayFilter" class="sk-sel">
         <option value="">All barangays</option>

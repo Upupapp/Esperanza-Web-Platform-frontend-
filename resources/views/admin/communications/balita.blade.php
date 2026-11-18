@@ -92,6 +92,7 @@
                     <span class="sr-only">Search Balita</span>
                     <input aria-label="Search Balita" type="search" x-model="search" placeholder="Search posts" class="flex-1 min-w-0 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0 outline-none">
                 </label>
+                <button type="button" x-show="mineOnly" x-cloak @click="mineOnly = false" class="inline-flex items-center gap-1.5 h-10 rounded-full px-3.5 bg-brand-50 text-brand-700 text-[13px] font-semibold shrink-0 hover:bg-brand-100 focus:ring-4 focus:ring-brand-100 outline-none">Your posts only<i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                 <span class="relative inline-flex items-center shrink-0">
                     <select aria-label="Balita category" x-model="category" class="appearance-none h-10 rounded-full border-0 bg-slate-100 hover:bg-slate-200 pl-3 pr-7 text-[13px] font-medium text-ink-body whitespace-nowrap cursor-pointer focus:ring-4 focus:ring-brand-100 outline-none">
                         <option value="All">All categories</option>

@@ -85,7 +85,7 @@
         @endif
     </div>
     @if($sublabelBind)
-        <p class="relative {{ $compact ? 'text-[11.5px] leading-snug min-h-[30px] max-w-[96px] text-balance' : 'text-xs' }} text-[var(--slab-sub)]" x-text="{{ $sublabelBind }}"></p>
+        <p class="relative {{ $compact ? 'text-[11.5px] leading-snug min-h-[30px] max-w-[96px] text-balance' : 'text-xs' }} text-[var(--slab-sub)]" x-text="String(({{ $sublabelBind }}) ?? '').replace(/ · /g, '\u00a0· ')"></p>
     @elseif($sublabel)
         <p class="relative {{ $compact ? 'text-[11.5px] leading-snug min-h-[30px] max-w-[96px] text-balance' : 'text-xs' }} text-[var(--slab-sub)]" x-text="$store.lang.current === 'en' ? @js($sublabelEn ?? $sublabel) : @js($sublabel)">{{ $sublabel }}</p>
     @elseif($compact)

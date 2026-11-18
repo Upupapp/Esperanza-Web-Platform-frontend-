@@ -79,7 +79,8 @@ class Sweep1118web4Test extends TestCase
     public function test_tulong_tabs_cards_and_the_status_filter_agree(): void
     {
         $view = $this->tulong();
-        $this->assertStringContainsString("pickTab(tab) {\n                this.tab = tab;\n                this.statusFilter = '';\n                this.openOnly = false;\n            },", $view);
+        // ...and the statuses a dashboard link named (?status=a,b, 18 Nov).
+        $this->assertStringContainsString("pickTab(tab) {\n                this.tab = tab;\n                this.statusFilter = '';\n                this.statusList = [];\n                this.openOnly = false;\n            },", $view);
         $this->assertStringContainsString("type=\"button\" @click=\"pickTab('{{ \$key }}')\"", $view);
         foreach (["@click=\"pickTab('all'); openOnly = true\" class=\"cursor-pointer\" label=\"Active Cases\"", "@click=\"pickTab('action')\"", "@click=\"pickTab('release')\"", "@click=\"pickTab('done')\" class=\"cursor-pointer\" label=\"Completed\"", "@click=\"pickTab('all')\" class=\"cursor-pointer\" label=\"All Cases\""] as $card) {
             $this->assertStringContainsString($card, $view);

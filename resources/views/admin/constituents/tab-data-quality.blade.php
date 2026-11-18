@@ -94,10 +94,12 @@
                 </span>
             </div>
 
+            {{-- Only the officer's own (?mine=1, the dashboard's link). --}}
+            <button type="button" x-show="dqMineOnly" x-cloak @click="dqMineOnly = false" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-brand-50 text-brand-700 hover:bg-brand-100 transition shrink-0">Assigned to you<i data-lucide="x" class="w-3.5 h-3.5"></i></button>
             {{-- Clear button --}}
             <button
-                @click="search=''; dqTypeFilter=''; dqStatusFilter=''"
-                x-show="search !== '' || dqTypeFilter !== '' || dqStatusFilter !== ''"
+                @click="search=''; dqTypeFilter=''; dqStatusFilter=''; dqMineOnly=false"
+                x-show="search !== '' || dqTypeFilter !== '' || dqStatusFilter !== '' || dqMineOnly"
                 x-cloak
                 class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-white/60 transition shrink-0"
                 title="Clear all filters"

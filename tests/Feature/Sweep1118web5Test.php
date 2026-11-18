@@ -85,10 +85,11 @@ class Sweep1118web5Test extends TestCase
     public function test_a_live_reload_waits_for_the_dashboard_load_the_officer_asked_for(): void
     {
         $js = $this->source('resources/js/dashboards.js');
-        $this->assertSame(2, substr_count($js, "if (quiet && this.loading) { this.liveAfter = true; return; }\n"));
-        $this->assertSame(2, substr_count($js, 'if (this.liveAfter) { this.liveAfter = false; this.load(true); }'));
+        // The office, the barangay and the area dashboards (18 Nov).
+        $this->assertSame(3, substr_count($js, "if (quiet && this.loading) { this.liveAfter = true; return; }\n"));
+        $this->assertSame(3, substr_count($js, 'if (this.liveAfter) { this.liveAfter = false; this.load(true); }'));
 
-        foreach (['export function deptDashboard()', 'export function brgyDashboard()'] as $board) {
+        foreach (['export function deptDashboard()', 'export function brgyDashboard()', 'export function areaDashboard(area)'] as $board) {
             $part = substr($js, strpos($js, $board));
             $load = $this->between($part, 'async load(quiet = false) {', 'catch (e) {');
             // The guard comes before the sequence moves on, or it would still drop the visible answer.

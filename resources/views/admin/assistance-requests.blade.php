@@ -89,6 +89,9 @@
             // Asked of the server, with the filters above (scope round 2026-10-15).
             mineOnly: false,
             overdueOnly: false,
+            // ?status=a,b from the dashboard's Needs your action (18 Nov); one
+            // status is the Advanced status filter itself.
+            statusList: [],
             loadSeq: 0,
             // How many cases the server holds when the list loaded only the
             // newest of them (a load stops at 2,000), else 0.
@@ -251,6 +254,9 @@
                 if (params.get('open') === '1') { this.openOnly = true; this.tab = 'all'; }
                 this.mineOnly = params.get('assigned') === 'me';
                 this.overdueOnly = params.get('overdue') === '1';
+                const asked = (params.get('status') || '').split(',').map((x) => x.trim()).filter(Boolean);
+                if (asked.length === 1) this.statusFilter = asked[0]; else this.statusList = asked;
+                if (asked.length) this.tab = 'all';
                 if (ref || citizen) {
                     this.search = ref || citizen;
                     this.tab = 'all';
@@ -643,6 +649,7 @@
             // hidden in the closed panel kept the list (sweep 2026-11-18).
             matchesTab(r) {
                 if (this.statusFilter) return r.status === this.statusFilter;
+                if (this.statusList.length) return this.statusList.includes(r.status);
                 if (this.tab === 'all') return true;
                 if (this.tab === 'action') return this.actionStatuses.includes(r.status);
                 if (this.tab === 'release') return r.status === 'Ready for Release';
@@ -654,6 +661,7 @@
             pickTab(tab) {
                 this.tab = tab;
                 this.statusFilter = '';
+                this.statusList = [];
                 this.openOnly = false;
             },
             get filteredRequests() {
@@ -1158,9 +1166,9 @@
                     <span x-text="'Showing the ' + filteredRequests.length.toLocaleString() + ' records imported from ' + importFilter + '.'"></span>
                     <button type="button" class="font-medium underline" @click="importFilter = ''">Show all</button>
                 </p>
-                <p x-show="openOnly || barangayFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
-                    <span x-text="'Showing ' + (openOnly ? 'open cases' : 'cases') + (barangayFilter ? ' in Brgy. ' + barangayFilter : '') + '.'"></span>
-                    <button type="button" class="font-medium underline" @click="openOnly = false; barangayFilter = ''">Show all</button>
+                <p x-show="openOnly || barangayFilter || statusList.length || statusFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
+                    <span x-text="'Showing ' + (openOnly ? 'open cases' : 'cases') + (statusFilter || statusList.length ? ' that are ' + (statusFilter || statusList.join(', ')) : '') + (barangayFilter ? ' in Brgy. ' + barangayFilter : '') + '.'"></span>
+                    <button type="button" class="font-medium underline" @click="openOnly = false; barangayFilter = ''; statusFilter = ''; statusList = []">Show all</button>
                 </p>
             </div>
 

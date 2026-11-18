@@ -141,7 +141,8 @@ class FullQaRunFixesTest extends TestCase
     /** The dashboard read "null — auth.login_failed". */
     public function test_recent_activity_reads_in_words(): void
     {
-        $view = $this->source('resources/views/admin/dashboard.blade.php');
+        // One activity card for every dashboard view (18 Nov).
+        $view = $this->source('resources/views/components/admin/dashboards/activity.blade.php');
 
         // The actor and the action in words (the clay dashboard sets them apart).
         $this->assertStringContainsString("x-text=\"activity.actor || 'System'\"", $view);

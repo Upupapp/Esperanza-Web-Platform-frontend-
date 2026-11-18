@@ -222,6 +222,8 @@ function adminBalita(barangays = []) {
         // The Scheduled chip sits beside the status chips but is not a
         // status: approved posts waiting for their time (2026-10-21).
         scheduledOnly: false,
+        // The officer's own posts only (?mine=1, the dashboard's links, 18 Nov).
+        mineOnly: false,
         categoryList: BALITA_CATEGORIES,
         composerOpen: false,
         editing: null,
@@ -248,8 +250,15 @@ function adminBalita(barangays = []) {
         archFromFb: false,
 
         init() {
+            // The dashboard's links name a status and the officer's own posts
+            // (?tab=balita&status=Rejected&mine=1, 18 Nov).
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'balita') {
+                if (this.statuses.includes(params.get('status'))) this.status = params.get('status');
+                this.mineOnly = params.get('mine') === '1';
+            }
             // A new filter starts the feed at the top again.
-            this.$watch(() => [this.search, this.status, this.scope, this.category, this.scheduledOnly].join('|'), () => { this.shown = 10; });
+            this.$watch(() => [this.search, this.status, this.scope, this.category, this.scheduledOnly, this.mineOnly].join('|'), () => { this.shown = 10; });
             // Live updates (2026-11-15): a post, like or comment anywhere
             // reloads the feed quietly once it has loaded, while its tab is
             // shown and no dialog (the composer, a review) is open.
@@ -299,6 +308,7 @@ function adminBalita(barangays = []) {
             const q = this.search.trim().toLowerCase();
             return this.posts.filter((a) =>
                 (a.barangay === null || this.$store.session.inScope(a.barangay))
+                && (!this.mineOnly || !!a.mine)
                 && (this.scheduledOnly ? this.isScheduled(a) : (this.status === 'All' || a.status === this.status))
                 && (this.scope === 'All' || (this.scope === 'Municipal' ? !a.barangay : a.barangay === this.scope))
                 && (this.category === 'All' || a.category === this.category)
@@ -1034,6 +1044,9 @@ function adminEvents(barangays = []) {
         maxSignatories: MAX_SIGNATORIES,
 
         init() {
+            // The dashboard's links name a status (?tab=events&status=Pending%20Review, 18 Nov).
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'events' && this.statuses.includes(params.get('status'))) this.status = params.get('status');
             // Live updates (2026-11-15): an event changed anywhere reloads the
             // list quietly once it has loaded, while its tab is shown and no
             // dialog (the event form, a review, a cancel) is open.

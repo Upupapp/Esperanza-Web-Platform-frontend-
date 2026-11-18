@@ -64,7 +64,11 @@ class FullWidthPagesTest extends TestCase
         $cond = "\$store.session.can('constituents') || \$store.session.can('dokyu') || \$store.session.can('tulong')";
         $this->assertStringContainsString('<p class="text-[14.5px] text-ink-body" x-show="'.$cond.'">Live counts, updated as they change.</p>', $dash);
         $this->assertStringContainsString('<div x-show="'.$cond.'" class="grid gap-4 grid-cols-2', $dash);
-        $this->assertStringContainsString('<div x-show="'.$cond.'" class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">', $dash);
+        // The requests row only with Dokyu or Tulong (18 Nov: a residents-only
+        // account read "No open requests" forever beside one stretched tile).
+        $this->assertStringContainsString('<div x-show="hasCounts" class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">', $dash);
+        // A row of one card spans the page: Needs your action alone is not held to two fifths.
+        $this->assertStringContainsString("<x-admin.dashboards.action-list ::class=\"hasCounts ? 'xl:col-span-2' : 'xl:col-span-5'\" />", $dash);
     }
 
     public function test_the_profile_lists_span_the_page_under_the_two_columns(): void

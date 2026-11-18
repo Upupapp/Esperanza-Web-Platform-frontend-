@@ -110,6 +110,9 @@
             // Asked of the server, with the filters above (scope round 2026-10-15).
             mineOnly: false,
             overdueOnly: false,
+            // ?status=a,b from the dashboard's Needs your action (18 Nov): those
+            // statuses only, until a tab is picked or Show all.
+            statusList: [],
             loadSeq: 0,
             // How many requests the server holds when the list loaded only the
             // newest of them (a load stops at 2,000), else 0.
@@ -1697,6 +1700,9 @@
                 if (params.get('open') === '1') { this.openOnly = true; this.tab = 'all'; }
                 this.mineOnly = params.get('assigned') === 'me';
                 this.overdueOnly = params.get('overdue') === '1';
+                this.statusList = (params.get('status') || '').split(',').map((x) => x.trim()).filter(Boolean);
+                if (this.statusList.length) this.tab = 'all';
+                this.$watch('tab', () => { this.statusList = []; });
                 if (ref || citizen) {
                     this.search = ref || citizen;
                     this.view = 'requests';
@@ -2059,6 +2065,7 @@
                 'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
             },
             matchesTab(r) {
+                if (this.statusList.length) return this.statusList.includes(r.status);
                 if (this.tab === 'all') return true;
                 if (this.tab === 'action') return this.actionStatuses.includes(r.status);
                 if (this.tab === 'release') return r.status === 'Mark to Release';
@@ -2511,9 +2518,9 @@
                     <span x-text="'Showing the ' + filteredRequests.length.toLocaleString() + ' records imported from ' + importFilter + '.'"></span>
                     <button type="button" class="font-medium underline" @click="importFilter = ''">Show all</button>
                 </p>
-                <p x-show="openOnly || barangayFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
-                    <span x-text="'Showing ' + (openOnly ? 'open requests' : 'requests') + (barangayFilter ? ' in Brgy. ' + barangayFilter : '') + '.'"></span>
-                    <button type="button" class="font-medium underline" @click="openOnly = false; barangayFilter = ''">Show all</button>
+                <p x-show="openOnly || barangayFilter || statusList.length" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
+                    <span x-text="'Showing ' + (openOnly ? 'open requests' : 'requests') + (statusList.length ? ' that are ' + statusList.join(', ') : '') + (barangayFilter ? ' in Brgy. ' + barangayFilter : '') + '.'"></span>
+                    <button type="button" class="font-medium underline" @click="openOnly = false; barangayFilter = ''; statusList = []">Show all</button>
                 </p>
             </div>
 

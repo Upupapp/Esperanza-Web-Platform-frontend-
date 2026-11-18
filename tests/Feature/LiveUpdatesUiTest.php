@@ -84,7 +84,8 @@ class LiveUpdatesUiTest extends TestCase
     public function test_staff_pages_reload_quietly_on_their_topic(): void
     {
         $dashboard = $this->source('resources/views/admin/dashboard.blade.php');
-        $this->assertStringContainsString("this.\$store.live.on(this.\$el, 'any', () => this.load(true), { busy: () => this.view !== 'overview' });", $dashboard);
+        // Every view shows the Overview's activity and alerts now (18 Nov), so they reload on any view.
+        $this->assertStringContainsString("this.\$store.live.on(this.\$el, 'any', () => this.load(true));\n                await this.load();", $dashboard);
         $this->assertStringContainsString('retryExpr="load()"', $dashboard);
         $this->assertSame(2, substr_count($this->source('resources/js/dashboards.js'), "this.\$store.live.on(this.\$el, 'any', () => this.load(true));"));
 
@@ -102,7 +103,8 @@ class LiveUpdatesUiTest extends TestCase
 
         $records = $this->source('resources/js/scope-admin-records.js');
         $this->assertSame(2, substr_count($records, "this.\$store.live.on(this.\$el, 'balita', () => (this.loadedOnce ? this.load(true) : null)"));
-        $this->assertStringContainsString("this.\$store.live.on(null, ['other', 'balita'], () => (this.started ? this.load(true) : this.loadCounts())", $records);
+        // The feedback desk moved to its own file (Settings, 2026-11-18).
+        $this->assertStringContainsString("this.\$store.live.on(null, ['other', 'balita'], () => (this.started ? this.load(true) : this.loadCounts())", $this->source('resources/js/feedback-desk.js'));
         $this->assertStringContainsString('if (!quiet) this.openLinked();', $records);
     }
 

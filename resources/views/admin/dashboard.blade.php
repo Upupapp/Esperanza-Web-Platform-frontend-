@@ -1,8 +1,15 @@
 <x-layouts.admin title="Dashboard" subtitle="Requests, residents and alerts in your scope." active="dashboard">
     {{-- Tabs (owner, 2026-10-14): the overview, the office dashboards and the
          barangay dashboards, on this one page rather than new sidebar entries.
-         A department account lands on its office, a barangay account on its
-         barangay (dashboardHost, resources/js/dashboards.js). --}}
+         One dashboard per role (owner, 18 Nov): the server lists the views an
+         account has, its home first (GET /admin/dashboard/subjects views), and
+         the tab bar shows only with more than one. The Front Desk lands on
+         "Front desk", the Records Officer on "Records", the Information Officer
+         and MIO Staff on Balita, the MDRRMO on Sakuna, an office's head and
+         staff on their office, a barangay's account on its barangay. Every view
+         sits inside the Overview's x-data below, so its activity and Sakuna
+         alerts (GET /admin/dashboard) serve every view (dashboardHost,
+         resources/js/dashboards.js). --}}
     <div x-data="dashboardHost()">
     <div
         x-data="{
@@ -10,7 +17,6 @@
             loading: true,
             failed: false,
             dash: null,
-            coverage: null,
             statusColors: {
                 'Draft': '#94a3b8', 'Submitted': '#3b82f6', 'Pending Review': '#f59e0b',
                 'Under Verification': '#6366f1', 'Assigned': '#a855f7', 'Processing': '#2f62f5',
@@ -59,15 +65,15 @@
                     .map(r => ({ name: r.barangay, count: (key === 'dokyu' ? (r.dokyu ?? r.open) : key === 'tulong' ? r.tulong : r.open) ?? 0 }))
                     .filter(r => r.count > 0);
                 const max = Math.max(1, ...rows.map(r => r.count));
-                return rows.map(r => ({ ...r, pct: Math.round((r.count / max) * 100) }));
+                return rows.map(r => ({ key: r.name, label: 'Brgy. ' + r.name, value: r.count, text: r.count + (r.count === 1 ? ' request' : ' requests'), pct: Math.round((r.count / max) * 100) }));
             },
             get trendData() {
                 const t = this.dash?.requests?.trend;
                 if (!t) return { labels: [], series: [] };
                 return { labels: t.labels || [], series: [
-                    { label: 'Dokyu', values: t.documents || [], color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 },
-                    { label: 'Tulong', values: t.assistance || [], color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.45 },
-                ] };
+                    this.$store.session.can('dokyu') ? { label: 'Dokyu', values: t.documents || [], color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 } : null,
+                    this.$store.session.can('tulong') ? { label: 'Tulong', values: t.assistance || [], color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.45 } : null,
+                ].filter(Boolean) };
             },
             // One icon per kind of action (README 'Recent activity').
             activityIcon(a) {
@@ -91,13 +97,29 @@
                 const s = String(m);
                 return this.moduleNames[s] || (s.charAt(0).toUpperCase() + s.slice(1)).replace(/_/g, ' ');
             },
-            get registeredResidents() {
-                return this.coverage?.meta?.municipal?.residents ?? this.coverage?.data?.[0]?.residents ?? null;
+            get registeredResidents() { return this.dash?.residents?.total ?? null; },
+            // Released and filed name only the modules the account holds (a
+            // Dokyu-only role read Tulong in them, 18 Nov).
+            get modulesText() {
+                return [this.$store.session.can('dokyu') ? 'Dokyu' : null, this.$store.session.can('tulong') ? 'Tulong' : null].filter(Boolean).join(' + ');
             },
+            get releasedText() {
+                return [this.$store.session.can('dokyu') ? 'Dokyu released' : null, this.$store.session.can('tulong') ? 'Tulong completed' : null].filter(Boolean).join(' + ');
+            },
+            // An account that cannot open Audit Logs gets only its own actions
+            // (activities_scope own): its title says so, and no View All.
+            get activityTitle() {
+                return { own: 'Your recent activity', office: 'Recent activity in your office', barangay: 'Recent activity in your barangay' }[this.dash?.activities_scope] || 'Recent activity';
+            },
+            get mayAudit() {
+                const scope = this.dash?.activities_scope;
+                return scope ? scope !== 'own' : this.$store.session.canPerm('um_audit', 'view');
+            },
+            get hasCounts() { return this.$store.session.can('dokyu') || this.$store.session.can('tulong'); },
             async init() {
                 // Live updates (2026-11-15): any change anywhere reloads the
-                // figures quietly, while the Overview tab is the one shown.
-                this.$store.live.on(this.$el, 'any', () => this.load(true), { busy: () => this.view !== 'overview' });
+                // figures quietly. Every view shows their activity and alerts.
+                this.$store.live.on(this.$el, 'any', () => this.load(true));
                 await this.load();
             },
             // quiet (a live update): the figures on screen stay until the new
@@ -108,18 +130,15 @@
                     this.failed = false;
                 }
                 try {
-                    const [dash, coverage] = await Promise.all([
-                        $api.get('/admin/dashboard'),
-                        this.$store.session.can('constituents') ? $api.get('/admin/coverage') : Promise.resolve(null),
-                    ]);
+                    const dash = await $api.get('/admin/dashboard');
                     this.dash = dash.data;
-                    this.coverage = coverage;
                     this.failed = false;
                 } catch {
                     if (!quiet) this.failed = true;
                 } finally {
                     this.loading = false;
                     if (!quiet) setTimeout(() => (this.ready = true), 150);
+                    this.$nextTick(() => window.renderIcons?.());
                 }
             },
         }"
@@ -144,7 +163,7 @@
                         </h2>
                         <p class="mt-1 text-[15px] text-[#dce5ff] flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span x-text="$store.session.account?.role + ' · ' + $store.session.account?.dept"></span>
-                            <span class="text-white/40">·</span>
+                            <span class="text-white/40 hidden sm:inline">·</span>
                             <span class="font-mono text-[13.5px]" x-text="$store.session.account?.id"></span>
                         </p>
                     </div>
@@ -153,21 +172,21 @@
             </div>
         </div>
 
-        <div x-show="subjectsReady && (subjects.offices.length || subjects.barangays.length)" x-cloak class="flex flex-wrap items-center gap-3">
-            <div class="inline-flex flex-wrap p-1 rounded-2xl surface-pressed-sm" role="tablist" aria-label="Dashboard">
-                <button type="button" role="tab" :aria-selected="view === 'overview'" @click="show('overview')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'overview' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview</button>
-                <button type="button" role="tab" x-show="subjects.offices.length" :aria-selected="view === 'department'" @click="show('department')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'department' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-4 h-4"></i><span x-text="officeTabLabel"></span></button>
-                <button type="button" role="tab" x-show="subjects.barangays.length" :aria-selected="view === 'barangay'" @click="show('barangay')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'barangay' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="map-pinned" class="w-4 h-4"></i><span x-text="barangayTabLabel"></span></button>
+        <div x-show="showTabs" x-cloak class="flex flex-wrap items-center gap-3">
+            <div class="inline-flex flex-wrap p-1 rounded-2xl surface-pressed-sm max-w-full" role="tablist" aria-label="Dashboard">
+                <template x-for="v in views" :key="v">
+                    <button type="button" role="tab" :aria-selected="view === v" @click="show(v)" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === v ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i :data-lucide="tabIcon(v)" class="w-4 h-4"></i><span x-text="tabLabel(v)"></span></button>
+                </template>
             </div>
         </div>
 
-        <div x-show="view === 'overview'" class="flex flex-wrap items-center justify-between gap-3">
+        <div x-show="subjectsReady && view === 'overview'" x-cloak class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-[14.5px] text-ink-body" x-show="$store.session.can('constituents') || $store.session.can('dokyu') || $store.session.can('tulong')">Live counts, updated as they change.</p>
-            <x-ui.button :href="route('admin.reports')" icon="download">Export report</x-ui.button>
+            <x-ui.button :href="route('admin.reports')" icon="download" x-show="$store.session.can('reports')" class="ml-auto">Export Report</x-ui.button>
         </div>
 
         <!-- Skeleton state -->
-        <div x-show="!ready && view === 'overview'" x-transition.opacity.duration.300ms class="flex flex-col gap-5">
+        <div x-show="!subjectsReady || (!ready && view === 'overview')" x-transition.opacity.duration.300ms class="flex flex-col gap-5">
             <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
                 @for ($i = 0; $i < 6; $i++)
                     <div class="surface-glass rounded-[22px] min-h-[136px] p-4 space-y-3">
@@ -191,51 +210,63 @@
             <x-ui.error-state messageExpr="'Could not load the dashboard.'" retryExpr="load()" :retryable="true" />
         </div>
 
-        <template x-if="view === 'department'">
+        <template x-if="subjectsReady && view === 'department'">
             <x-admin.dashboards.department />
         </template>
-        <template x-if="view === 'barangay'">
+        <template x-if="subjectsReady && view === 'barangay'">
             <x-admin.dashboards.barangay />
+        </template>
+        <template x-if="subjectsReady && view === 'desk'">
+            <x-admin.dashboards.desk />
+        </template>
+        <template x-if="subjectsReady && view === 'records'">
+            <x-admin.dashboards.records />
+        </template>
+        <template x-if="subjectsReady && view === 'balita'">
+            <x-admin.dashboards.balita />
+        </template>
+        <template x-if="subjectsReady && view === 'sakuna'">
+            <x-admin.dashboards.sakuna />
         </template>
 
         <!-- Real content -->
-        <div x-show="ready && !failed && view === 'overview'" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="subjectsReady && ready && !failed && view === 'overview'" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
             <!-- KPI cards: all six in one row on a wide screen (owner, 2026-10-09), so compact -->
             {{-- A role with no counts (MIO, 2026-11-17) gets no empty grid: its gap left a blank band. --}}
             <div x-show="$store.session.can('constituents') || $store.session.can('dokyu') || $store.session.can('tulong')" class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
-                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
-                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.assistance-requests') . '?open=1'" label="Tulong Open" valueBind="openTulong" icon="hand-heart" color="deep" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="slate" sublabel="Dokyu released + Tulong completed" :delay="160" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="gold" sublabel="Dokyu + Tulong" :delay="200" /></div>
+                <div x-show="dash?.residents" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.constituents')" label="Registered residents" valueBind="(registeredResidents ?? 0).toLocaleString('en-PH')" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Open Dokyu requests" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
+                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.assistance-requests') . '?open=1'" label="Open Tulong cases" valueBind="openTulong" icon="hand-heart" color="deep" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Released this month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="slate" sublabelBind="releasedText" :delay="160" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Filed today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="gold" sublabelBind="modulesText" :delay="200" /></div>
             </div>
 
             <!-- Row 1: doughnuts + barangays -->
-            <div x-show="$store.session.can('constituents') || $store.session.can('dokyu') || $store.session.can('tulong')" class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
+            <div x-show="hasCounts" class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
                 <div x-show="$store.session.can('dokyu')" x-cloak>
-                <x-ui.card>
+                <x-ui.card class="h-full">
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <h3 class="text-lg font-extrabold text-ink">Dokyu</h3>
-                        <a href="{{ route('admin.document-requests') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View details</a>
+                        <a href="{{ route('admin.document-requests') }}" class="shrink-0 whitespace-nowrap text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View Details</a>
                     </div>
                     <x-ui.clay-donut rows="docStatus" total-label="Total requests" empty="No Dokyu requests yet." />
                 </x-ui.card>
                 </div>
 
                 <div x-show="$store.session.can('tulong')" x-cloak>
-                <x-ui.card>
+                <x-ui.card class="h-full">
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <h3 class="text-lg font-extrabold text-ink">Tulong</h3>
-                        <a href="{{ route('admin.assistance-requests') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View details</a>
+                        <a href="{{ route('admin.assistance-requests') }}" class="shrink-0 whitespace-nowrap text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View Details</a>
                     </div>
                     <x-ui.clay-donut rows="assistStatus" total-label="Total cases" empty="No Tulong requests yet." />
                 </x-ui.card>
                 </div>
 
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong') || $store.session.can('constituents')" x-cloak>
-                <x-ui.card>
+                <div x-show="hasCounts" x-cloak>
+                <x-ui.card class="h-full">
                     <div class="flex flex-col items-start gap-3 mb-5">
                         <h3 class="text-lg font-extrabold text-ink leading-tight">Open requests by barangay</h3>
                         <div x-show="$store.session.can('dokyu') && $store.session.can('tulong')" class="inline-flex p-1 rounded-xl surface-pressed-sm shrink-0" role="tablist" aria-label="Module">
@@ -244,17 +275,7 @@
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <template x-for="brgy in barangayRows" :key="brgy.name">
-                            <div>
-                                <div class="flex items-center justify-between gap-3 mb-2">
-                                    <span class="text-[14.5px] font-semibold text-ink-body truncate" x-text="'Brgy. ' + brgy.name"></span>
-                                    <span class="text-sm text-ink-muted shrink-0" x-text="brgy.count + (brgy.count === 1 ? ' request' : ' requests')"></span>
-                                </div>
-                                <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
-                                </div>
-                            </div>
-                        </template>
+                        <x-ui.clay-bars rows="barangayRows" x-show="barangayRows.length" />
                         <div x-show="!barangayRows.length" class="surface-pressed rounded-2xl px-4 py-5 text-center">
                             <p class="text-[14.5px] font-bold text-ink" x-text="{ dokyu: 'No open Dokyu requests', tulong: 'No open Tulong requests' }[brgyTab] || 'No open requests'"></p>
                             <p class="mt-1 text-[12.5px] text-ink-muted">Every request in your scope is released, completed or closed.</p>
@@ -268,68 +289,35 @@
                 </div>
             </div>
 
-            <!-- Row 2: trend, alerts, activity -->
-            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak>
-                <x-ui.card>
+            {{-- A role with no figures here still has its work and its activity. --}}
+            <div x-show="!hasCounts && !dash?.residents" class="surface-pressed rounded-2xl px-4 py-5 text-center">
+                <p class="text-[14.5px] font-bold text-ink">Your role has no figures on this dashboard.</p>
+                <p class="mt-1 text-[12.5px] text-ink-muted">What waits on you and your recent activity are below.</p>
+            </div>
+
+            <!-- Row 2: the trend and what waits on this account -->
+            <div class="grid grid-cols-1 xl:grid-cols-5 gap-5">
+                <div x-show="hasCounts" x-cloak class="xl:col-span-3">
+                <x-ui.card class="flex flex-col h-full">
                     <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-3">
                         <h3 class="text-lg font-extrabold text-ink">Requests trend</h3>
                         <p class="flex items-center gap-3 text-[13px] font-semibold text-ink-muted">
                             <span>Last 6 months</span>
-                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
-                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gold-600"></span>Tulong</span>
+                            <span x-show="$store.session.can('dokyu')" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
+                            <span x-show="$store.session.can('tulong')" class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gold-600"></span>Tulong</span>
                         </p>
                     </div>
-                    <x-ui.clay-trend data="trendData" label="Dokyu and Tulong requests filed in each of the last six months" />
+                    <x-ui.clay-trend class="my-auto" data="trendData" label="Dokyu and Tulong requests filed in each of the last six months" />
                 </x-ui.card>
                 </div>
 
-                <x-ui.card x-show="$store.session.can('sakuna')" x-cloak>
-                    <div class="flex items-center justify-between gap-3 mb-4">
-                        <h3 class="text-lg font-extrabold text-ink">Sakuna alerts</h3>
-                        <span class="min-w-[26px] h-[26px] px-2 rounded-full clay-gold grid place-items-center text-[12.5px] font-extrabold" x-text="(dash?.sakuna?.alerts || []).length"></span>
-                    </div>
-                    <div class="space-y-3">
-                        <template x-for="alert in (dash?.sakuna?.alerts || [])" :key="alert.ref">
-                            <a href="{{ route('admin.sakuna.alerts') }}" class="flex items-start gap-3 rounded-[18px] bg-white/55 border border-white/80 px-3.5 py-3 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200">
-                                <span class="w-[42px] h-[42px] rounded-2xl clay-gold-light grid place-items-center shrink-0">
-                                    <i data-lucide="triangle-alert" class="w-5 h-5"></i>
-                                </span>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-[15px] font-bold text-ink leading-snug truncate" x-text="alert.title?.en"></p>
-                                    <p class="text-[12.5px] text-ink-muted" x-text="alert.type + ' · ' + alert.level"></p>
-                                    <p class="text-[11.5px] text-ink-faint mt-0.5" x-text="alert.published_at ? new Date(alert.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></p>
-                                </div>
-                                <span class="shrink-0 surface-pressed-sm rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[.04em] text-ink-body" x-text="alert.level"></span>
-                            </a>
-                        </template>
-                        <p class="py-6 text-center text-sm text-ink-muted" x-show="!(dash?.sakuna?.alerts || []).length">No active alerts.</p>
-                        <a href="{{ route('admin.sakuna.alerts') }}" class="inline-block text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View all alerts</a>
-                    </div>
-                </x-ui.card>
+                <x-admin.dashboards.action-list ::class="hasCounts ? 'xl:col-span-2' : 'xl:col-span-5'" />
+            </div>
 
-                <x-ui.card>
-                    <div class="flex items-center justify-between gap-3 mb-1">
-                        <h3 class="text-lg font-extrabold text-ink">Recent activity</h3>
-                        <a href="{{ route('admin.audit-logs') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View all</a>
-                    </div>
-                    <div>
-                        <template x-for="(activity, i) in (dash?.activities || []).slice(0, 5)" :key="i">
-                            <div class="flex items-start gap-3 px-1 py-3.5" :class="i && 'border-t border-brand-600/[.09]'">
-                                <span class="w-[38px] h-[38px] rounded-full surface-pressed grid place-items-center text-brand-600 shrink-0">
-                                    <i :data-lucide="activityIcon(activity)" class="w-[17px] h-[17px]"></i>
-                                </span>
-                                <div class="min-w-0">
-                                    {{-- In words: a failed sign-in read 'null — auth.login_failed' (QA run 2026-10-05). --}}
-                                    <p class="text-sm leading-snug"><span class="font-bold text-ink" x-text="activity.actor || 'System'"></span><span class="text-ink-muted"> — </span><span class="font-semibold text-ink-muted" x-text="activity.summary || activity.action"></span></p>
-                                    <p class="text-xs font-semibold text-brand-600 mt-0.5 break-words" x-text="[moduleLabel(activity.module), activity.target].filter(Boolean).join(' · ')"></p>
-                                    <p class="text-[11.5px] text-ink-faint mt-0.5" x-text="activity.at ? new Date(activity.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></p>
-                                </div>
-                            </div>
-                        </template>
-                        <p class="py-6 text-center text-sm text-ink-muted" x-show="!(dash?.activities || []).length">No recent activity.</p>
-                    </div>
-                </x-ui.card>
+            <!-- Row 3: Sakuna alerts and activity -->
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
+                <x-admin.dashboards.alerts x-show="$store.session.can('sakuna')" x-cloak />
+                <x-admin.dashboards.activity />
             </div>
         </div>
     </div>

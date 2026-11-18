@@ -70,6 +70,11 @@
                  barangay's registry (?barangay=). --}}
             const params = new URLSearchParams(window.location.search);
             if (params.get('barangay')) this.barangayFilter = params.get('barangay');
+            {{-- From the dashboard's Needs your action (18 Nov): a tab, a rung of
+                 the record ladder, the officer's own data issues. --}}
+            if (['registry', 'data-quality', 'citizen-verification'].includes(params.get('tab'))) this.tab = params.get('tab');
+            if (['Unverified', 'For Validation', 'Partially Verified', 'Verified'].includes(params.get('verification'))) { this.tab = 'registry'; this.view = 'individuals'; this.verificationFilter = params.get('verification'); }
+            this.dqMineOnly = this.tab === 'data-quality' && params.get('mine') === '1';
             const wanted = params.get('ref');
             if (wanted) {
                 {{-- A record past the loaded pages (Scan ID's link, 2026-10-29)
@@ -228,6 +233,7 @@
         tagFilter:          '',
         dqTypeFilter:       '',
         dqStatusFilter:     '',
+        dqMineOnly:         false,
         showIndividualDetail: false,
         showAddIndividual:    false,
         showFamilyDetail:     false,
@@ -732,6 +738,7 @@
                 if (!this.$store.session.inScope(i.barangay)) return false;
                 if (this.dqTypeFilter && i.type !== this.dqTypeFilter) return false;
                 if (this.dqStatusFilter && i.status !== this.dqStatusFilter) return false;
+                if (this.dqMineOnly && i.assigned_to !== this.$store.session.account?.name) return false;
                 if (this.search) {
                     const q = this.search.toLowerCase();
                     return (this.dqRecordName(i.record)||'').toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || (i.barangay||'').toLowerCase().includes(q) || (i.ref||'').toLowerCase().includes(q);
@@ -977,7 +984,7 @@
             } catch { say('Could not make the PDF.', 'error'); }
         },
         can(sub,perm) { return this.$store.session.canPerm?this.$store.session.canPerm(sub,perm):true; },
-        clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.cvSearch='';this.cvStatusFilter='';this.cvBarangayFilter='';this.cvTagFilter=''; },
+        clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.dqMineOnly=false;this.cvSearch='';this.cvStatusFilter='';this.cvBarangayFilter='';this.cvTagFilter=''; },
     }"
     {{-- No x-init="init()": Alpine runs init() by itself, and calling it
          again loaded the whole registry twice (live test 2026-10-12: every

@@ -157,7 +157,7 @@
                         :class="$store.session.account?.scope === 'Municipal' ? 'clay-gold-light' : 'bg-purple-50 text-purple-700'"
                     >
                         <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
-                        <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + $store.session.account?.scope"></span>
+                        <span x-text="$store.session.scopePill()"></span>
                     </span>
                 </div>
                 <a href="#" @click.prevent="open = false; $dispatch('open-my-profile')" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
