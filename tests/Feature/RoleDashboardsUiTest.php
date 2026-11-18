@@ -35,7 +35,7 @@ class RoleDashboardsUiTest extends TestCase
         $js = $this->source('resources/js/dashboards.js');
         $page = $this->source('resources/views/admin/dashboard.blade.php');
 
-        $this->assertStringContainsString("const listed = (this.subjects.views || []).filter((v) => VIEW_TABS[v]);", $js);
+        $this->assertStringContainsString('const listed = (this.subjects.views || []).filter((v) => VIEW_TABS[v]);', $js);
         $this->assertStringContainsString('this.view = this.views.includes(asked) ? asked : this.views[0];', $js);
         // Tabs only with more than one view: a department or barangay account has none.
         $this->assertStringContainsString('get showTabs() { return this.subjectsReady && this.views.length > 1; }', $js);
@@ -193,7 +193,7 @@ class RoleDashboardsUiTest extends TestCase
         $js = $this->source('resources/js/dashboards.js');
         $view = $this->source('resources/views/components/admin/dashboards/barangay.blade.php');
 
-        $this->assertStringContainsString("get own() { return !this.choosesBarangay && !!this.barangay && this.\$store.session.account?.scope === this.barangay; },", $js);
+        $this->assertStringContainsString('get own() { return !this.choosesBarangay && !!this.barangay && this.$store.session.account?.scope === this.barangay; },', $js);
         foreach (['Certificates to act on', 'Appointments today', 'Accounts to verify', 'Residents helped'] as $label) {
             $this->assertStringContainsString('label="'.$label.'"', $view);
         }
@@ -236,7 +236,7 @@ class RoleDashboardsUiTest extends TestCase
         $this->assertStringContainsString('if (this.statusList.length) return this.statusList.includes(r.status);', $dokyu);
 
         $tulong = $this->source('resources/views/admin/assistance-requests.blade.php');
-        $this->assertStringContainsString("if (asked.length === 1) this.statusFilter = asked[0]; else this.statusList = asked;", $tulong);
+        $this->assertStringContainsString('if (asked.length === 1) this.statusFilter = asked[0]; else this.statusList = asked;', $tulong);
 
         $records = $this->source('resources/js/scope-admin-records.js');
         $this->assertStringContainsString("this.mineOnly = params.get('mine') === '1';", $records);
