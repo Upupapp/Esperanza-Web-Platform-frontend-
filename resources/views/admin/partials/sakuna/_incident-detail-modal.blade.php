@@ -76,7 +76,7 @@
                  the role may not read them or the feature is off. --}}
             <div x-show="Array.isArray(selectedIncident?.persons)" x-cloak class="p-4 rounded-xl border border-rose-100 bg-white">
                 <div class="flex items-center justify-between gap-2 mb-2">
-                    <p class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Missing, deceased or unidentified persons</p>
+                    <p class="text-xs font-bold text-ink-muted uppercase tracking-[.07em]">Casualties: dead, injured, missing or not identified</p>
                     <a x-show="!missingOff && can('sakuna_missing','create')" :href="tabUrls['missing-persons'] + '?incident=' + encodeURIComponent(selectedIncident?.ref || '')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Record a person</a>
                 </div>
                 <p x-show="!(selectedIncident?.persons || []).length" class="text-xs text-ink-muted">No one is recorded under this incident.</p>

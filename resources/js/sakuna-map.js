@@ -266,12 +266,12 @@ function sakunaLocationPicker({ target, search = false, bilingual = false, requi
         get coords() { return this.hasPin ? coordText(this.lat, this.lng) : ''; },
         get osm() { return this.hasPin ? osmUrl(this.lat, this.lng) : '#'; },
         get emptyText() {
-            if (this.isRequired) return this.t('Not pinned yet. A new centre needs its place on the map so residents can find it.', 'Hindi pa naka-pin. Kailangang nasa mapa ang bagong center para mahanap ito ng mga residente.');
-            if (subject === 'centre') return this.t('Not on the map yet. Residents still see it in the list; pin it so it shows on the map and in "nearest centre".', 'Wala pa sa mapa. Makikita pa rin ito sa listahan; i-pin para lumabas sa mapa at sa "pinakamalapit na center".');
+            if (this.isRequired) return this.t('Not pinned yet. A new center needs its place on the map so residents can find it.', 'Hindi pa naka-pin. Kailangang nasa mapa ang bagong center para mahanap ito ng mga residente.');
+            if (subject === 'centre') return this.t('Not on the map yet. Residents still see it in the list; pin it so it shows on the map and in "nearest center".', 'Wala pa sa mapa. Makikita pa rin ito sa listahan; i-pin para lumabas sa mapa at sa "pinakamalapit na center".');
             return this.t('No map location selected. The barangay and the place you typed are still sent.', 'Walang napiling lokasyon sa mapa. Ipapadala pa rin ang barangay at ang lugar na isinulat mo.');
         },
         get failedText() {
-            if (this.isRequired) return this.t('A new centre needs its place on the map. Try again once the map loads.', 'Kailangang nasa mapa ang bagong center. Subukang muli kapag na-load na ang mapa.');
+            if (this.isRequired) return this.t('A new center needs its place on the map. Try again once the map loads.', 'Kailangang nasa mapa ang bagong center. Subukang muli kapag na-load na ang mapa.');
             if (subject === 'centre') return this.t('You can still save the other details and pin it later.', 'Maise-save pa rin ang ibang detalye at mai-pin ito mamaya.');
             return this.t('You can still send this without a pin: describe the place in the field above.', 'Maipapadala mo pa rin ito nang walang pin: ilarawan ang lugar sa field sa itaas.');
         },

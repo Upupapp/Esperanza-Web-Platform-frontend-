@@ -6,7 +6,7 @@
      ?report=1 opens the form. Mirrors the app's Sakuna tab. Logic in
      resources/js/scope-citizen.js (citizenEmergency); the resident's own
      shelter and relief in resources/js/citizen-shelter.js (2026-10-27). --}}
-<x-layouts.citizen title="Emergency" subtitle="Hotlines, evacuation centres, alerts, and incident reports." active="emergency">
+<x-layouts.citizen title="Emergency" subtitle="Hotlines, evacuation centers, alerts, and incident reports." active="emergency">
     <div x-data="citizenEmergency" class="animate-fade-up">
 
         {{-- In a life-threatening emergency, the fastest thing on the page is the call. --}}
@@ -99,7 +99,7 @@
                      resources/js/citizen-shelter.js. --}}
                 <section id="my-records" class="surface-glass rounded-[26px] p-5 scroll-mt-4" aria-labelledby="my-records-heading" x-data="citizenShelter">
                     <h2 id="my-records-heading" class="text-base font-extrabold text-ink flex items-center gap-2"><i data-lucide="house" class="w-5 h-5 text-brand-600"></i><x-ui.t fil="Aking Paglikas at Relief" en="My Shelter and Relief" /></h2>
-                    <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Ang mga pananatili ng inyong pamilya sa evacuation center at ang relief na inilabas para sa inyo. Ang staff pa rin ang nagtatala ng check-in at relief." en="Your family's stays at evacuation centres and the relief released to you. Staff still record check-ins and relief." /></p>
+                    <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Ang mga pananatili ng inyong pamilya sa evacuation center at ang relief na inilabas para sa inyo. Ang staff pa rin ang nagtatala ng check-in at relief." en="Your family's stays at evacuation centers and the relief released to you. Staff still record check-ins and relief." /></p>
 
                     <div x-show="recordsState === 'loading'" class="space-y-2 mt-4"><x-ui.skeleton class="h-14 rounded-2xl" /><x-ui.skeleton class="h-14 rounded-2xl opacity-70" /></div>
                     <div x-show="recordsState === 'error'" x-cloak>
@@ -115,11 +115,11 @@
                                 <li class="rounded-2xl border border-brand-600/10 bg-white/70 px-3.5 py-3">
                                     <div class="flex flex-wrap items-start justify-between gap-2">
                                         <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-ink" x-text="s.center || t('Evacuation centre', 'Evacuation center')"></p>
-                                            <p class="text-[11px] text-ink-muted"><span class="font-mono" x-text="s.ref"></span> · <span x-text="t('Checked in ', 'Nag-check in ') + when(s.checked_in) + (s.checked_out ? t(' · left the centre ', ' · umalis sa center ') + when(s.checked_out) : '')"></span></p>
+                                            <p class="text-sm font-semibold text-ink" x-text="s.center || t('Evacuation center', 'Evacuation center')"></p>
+                                            <p class="text-[11px] text-ink-muted"><span class="font-mono" x-text="s.ref"></span> · <span x-text="t('Checked in ', 'Nag-check in ') + when(s.checked_in) + (s.checked_out ? t(' · left the center ', ' · umalis sa center ') + when(s.checked_out) : '')"></span></p>
                                             <p class="text-[11px] text-ink-muted mt-0.5" x-text="s.members.length ? s.members.map((m) => m.name).join(', ') : (s.member_count + ' ' + t('people', 'katao'))"></p>
                                         </div>
-                                        <span class="shrink-0 text-[10.5px] font-bold rounded-full px-2 py-0.5" :class="s.status === 'Processing' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'" x-text="s.status === 'Processing' ? t('Staying now', 'Nananatili ngayon') : t('Left the centre', 'Umalis na sa center')"></span>
+                                        <span class="shrink-0 text-[10.5px] font-bold rounded-full px-2 py-0.5" :class="s.status === 'Processing' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'" x-text="s.status === 'Processing' ? t('Staying now', 'Nananatili ngayon') : t('Left the center', 'Umalis na sa center')"></span>
                                     </div>
                                     <button type="button" @click="openReport(s.ref)" class="mt-2 text-xs font-semibold text-brand-700 hover:text-brand-800 min-h-[44px]" :aria-expanded="reportFor === s.ref" x-text="t('Report a mistake', 'Mag-ulat ng mali')"></button>
                                 </li>
@@ -197,7 +197,7 @@
                             <button type="button" @click="addHouseholdMember()" class="text-xs font-semibold text-brand-700 min-h-[44px]" x-text="t('+ Add a person', '+ Magdagdag ng tao')"></button>
                             <label class="flex items-start gap-2 rounded-2xl surface-pressed-sm px-3.5 py-3 text-xs text-ink-body">
                                 <input type="checkbox" x-model="hhForm.consent" class="mt-0.5 rounded border-slate-300 text-brand-600">
-                                <span><x-ui.t fil="Pumapayag akong itago ng munisipyo ang listahang ito, kasama ang mga detalye ng mga bata, para lamang sa check-in sa evacuation center. Maaari ko itong burahin anumang oras." en="I agree that the Municipality keeps this list, including children's details, only for check-in at an evacuation centre. I can delete it at any time." /></span>
+                                <span><x-ui.t fil="Pumapayag akong itago ng munisipyo ang listahang ito, kasama ang mga detalye ng mga bata, para lamang sa check-in sa evacuation center. Maaari ko itong burahin anumang oras." en="I agree that the Municipality keeps this list, including children's details, only for check-in at an evacuation center. I can delete it at any time." /></span>
                             </label>
                             <div class="flex justify-end gap-2">
                                 <button type="button" @click="hhEditing = false" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-white text-ink border border-slate-200" x-text="t('Cancel', 'Kanselahin')"></button>
@@ -212,12 +212,12 @@
                      (2026-10-26): distances are straight lines from the device's
                      GPS or a point the resident taps, never from a barangay name. --}}
                 <section class="surface-glass rounded-[26px] p-5" aria-labelledby="centres-heading" x-data="sakunaCentresMap" x-effect="refresh()">
-                    <h2 id="centres-heading" class="text-base font-extrabold text-ink flex items-center gap-2"><i data-lucide="house" class="w-5 h-5 text-brand-600"></i><x-ui.t fil="Mga Evacuation Center" en="Evacuation Centres" /></h2>
-                    <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Ang mga bukas na center, kung ilan ang naroon na, at ang mga serbisyo nila." en="The centres that are set up, how full they are, and what they offer." /></p>
+                    <h2 id="centres-heading" class="text-base font-extrabold text-ink flex items-center gap-2"><i data-lucide="house" class="w-5 h-5 text-brand-600"></i><x-ui.t fil="Mga Evacuation Center" en="Evacuation Centers" /></h2>
+                    <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Ang mga bukas na center, kung ilan ang naroon na, at ang mga serbisyo nila." en="The centers that are set up, how full they are, and what they offer." /></p>
 
                     <div x-show="centresState === 'loaded' && centres.length" x-cloak class="mt-4 space-y-3">
                         <div class="flex flex-wrap items-center gap-2">
-                            <div class="inline-flex rounded-2xl surface-pressed-sm p-1" role="group" :aria-label="t('Show the centres as', 'Ipakita ang mga center bilang')">
+                            <div class="inline-flex rounded-2xl surface-pressed-sm p-1" role="group" :aria-label="t('Show the centers as', 'Ipakita ang mga center bilang')">
                                 <button type="button" @click="view = 'list'" :aria-pressed="view === 'list'" class="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-xl text-xs font-semibold transition-colors" :class="view === 'list' ? 'bg-white text-brand-700 shadow-sm' : 'text-ink-muted hover:text-ink'"><i data-lucide="list" class="w-4 h-4"></i><x-ui.t fil="Listahan" en="List" /></button>
                                 <button type="button" @click="showMap()" :aria-pressed="view === 'map'" class="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-xl text-xs font-semibold transition-colors" :class="view === 'map' ? 'bg-white text-brand-700 shadow-sm' : 'text-ink-muted hover:text-ink'"><i data-lucide="map" class="w-4 h-4"></i><x-ui.t fil="Mapa" en="Map" /></button>
                             </div>
@@ -233,7 +233,7 @@
                             <div class="flex flex-wrap gap-2">
                                 <button type="button" @click="findNearest()" :disabled="hereState === 'locating'" :aria-busy="hereState === 'locating'"
                                     class="inline-flex items-center gap-1.5 min-h-[40px] px-3.5 rounded-2xl text-xs font-semibold clay-blue btn-shine hover:brightness-95 disabled:opacity-60">
-                                    <i data-lucide="locate-fixed" class="w-4 h-4"></i><span x-text="hereState === 'locating' ? t('Finding you…', 'Hinahanap ka…') : t('Find the nearest open centre', 'Hanapin ang pinakamalapit na bukas na center')"></span>
+                                    <i data-lucide="locate-fixed" class="w-4 h-4"></i><span x-text="hereState === 'locating' ? t('Finding you…', 'Hinahanap ka…') : t('Find the nearest open center', 'Hanapin ang pinakamalapit na bukas na center')"></span>
                                 </button>
                                 <button type="button" @click="pickOnMap()" class="inline-flex items-center gap-1.5 min-h-[40px] px-3.5 rounded-2xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:border-slate-300">
                                     <i data-lucide="map-pinned" class="w-4 h-4"></i><x-ui.t fil="Piliin ang lugar ko sa mapa" en="Choose my place on the map" />
@@ -243,35 +243,35 @@
                             <p x-show="hereState === 'idle'" class="text-[11px] text-ink-muted mt-1.5"><x-ui.t fil="Magtatanong muna ang iyong device bago ibahagi ang lokasyon mo; gagamitin lang ito para sukatin ang layo." en="Your device asks before sharing your location; it is used only to measure distances." /></p>
                             <p x-show="hereMessage" x-cloak role="status" class="text-[11px] mt-1.5" :class="hereTrouble ? 'text-amber-800 font-semibold' : 'text-ink-muted'" x-text="hereMessage"></p>
                             <div x-show="here && nearest" x-cloak class="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 px-3.5 py-2.5">
-                                <p class="text-[10.5px] font-bold uppercase tracking-wide text-emerald-800"><x-ui.t fil="Pinakamalapit na bukas na center" en="Nearest open centre" /></p>
+                                <p class="text-[10.5px] font-bold uppercase tracking-wide text-emerald-800"><x-ui.t fil="Pinakamalapit na bukas na center" en="Nearest open center" /></p>
                                 <button type="button" @click="openCentre(nearest.c)" class="text-sm font-bold text-ink hover:underline text-left" x-text="nearest?.c.name"></button>
                                 <p class="text-[11px] text-emerald-900" x-text="nearest ? distanceLabel(nearest.c) + ' · Brgy. ' + nearest.c.barangay : ''"></p>
                             </div>
-                            <p x-show="here && !nearest" x-cloak class="mt-3 text-[11px] text-ink-muted"><x-ui.t fil="Walang bukas na center na nasa mapa ngayon." en="No open centre is on the map right now." /></p>
+                            <p x-show="here && !nearest" x-cloak class="mt-3 text-[11px] text-ink-muted"><x-ui.t fil="Walang bukas na center na nasa mapa ngayon." en="No open center is on the map right now." /></p>
                             <p x-show="here" x-cloak class="mt-2 text-[11px] text-ink-muted"><x-ui.t fil="Tuwid na linya ang layo, hindi ayon sa daan. Hindi laging pinakaligtas o pinakamabilis puntahan ang pinakamalapit — sundin ang MDRRMO at ang mga opisyal ng inyong barangay." en="Distances are straight lines, not by road. The nearest is not always the safest or quickest to reach — follow the MDRRMO and your barangay officials." /></p>
                         </div>
-                        <p x-show="!placed.length" class="rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Wala pang center na nasa mapa, kaya hindi pa masusukat ang layo. Gamitin ang listahan at ang barangay." en="No centre is on the map yet, so distances cannot be measured. Use the list and the barangay filter." /></p>
+                        <p x-show="!placed.length" class="rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Wala pang center na nasa mapa, kaya hindi pa masusukat ang layo. Gamitin ang listahan at ang barangay." en="No center is on the map yet, so distances cannot be measured. Use the list and the barangay filter." /></p>
                     </div>
                     <div x-show="centresState === 'loading'" class="space-y-2 mt-4"><x-ui.skeleton class="h-16 rounded-2xl" /><x-ui.skeleton class="h-16 rounded-2xl opacity-70" /></div>
                     <div x-show="centresState === 'error'" x-cloak>
                         <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'The evacuation centres could not be loaded.' : 'Hindi ma-load ang mga evacuation center.'" retryExpr="loadDirectory()" class="!py-8" />
                     </div>
-                    <p x-show="centresState === 'loaded' && !centres.length" x-cloak class="mt-4 rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Wala pang nakalistang evacuation center." en="No evacuation centres listed yet." /></p>
+                    <p x-show="centresState === 'loaded' && !centres.length" x-cloak class="mt-4 rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Wala pang nakalistang evacuation center." en="No evacuation centers listed yet." /></p>
                     <div x-show="view === 'map' && centres.length" x-cloak class="mt-3">
                         <div x-show="placed.length" class="relative">
                             <div x-ref="map" class="sakuna-map h-72 sm:h-96 w-full rounded-2xl overflow-hidden border border-brand-600/10"
-                                 role="application" :aria-label="t('Map of evacuation centres', 'Mapa ng mga evacuation center')"></div>
+                                 role="application" :aria-label="t('Map of evacuation centers', 'Mapa ng mga evacuation center')"></div>
                             <div x-show="mapState === 'loading'" class="pointer-events-none absolute inset-x-0 top-2 flex justify-center z-[500]"><span class="text-[11px] font-semibold text-slate-600 bg-white/90 rounded-full px-2.5 py-1 shadow"><x-ui.t fil="Nilo-load ang mapa…" en="Loading the map…" /></span></div>
                         </div>
                         <div x-show="mapState === 'failed'" x-cloak role="alert" class="mt-2 rounded-2xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-[11px] text-amber-900">
                             <p class="font-semibold"><x-ui.t fil="Hindi ma-load ang mapa (walang koneksyon, o abala ang serbisyo ng mapa)." en="The map could not load (no connection, or the map service is busy)." /></p>
-                            <p><x-ui.t fil="Nasa listahan pa rin ang lahat ng center." en="Every centre is still in the list." /> <button type="button" @click="view = 'list'" class="font-semibold underline underline-offset-2"><x-ui.t fil="Ipakita ang listahan" en="Show the list" /></button> · <button type="button" @click="retryMap()" class="font-semibold underline underline-offset-2"><x-ui.t fil="Subukang muli" en="Try again" /></button></p>
+                            <p><x-ui.t fil="Nasa listahan pa rin ang lahat ng center." en="Every center is still in the list." /> <button type="button" @click="view = 'list'" class="font-semibold underline underline-offset-2"><x-ui.t fil="Ipakita ang listahan" en="Show the list" /></button> · <button type="button" @click="retryMap()" class="font-semibold underline underline-offset-2"><x-ui.t fil="Subukang muli" en="Try again" /></button></p>
                         </div>
-                        <p x-show="placed.length" class="text-[11px] text-ink-muted mt-1.5" x-text="(hereState === 'picking') ? t('Tap the map where you are.', 'I-tap ang mapa kung nasaan ka.') : t('Select a centre for its details. Green: open now. Grey: not open.', 'Pumili ng center para sa mga detalye. Berde: bukas ngayon. Abo: hindi bukas.')"></p>
+                        <p x-show="placed.length" class="text-[11px] text-ink-muted mt-1.5" x-text="(hereState === 'picking') ? t('Tap the map where you are.', 'I-tap ang mapa kung nasaan ka.') : t('Select a center for its details. Green: open now. Grey: not open.', 'Pumili ng center para sa mga detalye. Berde: bukas ngayon. Abo: hindi bukas.')"></p>
                         <p x-show="placed.length && placed.length < centres.length" class="text-[11px] text-ink-muted mt-0.5" x-text="t((centres.length - placed.length) + ' listed centre(s) are not on the map yet; they are in the list.', 'May ' + (centres.length - placed.length) + ' center na wala pa sa mapa; nasa listahan sila.')"></p>
-                        <p x-show="!placed.length" class="rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Wala pang center na nasa mapa. Nasa listahan ang lahat." en="No centre is on the map yet. They are all in the list." /> <button type="button" @click="view = 'list'" class="font-semibold text-brand-700 underline underline-offset-2"><x-ui.t fil="Ipakita ang listahan" en="Show the list" /></button></p>
+                        <p x-show="!placed.length" class="rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Wala pang center na nasa mapa. Nasa listahan ang lahat." en="No center is on the map yet. They are all in the list." /> <button type="button" @click="view = 'list'" class="font-semibold text-brand-700 underline underline-offset-2"><x-ui.t fil="Ipakita ang listahan" en="Show the list" /></button></p>
                     </div>
-                    <p x-show="view === 'list' && centres.length && !shown.length" x-cloak class="mt-3 rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Walang center sa barangay na ito." en="No centre in this barangay." /></p>
+                    <p x-show="view === 'list' && centres.length && !shown.length" x-cloak class="mt-3 rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Walang center sa barangay na ito." en="No center in this barangay." /></p>
                     <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4" x-show="view === 'list' && shown.length" x-cloak>
                         <template x-for="c in shown" :key="c.ref">
                             <li>
@@ -350,11 +350,11 @@
 
                         <div class="mt-3" x-show="centre.lat !== null && centre.lng !== null">
                             <div x-data="sakunaPinView({ point: () => ({ lat: centre?.lat, lng: centre?.lng }), tone: 'centre' })" x-effect="show()">
-                                <div x-ref="map" class="sakuna-map h-48 w-full rounded-xl overflow-hidden border border-slate-200" role="img" :aria-label="t('Map showing where the centre is', 'Mapa kung nasaan ang center')"></div>
+                                <div x-ref="map" class="sakuna-map h-48 w-full rounded-xl overflow-hidden border border-slate-200" role="img" :aria-label="t('Map showing where the center is', 'Mapa kung nasaan ang center')"></div>
                                 <p x-show="viewState === 'failed'" x-cloak class="text-[11px] text-amber-800 font-semibold mt-1"><x-ui.t fil="Hindi ma-load ang mapa. Gumagana pa rin ang direksyon sa ibaba." en="The map could not load. The directions below still work." /></p>
                             </div>
                         </div>
-                        <p class="text-[11px] text-ink-muted mt-3" x-show="centre.lat === null || centre.lng === null"><x-ui.t fil="Wala pa sa mapa ang center na ito; hahanapin ng direksyon ang pangalan at address nito." en="This centre is not on the map yet; directions search for its name and address." /></p>
+                        <p class="text-[11px] text-ink-muted mt-3" x-show="centre.lat === null || centre.lng === null"><x-ui.t fil="Wala pa sa mapa ang center na ito; hahanapin ng direksyon ang pangalan at address nito." en="This center is not on the map yet; directions search for its name and address." /></p>
                         <a :href="directionsUrl(centre)" target="_blank" rel="noopener"
                             class="mt-4 inline-flex w-full items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-2xl text-sm font-semibold clay-blue btn-shine hover:brightness-95">
                             <i data-lucide="navigation" class="w-4 h-4"></i><x-ui.t fil="Direksyon sa Google Maps" en="Directions in Google Maps" />

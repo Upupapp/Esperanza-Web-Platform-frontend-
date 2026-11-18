@@ -8,7 +8,7 @@
      Barangays) moved to Settings > Direktoryo (owner, 2026-10-21), and
      residents' Feedback to Settings > Feedback (owner, 2026-11-18: "this is
      not really in the balita part"); their old addresses open them there. --}}
-<x-layouts.admin title="Balita" subtitle="Announcements, banners and occasions, events and the barangay blotter." active="communications">
+<x-layouts.admin title="Balita" subtitle="Announcements, banners and occasions, and events." active="communications">
     <div
         x-data="{
             tab: '{{ $tab }}',
@@ -149,7 +149,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                         <template x-for="s in ['All', ...statuses]" :key="s">
-                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s"></button>
+                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="({ 'Released': 'Published', 'Rejected': 'Sent back', 'Pending Review': 'Waiting for review' })[s] || s"></button>
                         </template>
                     </div>
                     <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + events.length + ' events'"></p>

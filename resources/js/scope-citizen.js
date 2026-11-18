@@ -1850,7 +1850,7 @@ function citizenEmergency() {
         },
         occupancyWarning(c) {
             if (!c.open || c.individuals === null || c.capacity <= 0) return '';
-            if (c.pct >= 100) return this.t('Full: ask the MDRRMO for another centre', 'Puno na: magtanong sa MDRRMO ng ibang center');
+            if (c.pct >= 100) return this.t('Full: ask the MDRRMO for another center', 'Puno na: magtanong sa MDRRMO ng ibang center');
             if (c.pct >= 75) return this.t('Almost full', 'Halos puno na');
             return '';
         },
