@@ -1872,7 +1872,7 @@
                     submitted_at: row.submitted,
                     released_at: row.released || null,
                     status: row.status,
-                    category: cls.category || 'Other Municipal Services',
+                    category: row.category || cls.category || 'Other Municipal Services',
                     level: cls.level || 'Municipal',
                     reference_pdf: this.referencePdfByType[name] || this.referencePdfByType[type] || null,
                     service_guide_key: this.typeToServiceGuideKey[name] || this.typeToServiceGuideKey[type] || null,

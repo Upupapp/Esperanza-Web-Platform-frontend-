@@ -17,7 +17,7 @@
             <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2 mb-1">
                     <h2 class="text-base font-bold text-ink truncate" x-text="accountDetail?.name || accountRow?.name || 'Citizen account'"></h2>
-                    <x-ui.badge statusBind="accountDetail?.status || accountRow?.citizen_account?.status" />
+                    <x-ui.badge statusBind="(accountDetail?.status && accountDetail.status !== 'Pending Review') ? accountDetail.status : (accountRow ? cvStatusOf(accountRow) : accountDetail?.status)" />
                 </div>
                 <p class="text-xs text-ink-muted font-mono" x-text="accountDetail?.account_no || accountRow?.citizen_account?.account_no"></p>
             </div>

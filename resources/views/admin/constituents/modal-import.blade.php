@@ -379,7 +379,7 @@
                     </div>
                 </div>
                 <div x-show="undoTarget && undoTarget.ref===h.ref" x-cloak class="mt-3 rounded-xl bg-rose-50 border border-rose-200 p-3">
-                    <p class="text-xs text-rose-800 mb-2">Undo removes the residents, households and families this import added, and empties the details it filled in. Anyone who has since registered, filed a request or been listed as an evacuee is kept.</p>
+                    <p class="text-xs text-rose-800 mb-2">Undo archives the residents, households and families this import added, and empties the details it filled in. Anyone who has since registered, filed a request or been listed as an evacuee is kept.</p>
                     <div class="flex flex-wrap gap-2">
                         <input type="text" x-model="undoReason" maxlength="500" aria-label="Why the import is undone" placeholder="Why? (at least 5 characters)" class="flex-1 min-w-[12rem] text-xs rounded-lg border-rose-200">
                         <button type="button" @click="confirmUndo()" :disabled="undoing || undoReason.trim().length < 5" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white disabled:opacity-50" x-text="undoing ? 'Undoing…' : 'Undo the import'"></button>

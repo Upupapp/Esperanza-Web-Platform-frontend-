@@ -23,7 +23,7 @@
             :delay="75"
         />
         <x-ui.stat-card layout="compact"
-            label="Avg. Completion Rate"
+            label="Profiled, whole town"
             valueBind="(coverageMunicipal?.coveragePct ?? Math.round(barangayCoverage.reduce((s,b) => s + b.pct, 0) / (barangayCoverage.length || 1))) + '%'"
             icon="clipboard-check"
             color="purple"

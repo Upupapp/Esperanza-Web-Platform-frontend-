@@ -64,7 +64,7 @@
                                     <p class="text-[8px] text-white/50 uppercase tracking-wide">Republic of the Philippines</p>
                                     <p class="text-[9.5px] font-semibold text-white/85 truncate">Municipality of Esperanza, Masbate</p>
                                 </div>
-                                <span class="ml-auto text-[8px] font-bold text-gold-300 uppercase tracking-wider border border-gold-400/40 rounded-full px-1.5 py-0.5 shrink-0">Barangay ID</span>
+                                <span class="ml-auto text-[8px] font-bold text-gold-300 uppercase tracking-wider border border-gold-400/40 rounded-full px-1.5 py-0.5 shrink-0">Resident ID</span>
                             </div>
 
                             <div class="flex items-center gap-3 mt-3.5">
