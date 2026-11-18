@@ -131,7 +131,9 @@
                         type: r.service || '—',
                         serviceKey: r.service_key || null,
                         office: r.office || this.officeByType[r.service] || '',
-                        purpose: '',
+                        // The list carries the purpose, as on Dokyu: the
+                        // Layunin column stayed empty until a case was opened (2026-11-18).
+                        purpose: r.purpose || '',
                         days: this.daysByKey[r.service_key] || this.daysByType[r.service] || '3-5 working days',
                         submitted: this.formatDay(r.submitted),
                         submitted_at: r.submitted,
@@ -1248,7 +1250,7 @@
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted"><x-ui.t fil="Reference" en="Reference" /></th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted"><x-ui.t fil="Uri ng Tulong" en="Assistance Type" /></th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden lg:table-cell"><x-ui.t fil="Opisina" en="Office" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell"><x-ui.t fil="Layunin" en="Purpose" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell" x-show="filteredRequests.some(r => r.purpose)"><x-ui.t fil="Layunin" en="Purpose" /></th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden sm:table-cell"><x-ui.t fil="Isinumite" en="Submitted" /></th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted"><x-ui.t fil="Status" en="Status" /></th>
                     <th class="px-4 py-2.5"></th>
@@ -1260,11 +1262,11 @@
         tabindex="0"
         @keydown.enter.prevent="openProgress(req)"
         @keydown.space.prevent="openProgress(req)">
-                        <td class="px-4 py-3 font-mono text-xs text-ink-muted" x-text="req.ref"></td>
+                        <td class="px-4 py-3 font-mono text-xs text-ink-muted whitespace-nowrap" x-text="req.ref"></td>
                         <td class="px-4 py-3 text-slate-700 font-medium" x-text="req.type"></td>
                         <td class="px-4 py-3 text-ink-muted hidden lg:table-cell" x-text="req.office"></td>
-                        <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-text="req.purpose"></td>
-                        <td class="px-4 py-3 text-ink-muted hidden sm:table-cell" x-text="req.submitted"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-show="filteredRequests.some(r => r.purpose)" x-text="req.purpose"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden sm:table-cell whitespace-nowrap" x-text="req.submitted"></td>
                         <td class="px-4 py-3">
                             <span
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"

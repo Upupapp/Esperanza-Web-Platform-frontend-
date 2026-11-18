@@ -249,12 +249,15 @@
                         >
                     </div>
 
-                    <p class="min-w-0 flex-1 text-[13px] text-[#dce5ff] truncate">
-                        <x-ui.t fil="Barangay" en="Barangay" />
-                        <span class="font-semibold text-white" x-text="$store.barangay.mine?.label"></span>
-                        <span class="text-white/25 mx-1">·</span>
-                        <x-ui.t fil="Punong Barangay:" en="Punong Barangay:" />
-                        <span class="text-white/90 font-medium" x-text="$store.barangay.mine?.officials?.punong_barangay"></span>
+                    {{-- On a phone the barangay and its Punong Barangay each start a
+                         line, and the name wraps: on one line everything after the
+                         dot was cut to "…" (2026-11-18). --}}
+                    <p class="min-w-0 flex-1 text-[13px] text-[#dce5ff] max-sm:leading-snug sm:truncate">
+                        <span class="max-sm:block"><x-ui.t fil="Barangay" en="Barangay" />
+                        <span class="font-semibold text-white" x-text="$store.barangay.mine?.label"></span></span>
+                        <span class="text-white/25 mx-1 max-sm:hidden">·</span>
+                        <span class="max-sm:block max-sm:text-[12px]"><x-ui.t fil="Punong Barangay:" en="Punong Barangay:" />
+                        <span class="text-white/90 font-medium" x-text="$store.barangay.mine?.officials?.punong_barangay"></span></span>
                     </p>
 
                     <a

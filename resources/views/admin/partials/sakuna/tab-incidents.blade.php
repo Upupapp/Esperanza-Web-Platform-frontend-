@@ -74,7 +74,7 @@
     <div class="sk-stats">
         <div class="sk-stat"><span class="sk-slab">Total</span><span class="sk-sval tabular-nums" x-text="fig(incidentsList.length, incidentsLoading || incidentsFailed)"></span></div>
         <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-red" x-show="incidentsList.some(i => i.severity === 'Critical')"></span>Critical</span><span class="sk-sval tabular-nums" :class="incidentsList.some(i => i.severity === 'Critical') ? 'sk-t-red' : ''" x-text="fig(incidentsList.filter(i => i.severity === 'Critical').length, incidentsLoading || incidentsFailed)"></span></div>
-        <div class="sk-stat"><span class="sk-slab">Active</span><span class="sk-sval tabular-nums" x-text="fig(incidentsList.filter(i => !['Completed','Archived'].includes(i.status)).length, incidentsLoading || incidentsFailed)"></span></div>
+        <div class="sk-stat"><span class="sk-slab">Active</span><span class="sk-sval tabular-nums" x-text="fig(incidentsList.filter(i => !['Completed','Archived','Rejected'].includes(i.status)).length, incidentsLoading || incidentsFailed)"></span></div>
         <div class="sk-stat"><span class="sk-slab">Resolved</span><span class="sk-sval tabular-nums" x-text="fig(incidentsList.filter(i => i.status === 'Completed').length, incidentsLoading || incidentsFailed)"></span></div>
     </div>
     <div class="sk-actions">

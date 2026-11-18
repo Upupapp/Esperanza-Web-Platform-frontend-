@@ -221,9 +221,12 @@
                                 <p class="w-full text-[13px] font-extrabold text-ink"><span x-text="group.title"></span><span class="text-ink-muted font-semibold" x-text="group.who ? ' · ' + group.who : ''"></span></p>
                                 {{-- x-if, not x-show: each picker exists once (one #pr-office on the page). --}}
                                 <template x-if="group.key === 'office'">
-                                <div x-show="catalog.offices.length > 1" class="flex flex-col gap-1">
+                                {{-- As wide as the office's full name, up to the row, and an
+                                     ellipsis past that on a phone (UI sweep 2026-11-18: 260 px
+                                     cut 'MSWDO · Municipal Social Welfare &' with no ellipsis). --}}
+                                <div x-show="catalog.offices.length > 1" class="flex flex-col gap-1 min-w-0 max-w-full">
                                     <label for="pr-office" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office</label>
-                                    <select id="pr-office" x-model="office" @change="service = ''" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[260px]">
+                                    <select id="pr-office" x-model="office" @change="service = ''" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-full text-ellipsis">
                                         <template x-for="o in catalog.offices" :key="o.name">
                                             <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
                                         </template>
@@ -242,11 +245,11 @@
                                 </template>
                         {{-- An office's reports narrow as its dashboard does (2026-10-28). --}}
                         <template x-if="group.key === 'office'">
-                        <div class="flex flex-col gap-1">
+                        <div class="flex flex-col gap-1 min-w-0 max-w-full">
                             <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Narrowed to</span>
                             <div class="flex flex-wrap items-center gap-2">
                                 <label class="sr-only" for="pr-service">Program or document</label>
-                                <select id="pr-service" x-model="service" x-show="services.length > 1" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[240px]">
+                                <select id="pr-service" x-model="service" x-show="services.length > 1" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[240px] text-ellipsis">
                                     <option value="">All programs and documents</option>
                                     <template x-for="o in services" :key="o.key">
                                         <option :value="o.key" x-text="o.name" :selected="o.key === service"></option>

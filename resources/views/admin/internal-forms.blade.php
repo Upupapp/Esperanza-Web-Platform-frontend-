@@ -85,13 +85,17 @@
             get totalFormSteps() { return this.formSteps.length; },
             get currentFormStep() { return this.formSteps[this.formStep - 1] || { type: 'fields', fields: [] }; },
             get currentOffice() { return this.offices[this.officeKey] || null; },
-            // Only Super Administrator, Municipal Administrator, and Department
-            // Heads (who review/approve their department's submissions) see
-            // everyone's forms server-side; everyone else's list is already
-            // scoped to their own by the API. This only drives the banner copy.
+            // Whose forms the list holds is the server's rule (backend
+            // InternalFormController::scopeTo and Rbac/Scope.php): an officer
+            // held to an office (Department Head and Staff, the MDRRMO's roles,
+            // MIO Staff) sees their own forms, the ones their office handles or
+            // signs, and their colleagues' forms their office approves; every
+            // other role (Super and Municipal Admin, Front Desk, Records
+            // Officer, the Information Officer) sees every office's. No role
+            // sees only its own: a banner claiming so showed over other staff's
+            // forms (UI sweep 2026-11-18). This only drives the copy.
             get isAuthority() {
-                const role = this.$store.session.account?.roleKey;
-                return !this.$store.session.account || ['super_admin', 'municipal_admin', 'department_head'].includes(role);
+                return !this.$store.session.deptRestricted?.();
             },
             // The server shows a Department Head their office's forms and those
             // of their own staff that wait on them, not every office's.
@@ -350,18 +354,18 @@
         <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load internal forms.'" retryExpr="init()" :retryable="true" /></div>
 
         <div x-show="!loading && !failed">
-        <!-- Visibility banner: authorities see every submission, everyone else only their own -->
+        <!-- Visibility banner: cross-office roles see every submission, an office's officers their office's -->
         <div x-show="isAuthority && !isOfficeHead" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="shield-check" class="w-4 h-4 text-brand-500 shrink-0"></i>
             <p class="text-xs text-brand-700">Full visibility — as <strong x-text="$store.session.account?.role || 'an administrator'"></strong>, you can see every staff member's submissions across all offices.</p>
         </div>
         <div x-show="isOfficeHead" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="shield-check" class="w-4 h-4 text-brand-500 shrink-0"></i>
-            <p class="text-xs text-brand-700">Your office's view — the forms your office signs, and your own staff's forms that wait on you as their Department Head.</p>
+            <p class="text-xs text-brand-700">Your office's view — your own forms, the forms your office handles or signs, and your own staff's forms that wait on you as their Department Head. Other offices' forms are hidden.</p>
         </div>
-        <div x-show="!isAuthority" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
+        <div x-show="!isAuthority && !isOfficeHead" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="lock" class="w-4 h-4 text-purple-500 shrink-0"></i>
-            <p class="text-xs text-purple-700">Personal view — you can only see forms <strong>you</strong> submitted. Other staff members' submissions are hidden.</p>
+            <p class="text-xs text-purple-700">Your office's view — your own forms, the forms your office handles or signs, and your colleagues' forms that your office approves. Other offices' forms are hidden.</p>
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -373,7 +377,7 @@
 
         <!-- Office tabs + search -->
         <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
-            <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+            <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto">
                 <template x-for="(o, key) in offices" :key="key">
                     <button
                         type="button" @click="officeKey = key"
@@ -517,10 +521,10 @@
             </div>
         </div>
 
-        <!-- My Submitted Forms -->
+        <!-- Submitted forms: what the server shows this officer (the banner above says whose) -->
         <div class="flex items-center gap-3 mb-3">
-            <h3 class="text-sm font-semibold text-ink" x-text="isAuthority ? 'Recent Submissions' : 'My Submissions'"></h3>
-            <span class="text-[11px] text-ink-muted" x-text="filteredSubmitted.length + (isAuthority ? ' total' : ' submitted by you')"></span>
+            <h3 class="text-sm font-semibold text-ink">Recent submissions</h3>
+            <span class="text-[11px] text-ink-muted" x-text="filteredSubmitted.length + ' total'"></span>
         </div>
         <x-ui.table>
             <thead>

@@ -78,6 +78,19 @@
                 if (k.includes('read') || k.includes('view')) return 'eye';
                 return 'activity';
             },
+            // The module in words (UI sweep 2026-11-18): the card showed the raw
+            // audit key, 'user_management · IO-901'. Named as the sidebar does.
+            moduleNames: {
+                dokyu: 'Dokyu', tulong: 'Tulong', sakuna: 'Sakuna', constituents: 'Constituents',
+                communications: 'Balita', payments: 'Payments', papeles: 'Papeles', appointments: 'Appointments',
+                reports: 'Reports & Analytics', user_management: 'User Management', users: 'Test accounts',
+                identity: 'Sign-in & accounts', support: 'Support', privacy: 'Privacy', settings: 'Settings',
+            },
+            moduleLabel(m) {
+                if (!m) return '';
+                const s = String(m);
+                return this.moduleNames[s] || (s.charAt(0).toUpperCase() + s.slice(1)).replace(/_/g, ' ');
+            },
             get registeredResidents() {
                 return this.coverage?.meta?.municipal?.residents ?? this.coverage?.data?.[0]?.residents ?? null;
             },
@@ -309,7 +322,7 @@
                                 <div class="min-w-0">
                                     {{-- In words: a failed sign-in read 'null — auth.login_failed' (QA run 2026-10-05). --}}
                                     <p class="text-sm leading-snug"><span class="font-bold text-ink" x-text="activity.actor || 'System'"></span><span class="text-ink-muted"> — </span><span class="font-semibold text-ink-muted" x-text="activity.summary || activity.action"></span></p>
-                                    <p class="font-mono text-xs text-brand-600 mt-0.5 break-all" x-text="(activity.module || '') + (activity.target ? ' · ' + activity.target : '')"></p>
+                                    <p class="text-xs font-semibold text-brand-600 mt-0.5 break-words" x-text="[moduleLabel(activity.module), activity.target].filter(Boolean).join(' · ')"></p>
                                     <p class="text-[11.5px] text-ink-faint mt-0.5" x-text="activity.at ? new Date(activity.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></p>
                                 </div>
                             </div>

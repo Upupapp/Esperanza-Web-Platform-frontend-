@@ -312,7 +312,9 @@
         <div class="relative rounded-2xl overflow-hidden mb-5 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 shadow-card">
             <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,theme(colors.white),transparent_55%)] pointer-events-none"></div>
             <div class="relative px-5 py-6 sm:px-7 sm:py-7 flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="relative shrink-0">
+                {{-- As wide as the photo: on a phone the column stretched it across
+                     the card and the camera and check sat at the far edge (2026-11-18). --}}
+                <div class="relative shrink-0 w-20">
                     <img x-show="photo.url" :src="photo.url" alt="Profile photo" class="w-20 h-20 rounded-full object-cover border-2 border-white/40 shadow-lg">
                     <div x-show="!photo.url" class="w-20 h-20 text-2xl rounded-full bg-white/15 backdrop-blur border-2 border-white/40 text-white flex items-center justify-center font-semibold shadow-lg" x-text="$store.citizenSession.initials()"></div>
                     <span x-show="$store.citizenSession.account?.fullServiceAccess" class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
@@ -518,9 +520,15 @@
                 <x-ui.card id="resident-profile" x-show="profileVerification" x-cloak @resident-profile-saved.window="loadResidentProfile()">
                     <div class="flex items-center justify-between gap-2 mb-1.5">
                         <h3 class="text-sm font-semibold text-ink flex items-center gap-2"><i data-lucide="clipboard-check" class="w-4 h-4 text-ink-muted"></i><x-ui.t fil="Resident Profile" en="Resident Profile" /></h3>
-                        {{-- LANGUAGE (TAB 09): the record status is a ruled status name, shown as is. --}}
-                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5" :class="profileVerification === 'Verified' ? 'bg-emerald-50 text-emerald-700' : (profileReview?.outcome === 'returned' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700')" x-text="profileVerification"></span>
+                        {{-- LANGUAGE (TAB 09): the record status is a ruled status name, shown as is.
+                             Not before the profile is sent (2026-11-18): an unsent profile's record
+                             reads Unverified, which beside "Verified na Residente" said the opposite
+                             of the account; the line below says it is not sent yet. --}}
+                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5" x-show="profileVerification !== 'Unverified' || profileReview?.outcome === 'returned'" :class="profileVerification === 'Verified' ? 'bg-emerald-50 text-emerald-700' : (profileReview?.outcome === 'returned' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700')" x-text="profileVerification"></span>
                     </div>
+                    {{-- Whose status this is (2026-11-18): the household record the barangay
+                         checks, not the account the hero calls verified (ID and residency). --}}
+                    <p class="text-[11px] text-ink-muted leading-relaxed mb-2" data-resident-profile-scope><x-ui.t fil="Ang talaan mo at ng iyong sambahayan sa barangay. Hiwalay ito sa pag-verify ng iyong account." en="Your and your household's record at the barangay. It is separate from your account's verification." /></p>
                     {{-- Recognised at registration as a record the barangay already had (2026-10-09). --}}
                     <p class="flex gap-2 text-xs text-brand-800 bg-brand-50 rounded-xl px-3 py-2 mb-2 leading-relaxed" x-show="residentProfileView?.registry_match?.status === 'pending'" x-cloak><i data-lucide="user-check" class="w-4 h-4 shrink-0 mt-0.5"></i><x-ui.t fil="May tala ka na sa talaan ng iyong barangay. Kukumpirmahin ito ng barangay office kapag na-verify ang iyong account; hanggang doon, ang mga detalyeng ibinigay mo lang ang makikita mo rito." en="Your barangay already has a record of you. The barangay office confirms it when they verify your account; until then you see only the details you gave." /></p>
                     <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Verified'"><x-ui.t fil="Na-verify ng iyong barangay office ang impormasyon mo at ng iyong sambahayan." en="Your barangay office verified your information and your household's." /></p>

@@ -1169,13 +1169,17 @@
         tabindex="0"
         @keydown.enter.prevent="openRequest(r)"
         @keydown.space.prevent="openRequest(r)">
-                        <td class="px-4 py-3 font-mono text-xs text-ink-muted hidden xl:table-cell" x-text="r.ref" @click.stop="openRequest(r)"></td>
+                        {{-- The reference and the date stay on one line (UI sweep
+                             2026-11-18: "TUL-2026-" / "00104" broke at the hyphen);
+                             a long name is cut with its full text on hover, so one
+                             row cannot widen the Citizen column for every row. --}}
+                        <td class="px-4 py-3 font-mono text-xs text-ink-muted whitespace-nowrap hidden xl:table-cell" x-text="r.ref" @click.stop="openRequest(r)"></td>
                         <td class="px-4 py-3" @click.stop="openRequest(r)">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <img x-show="r.photo" x-cloak :src="r.photo" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" :alt="r.citizen" x-on:error="r.photo = null">
                                 <div x-show="!r.photo" class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                 <div class="min-w-0">
-                                    <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
+                                    <p class="max-w-[12rem] text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen" :title="r.citizen"></p>
                                     <p x-show="r.imported_from" x-cloak class="text-[10px] font-semibold text-brand-700" :title="'Imported from ' + r.imported_from + (r.resident_ref ? '; matched to resident ' + r.resident_ref : '; not matched to a resident')"><span x-text="'Imported · ' + (r.resident_ref || 'no resident record')"></span></p>
                                 </div>
                             </div>
@@ -1197,7 +1201,7 @@
                             <span x-show="r.assigned" x-text="r.assigned"></span>
                             <span x-show="!r.assigned" class="text-ink-faint italic">Unassigned</span>
                         </td>
-                        <td class="px-4 py-3 text-ink-muted hidden xl:table-cell" x-text="r.submitted"></td>
+                        <td class="px-4 py-3 text-ink-muted whitespace-nowrap hidden xl:table-cell" x-text="r.submitted"></td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[r.status] || statusStyles['Draft'])[0]">
                                 <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[r.status] || statusStyles['Draft'])[1]"></span>

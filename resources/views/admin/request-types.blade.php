@@ -14,17 +14,20 @@
 @php
     $isDokyu = $kind === 'dokyu';
     // The switch beside the title, as on the tab's own page: label, icon,
-    // address (null: this page), and the permission that shows it.
+    // address (null: this page), the permission that shows it (its view
+    // action), and the module that shows it. Citizen Document Storage shows
+    // only to a role that may open Papeles, the Dokyu page's own check (UI
+    // sweep 2026-11-18: Department Staff got Access Restricted there).
     $views = $isDokyu
         ? [
-            ['Requests', 'file-text', route('admin.document-requests'), null],
-            ['Document types', 'layout-list', null, null],
-            ['Citizen Document Storage', 'folder-open', route('admin.papeles'), null],
+            ['Requests', 'file-text', route('admin.document-requests'), null, null],
+            ['Document types', 'layout-list', null, null, null],
+            ['Citizen Document Storage', 'folder-open', route('admin.papeles'), null, 'papeles'],
         ]
         : [
-            ['Cases', 'folder-open', route('admin.assistance-requests'), null],
-            ['Sessions', 'calendar-days', route('admin.assistance-requests').'?view=sessions', 'tulong_sessions'],
-            ['Tulong types', 'layout-list', null, null],
+            ['Cases', 'folder-open', route('admin.assistance-requests'), null, null],
+            ['Sessions', 'calendar-days', route('admin.assistance-requests').'?view=sessions', 'tulong_sessions', null],
+            ['Tulong types', 'layout-list', null, null, null],
         ];
 @endphp
 
@@ -35,11 +38,11 @@
 >
     <div class="animate-fade-up">
         <nav class="flex flex-wrap items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full mb-4" aria-label="{{ $isDokyu ? 'Dokyu' : 'Tulong' }} views">
-            @foreach($views as [$viewLabel, $viewIcon, $viewHref, $viewPerm])
+            @foreach($views as [$viewLabel, $viewIcon, $viewHref, $viewPerm, $viewModule])
                 @if($viewHref === null)
                     <span aria-current="page" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap bg-white text-brand-700 shadow-sm"><i data-lucide="{{ $viewIcon }}" class="w-3.5 h-3.5"></i>{{ $viewLabel }}</span>
                 @else
-                    <a href="{{ $viewHref }}" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" x-cloak @endif
+                    <a href="{{ $viewHref }}" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" x-cloak @elseif($viewModule) x-show="$store.session.can('{{ $viewModule }}')" x-cloak @endif
                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap text-ink-muted hover:text-ink transition-colors"><i data-lucide="{{ $viewIcon }}" class="w-3.5 h-3.5"></i>{{ $viewLabel }}</a>
                 @endif
             @endforeach

@@ -93,7 +93,9 @@
 
         <div x-show="$store.session.can('communications') || $store.session.canPerm('comm_feedback', 'view')" x-cloak>
 
-        <p x-show="roleNote" x-cloak class="mb-3 flex items-start gap-2 rounded-2xl bg-white/70 border border-brand-600/10 px-3.5 py-2.5 text-xs text-ink-body"><i data-lucide="users-round" class="w-4 h-4 text-brand-600 shrink-0 mt-px"></i><span x-text="roleNote"></span></p>
+        {{-- Who publishes what: on the publishing tabs only. On Feedback and the
+             Blotter it read as off-topic (UI sweep 2026-11-18). --}}
+        <p x-show="roleNote && ['balita', 'banners', 'events'].includes(tab)" x-cloak class="mb-3 flex items-start gap-2 rounded-2xl bg-white/70 border border-brand-600/10 px-3.5 py-2.5 text-xs text-ink-body"><i data-lucide="users-round" class="w-4 h-4 text-brand-600 shrink-0 mt-px"></i><span x-text="roleNote"></span></p>
 
         {{-- max-w-full: the tabs scroll inside the bar on a phone instead of
              widening the page (scope round 2026-10-15). --}}

@@ -64,9 +64,13 @@
      canvas; the clock and search are pressed wells, the buttons and the user
      chip glass, the menus glass panels. Live updates (2026-11-15) start
      here, beside the bell: $store.live reads the API's change counters every
-     second (resources/js/app.js). --}}
+     second (resources/js/app.js).
+     On a phone the menu button and the icon buttons share the first row and
+     the title takes the full width under them, without the subtitle
+     (2026-11-18): the title block and a right-aligned row of buttons under it
+     held about 170 px of a screen that does not scroll them away. --}}
 <header
-    class="relative z-20 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
+    class="relative z-20 flex items-center gap-4 max-sm:gap-y-2 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{
         time: '',
         // A public page read without a session (the legal pages): no bell,
@@ -76,11 +80,11 @@
     }"
     x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll(); $store.live.start() }"
 >
-    <div class="flex-1 basis-44 flex items-center gap-3 min-w-0">
+    <div class="flex-1 basis-44 flex items-center gap-3 min-w-0 max-sm:contents">
         <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body shrink-0">
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
-        <div class="min-w-0">
+        <div class="min-w-0 max-sm:order-last max-sm:basis-full max-sm:[&>p]:hidden">
             <h1 class="text-[22px] lg:text-[26px] font-extrabold tracking-[-.02em] leading-tight text-ink truncate" x-text="$store.lang.current === 'en' ? @js($title) : @js($filTitle)">{{ $filTitle }}</h1>
             @if($subtitle)
                 <p class="text-[13.5px] leading-snug text-ink-muted line-clamp-2" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
@@ -154,7 +158,7 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-80 max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:right-3 max-sm:mt-0 max-sm:w-auto surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
+                class="absolute right-0 mt-2 w-80 max-sm:fixed max-sm:inset-x-3 max-sm:top-20 max-sm:right-3 max-sm:mt-0 max-sm:w-auto surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
             >
                 <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
                     <p class="text-sm font-bold text-ink"><x-ui.t fil="Aking mga ID" en="My IDs" /></p>
@@ -221,7 +225,7 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-[22rem] max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:right-3 max-sm:mt-0 max-sm:w-auto surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
+                class="absolute right-0 mt-2 w-[22rem] max-sm:fixed max-sm:inset-x-3 max-sm:top-20 max-sm:right-3 max-sm:mt-0 max-sm:w-auto surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
             >
                 <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
                     <p class="text-sm font-bold text-ink" x-text="$store.lang.current === 'en' ? 'Notifications' : 'Mga Abiso'"></p>

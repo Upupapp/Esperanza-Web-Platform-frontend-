@@ -75,7 +75,8 @@
     </div>
     <p class="relative {{ $compact ? 'text-[11.5px] pr-6' : 'text-[12.5px]' }} font-semibold leading-snug text-[var(--slab-sub)]" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</p>
     <div class="relative flex items-baseline gap-2 flex-wrap {{ $compact ? 'mt-auto' : '' }}">
-        <p class="{{ $compact ? 'text-[30px]' : 'text-[32px]' }} font-extrabold tracking-[-.03em] leading-none tabular-nums" @if($valueBind) x-text="{{ $valueBind }}" @endif>{{ $value }}</p>
+        {{-- compact: the number shrinks on phones, so a peso total like ₱2,340.00 stays inside its card (sweep 18 Nov) --}}
+        <p class="{{ $compact ? 'text-[length:clamp(20px,6vw,30px)] sm:text-[30px] min-w-0 [overflow-wrap:anywhere]' : 'text-[32px]' }} font-extrabold tracking-[-.03em] leading-none tabular-nums" @if($valueBind) x-text="{{ $valueBind }}" @endif>{{ $value }}</p>
         @if($trend)
             <span class="inline-flex items-center gap-1 text-xs font-bold rounded-full px-2 py-0.5 frost-2">
                 <i data-lucide="{{ $trendDirection === 'up' ? 'trending-up' : 'trending-down' }}" class="w-3.5 h-3.5"></i>

@@ -40,7 +40,8 @@ const TILES = {
 // Empty turns the staff address search off; pinning still works.
 const GEOCODER = String(env.VITE_GEOCODER_URL ?? 'https://nominatim.openstreetmap.org').replace(/\/+$/, '');
 
-const CLOSED_INCIDENT = ['Completed', 'Archived'];
+// 'Rejected' = marked Not valid: closed too, as on the Incidents tab's Active count (sweep, 18 Nov).
+const CLOSED_INCIDENT = ['Completed', 'Archived', 'Rejected'];
 const SEVERITY_TONE = { Critical: 'bg-rose-500', High: 'bg-orange-500', Medium: 'bg-amber-400', Low: 'bg-slate-400' };
 const SEVERITY_RANK = { Critical: 0, High: 1, Medium: 2, Low: 3 };
 

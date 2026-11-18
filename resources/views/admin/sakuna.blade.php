@@ -166,6 +166,8 @@
             if (open) return open + ' open incident' + (open === 1 ? '' : 's');
             return 'No active event';
         },
+        // The live board is the Command Center's: only a role that may view it has one.
+        get boardAllowed() { return this.$store.session.permsReady && this.$store.session.canPerm('sakuna_command', 'view'); },
         headerWaiting: false,
         async loadHeader() {
             // The account cached at sign-in carries no permissions yet; the
@@ -181,7 +183,11 @@
                 }
                 return;
             }
-            if (!this.$store.session.canPerm('sakuna_command', 'view')) { this.headerFailed = true; return; }
+            // A role without the Command Center has no live board to ask for:
+            // nothing failed, so the bar shows no status for it (boardAllowed)
+            // and its alert form does not say the board is unreachable
+            // (UI sweep 2026-11-18: Front Desk and Records saw Status unknown).
+            if (!this.boardAllowed) return;
             if (this.headerRefreshing) return;
             this.headerRefreshing = true;
             if (!this.headerBoard) {
@@ -779,7 +785,8 @@
                     this.allowed('sakuna_incidents') ? $api.getAll('/admin/sakuna/incidents').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.resourcesList = res.data || [];
-                this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived'].includes(i.status));
+                // Not valid (Rejected) is closed too, as the server counts it (IncidentLifecycle::CLOSED).
+                this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived', 'Rejected'].includes(i.status));
                 this.resourcesFailed = false;
                 this.saveCopy('resources', { list: this.resourcesList, incidents: this.resourceIncidentsOpen });
             } catch {
@@ -1883,8 +1890,11 @@
             const first = this.firstAllowedTab;
             if (first && this.tabUrls[first]) {
                 const params = new URLSearchParams(window.location.search);
-                params.set('no_access', this.activeTab);
-                window.location.replace(this.tabUrls[first] + '?' + params);
+                // Sakuna's own address (the sidebar's link) is the Command
+                // Center: a role without it opens its first tab quietly, with
+                // no You do not have access note over the header (UI sweep 2026-11-18).
+                if (this.activeTab !== 'command-center') params.set('no_access', this.activeTab);
+                window.location.replace(this.tabUrls[first] + (params.toString() ? '?' + params : ''));
             }
         },
         // A Send alert button in the header lands here with ?compose=1.
@@ -1927,7 +1937,9 @@
          rather than scroll, so no tab is ever off screen (live test NAV-4). --}}
     <header class="sk-card">
         <div class="flex flex-wrap items-center gap-2 px-4 pt-2.5 pb-1">
-            <span x-show="!headerBoard?.alerts?.length" :class="opStatusColor()" class="sk-pill" style="padding: 3px 9px;" title="From the public alerts in effect and the incidents still open">
+            {{-- The status and its freshness come from the live board: a role
+                 without the Command Center sees neither (UI sweep 2026-11-18). --}}
+            <span x-show="boardAllowed && !headerBoard?.alerts?.length" :class="opStatusColor()" class="sk-pill" style="padding: 3px 9px;" title="From the public alerts in effect and the incidents still open">
                 <i data-lucide="shield-alert" class="w-3 h-3"></i>
                 <span x-text="liveStatus"></span>
             </span>
@@ -1937,7 +1949,7 @@
                 <span x-text="headerBoard?.alerts?.length ? headerBoard.alerts[0].level + ' · ' + activeEventLabel : activeEventLabel" class="text-left whitespace-normal"></span>
             </button>
 
-            <button type="button" @click="loadHeader()" :disabled="headerRefreshing"
+            <button type="button" x-show="boardAllowed" @click="loadHeader()" :disabled="headerRefreshing"
                 class="sk-updated" :class="'sk-updated-' + headerState" title="Refresh now. The board also refreshes every minute.">
                 <i data-lucide="refresh-cw" x-show="headerState === 'live' || headerState === 'loading'" class="w-3.5 h-3.5" :class="headerRefreshing ? 'animate-spin' : ''"></i>
                 <i data-lucide="cloud-off" x-show="headerState === 'stale' || headerState === 'failed'" x-cloak class="w-3.5 h-3.5"></i>

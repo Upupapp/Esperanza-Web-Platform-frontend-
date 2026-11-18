@@ -12,9 +12,13 @@
                 <h3 class="text-xl font-extrabold text-ink leading-tight text-balance" x-text="data ? data.office : (office || 'No office')"></h3>
                 <p class="mt-0.5 text-[13px] text-ink-muted" x-show="data && data.head" x-text="data ? (data.head + (data.head_position ? ', ' + data.head_position : '')) : ''"></p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
+            {{-- Kept inside the card (UI sweep 2026-11-18): at 390px the office
+                 picker, as wide as its longest name, ran off the card and the
+                 screen. Now it is never wider than the card, and a name too long
+                 for it ends in an ellipsis; the heading above shows it whole. --}}
+            <div class="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
                 <label class="sr-only" for="dept-office">Office</label>
-                <select id="dept-office" x-show="choosesOffice" x-model="office" @change="officeChanged()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[380px]">
+                <select id="dept-office" x-show="choosesOffice" x-model="office" @change="officeChanged()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-full sm:max-w-[380px] text-ellipsis">
                     <template x-for="o in subjects.offices" :key="o.name">
                         <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
                     </template>

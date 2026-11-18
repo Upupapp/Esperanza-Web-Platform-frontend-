@@ -144,9 +144,13 @@
             <p class="mt-1 text-[12.5px] text-ink-muted" x-text="canS('create') ? 'Add one to let residents book a time with your office.' : 'Ask your department head to add one.'"></p>
         </div>
 
-        <div x-show="!sFailed && schedules.length" class="grid gap-4 lg:grid-cols-2 items-start">
+        {{-- Two to a row; a schedule left alone on the last row (one schedule,
+             or the third of three) takes the whole row, and a card that wide
+             sets its facts out across it (UI sweep 2026-11-18: a lone card
+             left an empty band of about 550 px on the right). --}}
+        <div x-show="!sFailed && schedules.length" class="grid gap-4 items-start lg:grid-cols-2 lg:[&>article:last-of-type:nth-of-type(odd)]:col-span-2">
             <template x-for="s in schedules" :key="s.id">
-                <article class="surface-glass rounded-[22px] p-4 sm:p-5 flex flex-col gap-3 min-w-0">
+                <article class="@container surface-glass rounded-[22px] p-4 sm:p-5 flex flex-col gap-3 min-w-0">
                     <div class="flex flex-wrap items-start justify-between gap-2">
                         <div class="min-w-0">
                             <h4 class="text-[15.5px] font-extrabold text-ink leading-snug break-words" x-text="s.label"></h4>
@@ -154,7 +158,7 @@
                         </div>
                         <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap" :class="s.active ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-slate-100 text-slate-600 ring-slate-200'"><i :data-lucide="s.active ? 'circle-check' : 'circle-pause'" class="w-3 h-3"></i><span x-text="s.active ? 'Open for booking' : 'Switched off'"></span></span>
                     </div>
-                    <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-[12.5px]">
+                    <dl class="grid grid-cols-2 @xl:grid-cols-3 @4xl:grid-cols-6 gap-x-4 gap-y-2 text-[12.5px]">
                         <div><dt class="text-ink-muted">Days</dt><dd class="font-semibold text-ink" x-text="weekdaysLabel(s.weekdays)"></dd></div>
                         <div><dt class="text-ink-muted">Hours</dt><dd class="font-semibold text-ink" x-text="time(s.start_time) + ' – ' + time(s.end_time)"></dd></div>
                         <div><dt class="text-ink-muted">Each slot</dt><dd class="font-semibold text-ink" x-text="s.slot_minutes + ' min, ' + s.capacity + (s.capacity === 1 ? ' resident' : ' residents')"></dd></div>

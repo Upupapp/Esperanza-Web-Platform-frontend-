@@ -64,7 +64,12 @@
             <span x-text="time"></span>
         </div>
 
-<x-ui.global-search :config="$searchConfig" placeholder-en="Search residents, requests, barangays..." />
+        {{-- A placeholder that fits the box (UI sweep 2026-11-18): the box leaves
+             about 165px for text beside its icon and the "/" chip, and "Search
+             residents, requests, barangays..." read "Search residents, reques" on
+             every staff page at 1440px. A wider box would take the room the
+             page subtitle needs. --}}
+        <x-ui.global-search :config="$searchConfig" placeholder-en="Residents, requests…" />
 
         {{-- Scan ID (welfare round 2026-10-29): who a presented ID belongs to,
              and a minor's or a PWD's guardian. For officers who read the

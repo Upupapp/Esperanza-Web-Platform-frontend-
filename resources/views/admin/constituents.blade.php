@@ -19,6 +19,10 @@
         // these are every resident.
         registryTruncated: false,
         registryTotals: { residents: 0, households: 0, families: 0 },
+        // The six tiles' numbers from one-row pages, apart from the lists (UI
+        // sweep 2026-11-18): the tiles counted the lists, so every role read
+        // six 0s for as long as their pages took, while Occupations said 341.
+        tileCounts: null,
         // Once the registry is bigger than one load (getAll's 2,000), search
         // and the filters go to the server, so they find every resident
         // (live test 2026-10-12: after a 2,000-row import they missed most).
@@ -91,6 +95,8 @@
                 await this.$store.session.whenReady();
                 const may = (sub) => this.$store.session.canPerm(sub, 'view');
                 const none = (extra = {}) => Promise.resolve({ data: [], ...extra });
+                // Asked first, so the server answers them before the lists' pages.
+                this.loadTileCounts(may);
                 const [residents, households, families, citizens, issues, encoders, coverage] = await Promise.all([
                     $api.getAll('/admin/residents'),
                     $api.getAll('/admin/households'),
@@ -133,6 +139,22 @@
                 this.remote = { key: '', rows: null, loading: false, total: 0, page: 1, lastPage: 1, params: {} };
                 this.queueRemoteSearch(0);
             }
+        },
+
+        // One row a list: the totals are in each page's meta, and the residents'
+        // carries the confirmed and sent-in counts for the whole scope. A list
+        // the role does not hold, or a failure, leaves that tile to the lists.
+        async loadTileCounts(may) {
+            const meta = (sub, url, params = {}) => may(sub)
+                ? $api.get(url, { params: { ...params, per_page: 1 } }).then(r => r.meta || {}).catch(() => ({}))
+                : Promise.resolve({});
+            const [res, hh, fam, dq] = await Promise.all([
+                meta('const_resident', '/admin/residents', { counts: 1 }),
+                meta('const_household', '/admin/households'),
+                meta('const_family', '/admin/families'),
+                meta('const_data_quality', '/admin/data-quality'),
+            ]);
+            this.tileCounts = { residents: res.total, households: hh.total, families: fam.total, verified: res.counts?.verified, pending: res.counts?.pending, issues: dq.total };
         },
 
         // What the server is asked for while the registry is too big to hold:
@@ -233,15 +255,23 @@
             const s = this.$store.session.account?.scope;
             return !s || s === 'Municipal';
         },
+        // Loaded, the lists give the counts, so a change made here shows at
+        // once; past one load the server's whole-scope counts do. Until then
+        // (or if the lists failed) the one-row counts, or a dash: never a 0
+        // that is not true.
         get activeStats() {
-            return {
-                residents: this.registryTruncated ? this.registryTotals.residents : this.individuals.length,
-                households: this.registryTruncated ? this.registryTotals.households : this.households.length,
-                families: this.registryTruncated ? this.registryTotals.families : this.families.length,
-                verified: this.individuals.filter(i => i.verification === 'Verified').length,
-                pending: this.individuals.filter(i => i.verification === 'For Validation').length,
+            const c = this.tileCounts || {};
+            const big = this.registryTruncated;
+            const listed = {
+                residents: big ? this.registryTotals.residents : this.individuals.length,
+                households: big ? this.registryTotals.households : this.households.length,
+                families: big ? this.registryTotals.families : this.families.length,
+                verified: big && c.verified != null ? c.verified : this.individuals.filter(i => i.verification === 'Verified').length,
+                pending: big && c.pending != null ? c.pending : this.individuals.filter(i => i.verification === 'For Validation').length,
                 issues: this.qualityIssues.length,
             };
+            if (!this.loading && !this.failed) return listed;
+            return Object.fromEntries(Object.keys(listed).map(k => [k, c[k] ?? '—']));
         },
 
         cvType: 'Individual',
@@ -952,7 +982,7 @@
                 <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>Data Quality
                 {{-- The same colours on the active tab: it is white now, and white
                      text on it hid the count (live test 2026-10-13). --}}
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600" x-text="qualityIssues.length"></span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600" x-text="activeStats.issues"></span>
             </button>
             <button x-show="can('const_resident','view')" @click="tab='occupations';clearFilters()"
                     x-on:livelihood-review-count.window="lvReviewCount = $event.detail"
@@ -982,7 +1012,8 @@
             <span>
                 The registry has <strong x-text="registryTotals.residents.toLocaleString()"></strong> residents; the list shows the first
                 <strong x-text="individuals.length.toLocaleString()"></strong>. Search, the barangay and the filters look through all of them.
-                The Records Confirmed and Profiles to Review counts, and the family and household lists, cover the records shown.
+                <span x-show="tileCounts?.verified != null">The family and household lists cover the records shown.</span>
+                <span x-show="tileCounts?.verified == null">The Records Confirmed and Profiles to Review counts, and the family and household lists, cover the records shown.</span>
             </span>
         </div>
 
