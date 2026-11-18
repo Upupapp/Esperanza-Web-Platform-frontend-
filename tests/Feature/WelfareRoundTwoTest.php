@@ -103,7 +103,8 @@ class WelfareRoundTwoTest extends TestCase
         $this->assertFileDoesNotExist(base_path('resources/views/admin/settings/service-catalog.blade.php'));
 
         $page = $this->get('/admin/settings/service-catalog')->assertOk()
-            ->assertSee("x-init=\"window.location.replace('/admin/document-requests/types')\"", false)
+            // The query and fragment go along since 2026-11-18 (FeedbackInSettingsTest).
+            ->assertSee("x-init=\"window.location.replace('/admin/document-requests/types' + window.location.search + window.location.hash)\"", false)
             ->assertSee('href="/admin/document-requests/types"', false)
             ->getContent();
         // The CSP allows no inline script: every <script> on the page has a src.

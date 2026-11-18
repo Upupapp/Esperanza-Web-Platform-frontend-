@@ -200,7 +200,8 @@ class Sweep1118web6Test extends TestCase
     {
         $page = $this->source('resources/views/admin/communications.blade.php');
         $start = strpos($page, "x-show=\"tab === 'blotter'\"");
-        $blotter = substr($page, $start, strpos($page, '{{-- ============================= FEEDBACK') - $start);
+        // The Blotter is the page's last tab since Feedback moved to Settings (2026-11-18).
+        $blotter = substr($page, $start, strrpos($page, '</x-layouts.admin>') - $start);
 
         $this->assertStringContainsString("this.entryTried = true;\n                    if (this.entryMissing) return;", $blotter);
         $this->assertStringContainsString('x-show="entryTried && entryMissing"', $blotter);

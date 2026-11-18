@@ -2,49 +2,33 @@
     $tab = $tab ?? 'balita';
 @endphp
 
-{{-- One sidebar entry, Balita, for its tabs: the Blotter and residents'
-     Feedback are tabs here (owner, 2026-10-07: as few sidebar entries as
-     possible). /blotter, /banners and /feedback (and the old
-     /admin/settings/support) still open this page on that tab. The directory
-     (Offices, Barangays) moved to Settings > Direktoryo (owner, 2026-10-21);
-     its old addresses open it there. --}}
-{{-- On its Feedback tab the page is titled Feedback, not Balita: when opened
-     there (the sidebar entry of officers who only answer tickets) and when the
-     tab is chosen (syncHeader) (2026-10-15). --}}
-@php
-    $feedbackSubtitle = 'Tickets from residents, routed to the office that owns them.';
-    $balitaSubtitle = "Announcements, banners and occasions, events, the barangay blotter and residents' feedback.";
-@endphp
-<x-layouts.admin :title="$tab === 'feedback' ? 'Feedback' : 'Balita'" :subtitle="$tab === 'feedback' ? $feedbackSubtitle : $balitaSubtitle" active="communications">
+{{-- One sidebar entry, Balita, for its tabs: the Blotter is a tab here
+     (owner, 2026-10-07: as few sidebar entries as possible). /blotter and
+     /banners still open this page on that tab. The directory (Offices,
+     Barangays) moved to Settings > Direktoryo (owner, 2026-10-21), and
+     residents' Feedback to Settings > Feedback (owner, 2026-11-18: "this is
+     not really in the balita part"); their old addresses open them there. --}}
+<x-layouts.admin title="Balita" subtitle="Announcements, banners and occasions, events and the barangay blotter." active="communications">
     <div
         x-data="{
             tab: '{{ $tab }}',
             // One submodule per tab. The Barangay Secretary holds only their
             // directory entry and opened Balita to 'Something went wrong' and a
             // 'Walang pahintulot' pop-up per tab (QA run 2026-10-05).
-            tabSubs: { balita: 'comm_news', banners: 'comm_banners', events: 'comm_events', blotter: 'comm_directory', feedback: 'comm_feedback' },
+            tabSubs: { balita: 'comm_news', banners: 'comm_banners', events: 'comm_events', blotter: 'comm_directory' },
             tabAllowed(t) { return $store.session.canPerm(this.tabSubs[t], 'view'); },
+            get anyTabAllowed() { return Object.keys(this.tabSubs).some((t) => this.tabAllowed(t)); },
             // Each tab's own address, so a reload stays on it; a tab without
             // a route of its own is ?tab= (scope round 2026-10-15).
-            tabPaths: { balita: '/admin/communications', banners: '/admin/communications/banners', blotter: '/admin/communications/blotter', feedback: '/admin/communications/feedback' },
-            syncHeader(t) {
-                const fb = t === 'feedback';
-                const h = document.querySelector('[data-page-title]');
-                const p = document.querySelector('[data-page-subtitle]');
-                if (h) h.textContent = fb ? 'Feedback' : 'Balita';
-                if (p) p.textContent = fb ? @js($feedbackSubtitle) : @js($balitaSubtitle);
-                document.title = (fb ? 'Feedback' : 'Balita') + ' — Esperanza LGU Administrative Portal';
-            },
+            tabPaths: { balita: '/admin/communications', banners: '/admin/communications/banners', blotter: '/admin/communications/blotter' },
             go(t) {
                 this.tab = t;
                 try { history.replaceState(history.state, '', this.tabPaths[t] || '/admin/communications?tab=' + t); } catch (e) { /* the tab still changes */ }
             },
-            // Open feedback tickets, for the Feedback tab (set by feedbackDesk).
-            feedbackOpen: null,
             async landOnAllowedTab() {
-                // ?tab= opens a tab with no route of its own; a reply notification
-                // links to ?tab=feedback&ref= (FeedbackDesk).
-                const asked = new URLSearchParams(window.location.search).get('tab');
+                // ?tab= opens a tab with no route of its own.
+                const params = new URLSearchParams(window.location.search);
+                const asked = params.get('tab');
                 // The directory is Settings > Direktoryo now (2026-10-21), from
                 // ?tab= or the old /admin/communications/offices address.
                 const old = ['offices', 'barangays'].includes(asked) ? asked : (['offices', 'barangays'].includes(this.tab) ? this.tab : null);
@@ -52,15 +36,25 @@
                     window.location.replace('/admin/settings/directory' + (old === 'barangays' ? '?view=barangays' : ''));
                     return;
                 }
+                // Feedback is Settings > Feedback now (2026-11-18). The reply and
+                // assignment notifications sent before linked to
+                // ?tab=feedback&ref=: the ticket opens there, the rest of the
+                // address kept.
+                if (asked === 'feedback') {
+                    params.delete('tab');
+                    const rest = params.toString();
+                    window.location.replace('/admin/settings/feedback' + (rest ? '?' + rest : '') + window.location.hash);
+                    return;
+                }
                 if (asked && this.tabSubs[asked]) this.tab = asked;
                 await $store.session.whenReady();
-                // An account that may not use the tab asked for opens on Feedback
-                // when it answers tickets (offices, the front desk, barangay
-                // secretaries hold that and little else here), otherwise on
-                // the first tab it may use.
+                // An account that may not use the tab asked for opens on the
+                // first tab it may use. One that holds none of them but answers
+                // residents' tickets is sent to Feedback.
                 if (!this.tabAllowed(this.tab)) {
-                    const allowed = this.tabAllowed('feedback') ? 'feedback' : Object.keys(this.tabSubs).find((t) => this.tabAllowed(t));
+                    const allowed = Object.keys(this.tabSubs).find((t) => this.tabAllowed(t));
                     if (allowed) this.go(allowed);
+                    else if ($store.session.canPerm('comm_feedback', 'view')) window.location.replace('/admin/settings/feedback');
                 }
             },
             // Who does what here, for the roles that run Balita (owner,
@@ -80,18 +74,18 @@
             initials(name) { return (name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); },
         }"
         x-init="landOnAllowedTab()"
-        x-effect="syncHeader(tab)"
         class="animate-fade-up"
     >
 
         {{-- An officer who only answers feedback (comm_feedback) holds the
-             module through it; checked by name as well, so such an account
-             never meets this panel (scope round 2026-10-15). --}}
-        <div x-show="!($store.session.can('communications') || $store.session.canPerm('comm_feedback', 'view'))" x-cloak>
+             module through it but none of these tabs: they are on their way
+             to Settings > Feedback (landOnAllowedTab), so neither panel shows
+             (2026-11-18). --}}
+        <div x-show="!anyTabAllowed && !$store.session.canPerm('comm_feedback', 'view')" x-cloak>
             <x-admin.access-restricted module="Balita" icon="megaphone" />
         </div>
 
-        <div x-show="$store.session.can('communications') || $store.session.canPerm('comm_feedback', 'view')" x-cloak>
+        <div x-show="anyTabAllowed" x-cloak>
 
         {{-- Who publishes what: on the publishing tabs only. On Feedback and the
              Blotter it read as off-topic (UI sweep 2026-11-18). --}}
@@ -104,7 +98,6 @@
             <button x-show="tabAllowed('banners')" @click="go('banners')" role="tab" :aria-selected="tab === 'banners' ? 'true' : 'false'" class="shrink-0 h-[52px] px-4 border-b-[3px] text-sm transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none focus-visible:bg-slate-100" :class="tab === 'banners' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-ink-muted font-medium hover:bg-slate-100 hover:text-ink'"><i data-lucide="gallery-horizontal" class="w-[18px] h-[18px]"></i>Banners &amp; Occasions</button>
             <button x-show="tabAllowed('events')" @click="go('events')" role="tab" :aria-selected="tab === 'events' ? 'true' : 'false'" class="shrink-0 h-[52px] px-4 border-b-[3px] text-sm transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none focus-visible:bg-slate-100" :class="tab === 'events' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-ink-muted font-medium hover:bg-slate-100 hover:text-ink'"><i data-lucide="calendar-days" class="w-[18px] h-[18px]"></i>Events</button>
             <button x-show="tabAllowed('blotter')" @click="go('blotter')" role="tab" :aria-selected="tab === 'blotter' ? 'true' : 'false'" class="shrink-0 h-[52px] px-4 border-b-[3px] text-sm transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none focus-visible:bg-slate-100" :class="tab === 'blotter' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-ink-muted font-medium hover:bg-slate-100 hover:text-ink'"><i data-lucide="book-text" class="w-[18px] h-[18px]"></i>Blotter</button>
-            <button x-show="tabAllowed('feedback')" @click="go('feedback')" role="tab" :aria-selected="tab === 'feedback' ? 'true' : 'false'" class="shrink-0 h-[52px] px-4 border-b-[3px] text-sm transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none focus-visible:bg-slate-100" :class="tab === 'feedback' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-ink-muted font-medium hover:bg-slate-100 hover:text-ink'"><i data-lucide="message-square-reply" class="w-[18px] h-[18px]"></i>Feedback<span x-show="feedbackOpen" x-cloak class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700" :title="feedbackOpen + ' open'"><span x-text="feedbackOpen"></span><span class="sr-only"> open</span></span></button>
         </div>
 
         @include('admin.communications.balita')
@@ -569,9 +562,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- ============================= FEEDBACK ============================= --}}
-        @include('admin.communications.feedback')
 
         </div>
     </div>

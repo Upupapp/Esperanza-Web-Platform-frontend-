@@ -55,10 +55,11 @@ class FullQaRunFixesTest extends TestCase
             .$this->source('resources/views/admin/communications/occasions.blade.php');
         // Offices and Barangays are Settings > Direktoryo since 2026-10-21.
         $this->assertSame(5, substr_count($all, 'x-init="$store.session.whenReady().then(() => tabAllowed('), 'each of the 4 editorial tabs (Banners & Occasions has two views) loads only when permitted');
-        $this->assertSame(5, substr_count($view, '<button x-show="tabAllowed('), 'each of the 5 tab buttons shows only when permitted');
+        // Feedback is a tab of Settings since 2026-11-18: four buttons here.
+        $this->assertSame(4, substr_count($view, '<button x-show="tabAllowed('), 'each of the 4 tab buttons shows only when permitted');
         // The Feedback desk (scope round 2026-10-15) loads itself, and only
         // for an account holding comm_feedback view.
-        $desk = $this->source('resources/js/scope-admin-records.js');
+        $desk = $this->source('resources/js/feedback-desk.js');
         $this->assertStringContainsString("get may() { return this.\$store.session.canPerm('comm_feedback', 'view'); }", $desk);
         $this->assertStringContainsString('if (!this.may) return;', $desk);
         $this->assertStringNotContainsString('x-init="load()"', $view);

@@ -100,7 +100,8 @@ class Sweep1118web3Test extends TestCase
     /** A live reload during a filter change merged the new filter's tickets with the old one's pages. */
     public function test_the_feedback_queue_never_mixes_two_filters(): void
     {
-        $js = $this->records();
+        // The desk is Settings > Feedback's own chunk since 2026-11-18.
+        $js = $this->source('resources/js/feedback-desk.js');
         $this->assertStringContainsString('{ busy: () => this.sending || this.assigning || this.routing || this.loading });', $js);
 
         $load = $this->method($js, "async load(quiet = false) {\n            const seq = ++this.seq;");

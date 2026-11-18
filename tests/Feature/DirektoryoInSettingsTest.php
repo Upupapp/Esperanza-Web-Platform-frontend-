@@ -50,12 +50,14 @@ class DirektoryoInSettingsTest extends TestCase
         // Facebook Page card on Integrations, and nothing more. Settings is
         // the module without the Service Catalog since round 2 (canSettings):
         // a Department Head holds that one for their own office's types.
-        $this->assertStringContainsString('x-show="$store.session.canSettings() || directoryAllowed || facebookAllowed"', $settings);
+        // Feedback joined them on 2026-11-18 (FeedbackInSettingsTest).
+        $this->assertStringContainsString('x-show="$store.session.canSettings() || directoryAllowed || facebookAllowed || feedbackAllowed"', $settings);
         $this->assertStringContainsString('get facebookAllowed() { return this.$store.session.canPerm(\'comm_news\', \'create\') || this.$store.session.canPerm(\'set_system\', \'view\'); },', $settings);
         $this->assertStringContainsString('@elseif($tabKey === \'integrations\') x-show="$store.session.canSettings() || facebookAllowed"', $settings);
         $this->assertStringContainsString('@elseif($tabKey === \'directory\') x-show="directoryAllowed"', $settings);
         $this->assertStringContainsString('<template x-if="$store.session.canSettings()">', $settings, 'the other tabs load only for Settings holders');
-        $this->assertStringContainsString('if (this.$store.session.canSettings()) return;', $settings);
+        $this->assertStringContainsString("if (this.\$store.session.canSettings()) {\n                        if (this.tab === 'feedback' && !this.feedbackAllowed) this.go('general');\n                        return;\n                    }", $settings);
+        $this->assertStringContainsString("if (this.tab === 'directory' && this.directoryAllowed) return;", $settings);
         $this->assertStringContainsString("if (this.directoryAllowed) this.go('directory');", $settings);
         $this->assertStringContainsString("else if (this.facebookAllowed) this.go('integrations');", $settings);
         $this->assertStringContainsString("\$store.session.canPerm('comm_barangay_directory', 'view') || \$store.session.canPerm('comm_news', 'create') || \$store.session.canPerm('set_system', 'view')\" x-cloak", $topbar);

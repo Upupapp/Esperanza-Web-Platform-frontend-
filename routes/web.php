@@ -77,15 +77,16 @@ Route::view('/admin/constituents/data-quality', 'admin.constituents', ['tab' => 
 // Papeles — citizen document repository, browsed Barangay -> Individual -> Documents.
 Route::view('/admin/papeles', 'admin.papeles')->name('admin.papeles');
 
-// Communications — Balita (announcements, banners, events, blotter, feedback) in one page with tabs.
+// Communications — Balita (announcements, banners, events, blotter) in one page with tabs.
 Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');
 // The directory (offices and barangays) is Settings > Direktoryo (2026-10-21): the old address is
 // Balita's page, which sends it on (Settings' own scripts load only under /admin/settings).
 Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');
 Route::view('/admin/communications/blotter', 'admin.communications', ['tab' => 'blotter'])->name('admin.communications.blotter');
 Route::view('/admin/communications/banners', 'admin.communications', ['tab' => 'banners'])->name('admin.communications.banners');
-// Feedback and support tickets, routed to the office that owns them (2026-10-15).
-Route::view('/admin/communications/feedback', 'admin.communications', ['tab' => 'feedback'])->name('admin.communications.feedback');
+// Feedback and support tickets (2026-10-15) are Settings > Feedback since
+// 2026-11-18: the old address sends the browser on, with its ?ref=.
+Route::view('/admin/communications/feedback', 'admin.forward', ['to' => '/admin/settings/feedback', 'label' => 'Feedback', 'active' => 'settings'])->name('admin.communications.feedback');
 Route::view('/admin/announcements', 'admin.communications', ['tab' => 'balita'])->name('admin.announcements');
 
 // Reports & Analytics — merged into one page with tabs.
@@ -101,14 +102,17 @@ Route::view('/admin/users/departments', 'admin.users', ['tab' => 'departments'])
 // Internal Forms — staff self-service forms (HR, GSO, Agriculture, MSWD), separate from citizen-facing Dokyu/Tulong.
 Route::view('/admin/internal-forms', 'admin.internal-forms', ['office' => 'hr'])->name('admin.internal-forms');
 
-// Settings — General, Notifications, Security, Branding, Integrations, Audit Logs as tabs.
+// Settings — General, Direktoryo, Feedback, Notifications, Security, Branding, Integrations, Audit Logs as tabs.
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');
 Route::view('/admin/settings/branding', 'admin.settings', ['tab' => 'branding'])->name('admin.branding');
 Route::view('/admin/settings/directory', 'admin.settings', ['tab' => 'directory'])->name('admin.settings.directory');
+// Residents' feedback and support tickets (owner, 2026-11-18: out of Balita,
+// into Settings), for anyone holding comm_feedback view.
+Route::view('/admin/settings/feedback', 'admin.settings', ['tab' => 'feedback'])->name('admin.settings.feedback');
 Route::view('/admin/settings/audit-logs', 'admin.settings', ['tab' => 'audit-logs'])->name('admin.audit-logs');
-// Support tickets moved to Communications > Feedback (2026-10-15); the old
-// address still lands there.
-Route::view('/admin/settings/support', 'admin.communications', ['tab' => 'feedback'])->name('admin.support');
+// Support tickets were Balita's Feedback tab from 2026-10-15; the old address
+// sends the browser on to Settings > Feedback.
+Route::view('/admin/settings/support', 'admin.forward', ['to' => '/admin/settings/feedback', 'label' => 'Feedback', 'active' => 'settings'])->name('admin.support');
 // The Service Catalog left Settings (2026-10-30): its old address sends the
 // browser on to Dokyu's Document types.
 Route::view('/admin/settings/service-catalog', 'admin.forward', ['to' => '/admin/document-requests/types', 'label' => 'Document types', 'active' => 'document-requests'])->name('admin.settings.catalog');

@@ -1,16 +1,19 @@
 @php
     $tab = $tab ?? 'general';
     $supportIconOptions = ['phone', 'mail', 'message-square', 'map-pin', 'clock', 'life-buoy', 'headset', 'globe'];
-    // Every tab, and the address that opens it (routes/web.php). Support
-    // tickets moved to Communications > Feedback; Document Templates and
-    // System joined (scope round 2026-10-15). A tab without an address of
-    // its own keeps ?tab= so a reload stays on it. The Service Catalog left
-    // for Dokyu's and Tulong's own pages (round 2, 2026-10-30).
+    // Every tab, and the address that opens it (routes/web.php). Document
+    // Templates and System joined (scope round 2026-10-15). A tab without an
+    // address of its own keeps ?tab= so a reload stays on it. The Service
+    // Catalog left for Dokyu's and Tulong's own pages (round 2, 2026-10-30).
     $settingsTabs = [
         'general' => ['building-2', 'General', '/admin/settings'],
         // The offices and barangay officials residents read in Direktoryo
         // (owner, 2026-10-21: they were Balita's Offices and Barangays tabs).
         'directory' => ['book-user', 'Direktoryo', '/admin/settings/directory'],
+        // Residents' tickets and how they rated the help content (owner,
+        // 2026-11-18: it was Balita's Feedback tab, and a support tab here
+        // before that). For anyone holding comm_feedback view.
+        'feedback' => ['message-square-reply', 'Feedback', '/admin/settings/feedback'],
         'notifications' => ['bell', 'Notifications', null],
         'security' => ['shield', 'Security rules', null],
         'branding' => ['palette', 'Branding', '/admin/settings/branding'],
@@ -59,6 +62,12 @@
             // post in Balita, without the rest of Settings (owner, 2026-10-29:
             // should apply to anyone who can post).
             get facebookAllowed() { return this.$store.session.canPerm('comm_news', 'create') || this.$store.session.canPerm('set_system', 'view'); },
+            // Feedback is for whoever answers residents' tickets: the API's
+            // own permission (comm_feedback), with or without Balita or the
+            // rest of Settings (owner, 2026-11-18).
+            get feedbackAllowed() { return this.$store.session.canPerm('comm_feedback', 'view'); },
+            // Open tickets, for the Feedback tab's count (set by feedbackDesk).
+            feedbackOpen: null,
             // A tab's address replaces the current one, so a reload stays on it.
             go(t) {
                 this.tab = t;
@@ -68,13 +77,22 @@
             init() {
                 const asked = new URLSearchParams(window.location.search).get('tab');
                 if (this.tab === 'general' && ['notifications', 'security', 'integrations'].includes(asked)) this.tab = asked;
-                // Without Settings, Direktoryo and the Facebook Page are the only tabs there are.
-                // Settings is the module without the Service Catalog (canSettings, app.js):
-                // a Department Head holds that one for their own office's types (round 2).
+                // Without Settings, Feedback, Direktoryo and the Facebook Page are the only tabs
+                // there are: the one asked for, else the first the role holds, Feedback first (the
+                // work that waits). Settings is the module without the Service Catalog
+                // (canSettings, app.js): a Department Head holds that one for their own office's
+                // types (round 2). Feedback is not in the Settings bundle: an administrator without
+                // it opens on General.
                 this.$store.session.whenReady().then(() => {
-                    if (this.$store.session.canSettings()) return;
+                    if (this.$store.session.canSettings()) {
+                        if (this.tab === 'feedback' && !this.feedbackAllowed) this.go('general');
+                        return;
+                    }
+                    if (this.tab === 'feedback' && this.feedbackAllowed) return;
+                    if (this.tab === 'directory' && this.directoryAllowed) return;
                     if (this.tab === 'integrations' && this.facebookAllowed) return;
-                    if (this.directoryAllowed) this.go('directory');
+                    if (this.feedbackAllowed) this.go('feedback');
+                    else if (this.directoryAllowed) this.go('directory');
                     else if (this.facebookAllowed) this.go('integrations');
                 });
             },
@@ -82,11 +100,11 @@
         class="animate-fade-up"
     >
 
-        <div x-show="!$store.session.canSettings() && !directoryAllowed && !facebookAllowed" x-cloak>
+        <div x-show="!$store.session.canSettings() && !directoryAllowed && !facebookAllowed && !feedbackAllowed" x-cloak>
             <x-admin.access-restricted module="System Settings" icon="settings" />
         </div>
 
-        <div x-show="$store.session.canSettings() || directoryAllowed || facebookAllowed" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div x-show="$store.session.canSettings() || directoryAllowed || facebookAllowed || feedbackAllowed" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {{-- Below the desktop width the sections wrap onto rows (NAV-4: tabs wrap, never hide off screen); a list beside the content from it, where a long name wraps inside the narrow column. --}}
         <div class="lg:col-span-1 min-w-0">
             <x-ui.card :padded="false" class="p-2">
@@ -97,6 +115,7 @@
                             @click="go('{{ $tabKey }}')"
                             @if($tabKey === 'system') x-show="$store.session.canPerm('set_system', 'view')" x-cloak
                             @elseif($tabKey === 'directory') x-show="directoryAllowed" x-cloak
+                            @elseif($tabKey === 'feedback') x-show="feedbackAllowed" x-cloak
                             @elseif($tabKey === 'integrations') x-show="$store.session.canSettings() || facebookAllowed" x-cloak
                             @else x-show="$store.session.canSettings()" x-cloak @endif
                             class="shrink-0 lg:w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors"
@@ -104,6 +123,7 @@
                             :aria-current="tab === '{{ $tabKey }}' ? 'page' : null"
                         >
                             <i data-lucide="{{ $tabIcon }}" class="w-4 h-4 shrink-0"></i>{{ $tabLabel }}
+                            @if($tabKey === 'feedback')<span x-show="feedbackOpen" x-cloak class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700" :title="feedbackOpen + ' open'"><span x-text="feedbackOpen"></span><span class="sr-only"> open</span></span>@endif
                         </button>
                     @endforeach
                 </nav>
@@ -112,6 +132,9 @@
 
         <div class="lg:col-span-3 min-w-0">
             @include('admin.settings.directory')
+
+            {{-- Outside the Settings-only block: for anyone who answers residents' tickets. --}}
+            @include('admin.settings.feedback')
 
             {{-- Outside the Settings-only block: its Facebook Page card is also
                  for Balita's approvers (welfare round 2026-10-29). --}}

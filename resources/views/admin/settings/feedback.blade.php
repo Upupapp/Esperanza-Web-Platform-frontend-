@@ -1,11 +1,20 @@
-{{-- communications/feedback.blade.php — the feedback desk (scope round
-     2026-10-15). Residents' feedback and support tickets, within the
-     officer's reach (a department sees its office's, a barangay its hall's,
-     the municipal desk every one): the queue, the whole conversation,
-     replies that set the status, routing to an office and assigning to an
-     officer, and how residents rated the FAQs and tutorials. Support Tickets
-     moved here from Settings; /admin/settings/support opens this tab.
-     Component feedbackDesk in resources/js/scope-admin-records.js. --}}
+{{-- ============================= FEEDBACK ============================= --}}
+{{-- The feedback desk (scope round 2026-10-15). Residents' feedback and
+     support tickets, within the officer's reach (a department sees its
+     office's, a barangay its hall's, the municipal desk every one): the
+     queue, the whole conversation, replies that set the status, routing to
+     an office and assigning to an officer, and how residents rated the FAQs
+     and tutorials.
+     A tab of Settings since 2026-11-18 (owner: "this is not really in the
+     balita part in the citizen side, and some account types dont have balita
+     and they need to access the feedback screen"): it was Balita's Feedback
+     tab. Shown to anyone holding comm_feedback view, with or without Balita
+     or the rest of Settings, so it is included outside the Settings-only
+     block. /admin/communications/feedback, /admin/settings/support and
+     /admin/communications?tab=feedback still lead here, with their ?ref=.
+     The queue sits beside the ticket from the xl width: beside the Settings
+     list the column is narrower than Balita's was.
+     Component feedbackDesk in resources/js/feedback-desk.js. --}}
 
 <div x-show="tab === 'feedback'" x-cloak x-data="feedbackDesk" class="space-y-4">
 
@@ -28,7 +37,7 @@
                 <option value="">All categories</option>
                 <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
             </select>
-            <select aria-label="Office" x-model="office" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm max-w-full">
+            <select aria-label="Office" x-model="office" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm max-w-full sm:max-w-[13rem]">
                 <option value="">All offices</option>
                 <option value="none">Not routed yet</option>
                 <template x-for="o in offices" :key="o.name"><option :value="o.name" x-text="officeName(o)"></option></template>
@@ -38,12 +47,13 @@
                 Assigned to me
             </label>
         </div>
+        <p class="text-[11px] text-ink-muted flex items-start gap-1.5"><i data-lucide="inbox" class="w-3 h-3 shrink-0 mt-0.5"></i>Tickets from residents, routed to the office that owns them.</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+    <div class="grid grid-cols-1 xl:grid-cols-5 gap-4 items-start">
 
         {{-- The queue: cards, so it reads on a phone too. --}}
-        <div class="lg:col-span-2 space-y-2.5" :class="sel ? 'hidden lg:block' : ''">
+        <div class="xl:col-span-2 space-y-2.5" :class="sel ? 'hidden xl:block' : ''">
             <div x-show="loading && !rows.length" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /><x-ui.skeleton class="h-24 opacity-60" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the tickets.'" retryExpr="load()" /></div>
             <div x-show="loaded && !loading && !failed && !rows.length" x-cloak>
@@ -74,11 +84,11 @@
         </div>
 
         {{-- The ticket --}}
-        <div class="lg:col-span-3 scroll-mt-24" x-ref="ticket" :class="sel ? '' : 'hidden lg:block'">
+        <div class="xl:col-span-3 scroll-mt-24" x-ref="ticket" :class="sel ? '' : 'hidden xl:block'">
             <x-ui.card x-show="!sel" class="text-sm text-ink-muted flex items-center gap-2"><i data-lucide="message-square-reply" class="w-4 h-4 shrink-0"></i>Choose a ticket to read the conversation and answer it.</x-ui.card>
 
             <div x-show="sel" x-cloak class="surface-glass rounded-[26px] p-4 sm:p-5 space-y-4">
-                <button type="button" @click="closeTicket()" class="lg:hidden inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>Back to the tickets</button>
+                <button type="button" @click="closeTicket()" class="xl:hidden inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>Back to the tickets</button>
 
                 <div class="flex flex-wrap items-start gap-2">
                     <div class="min-w-0 flex-1">
@@ -93,7 +103,7 @@
                     <button type="button" x-show="!sel?.notFound" class="underline" @click="openTicket(selRef)">Try again</button>
                 </p>
 
-                <dl x-show="!sel?.notFound" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                <dl x-show="!sel?.notFound" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-x-6 gap-y-2 text-xs">
                     <div class="flex justify-between gap-2"><dt class="text-ink-muted">Resident</dt><dd class="font-semibold text-ink text-right break-words" x-text="[sel?.citizen?.name, sel?.citizen?.account_no].filter(Boolean).join(' · ') || '—'"></dd></div>
                     <div class="flex justify-between gap-2"><dt class="text-ink-muted">Barangay</dt><dd class="font-semibold text-ink" x-text="(sel?.citizen?.barangay || sel?.barangay) ? 'Brgy. ' + (sel?.citizen?.barangay || sel?.barangay) : '—'"></dd></div>
                     <div class="flex justify-between gap-2"><dt class="text-ink-muted">Office</dt><dd class="font-semibold text-ink text-right" x-text="sel?.office ? (sel.office === 'Barangay Office' ? officeLabel(sel) : sel.office) : 'Not routed yet'"></dd></div>
@@ -175,7 +185,8 @@
                 <h3 class="text-sm font-semibold text-ink flex items-center gap-1.5"><i data-lucide="thumbs-up" class="w-4 h-4 text-ink-muted"></i>Help content feedback</h3>
                 <p class="text-xs text-ink-muted">What residents said about the FAQs and tutorials, least helpful first.</p>
             </div>
-            <a x-show="$store.session.canPerm('set_site_content', 'view')" href="{{ route('admin.settings.site-content') }}" class="text-xs font-semibold text-brand-700 hover:underline">Edit the help content</a>
+            {{-- Site Content is a tab of this page: it opens in place. --}}
+            <a x-show="$store.session.canSettings() && $store.session.canPerm('set_site_content', 'view')" href="{{ route('admin.settings.site-content') }}" @click.prevent="go('site-content')" class="text-xs font-semibold text-brand-700 hover:underline">Edit the help content</a>
         </div>
         <div x-show="helpLoading && !help.length" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-8" /><x-ui.skeleton class="h-8 opacity-80" /></div>
         <p x-show="helpFailed" class="text-xs text-rose-700" role="alert">Could not load the ratings. <button type="button" class="underline" @click="loadHelp()">Try again</button></p>

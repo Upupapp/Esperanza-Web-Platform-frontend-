@@ -77,15 +77,13 @@
              gone again. Shown to a role holding any of Balita's tabs. --}}
         <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Balita" :active="$active === 'communications'"
             showIf="$store.session.can('communications') && ['comm_news','comm_banners','comm_events','comm_directory'].some((s) => $store.session.canPerm(s, 'view'))" />
-        {{-- Officers who answer residents' feedback but publish nothing (department
-             and barangay staff) reach the Feedback desk here; anyone with Balita
-             finds it as a tab there, so no one sees two entries (2026-10-15). --}}
-        <x-ui.nav-item dense :href="route('admin.communications.feedback')" icon="messages-square" label="Feedback" :active="$active === 'communications'"
-            showIf="$store.session.canPerm('comm_feedback', 'view') && !['comm_news','comm_banners','comm_events','comm_directory'].some((s) => $store.session.canPerm(s, 'view'))" />
+        {{-- Residents' Feedback is a tab of Settings (owner, 2026-11-18), in the
+             profile menu like the rest of Settings: no entry of its own here,
+             for anyone, with or without Balita. --}}
         <x-ui.nav-item dense :href="route('admin.reports')" icon="file-chart-column" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />
         <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" moduleKey="user_management" />
         <x-ui.nav-item dense :href="route('admin.internal-forms')" icon="clipboard-list" label="Internal Forms" :active="$active === 'internal-forms'" />
-        {{-- Settings, with its Support Tickets and Audit Logs tabs, is in the
+        {{-- Settings, with its Feedback and Audit Logs tabs, is in the
              profile menu at the top right: the owner wants as few sidebar
              entries as possible (2026-10-07). --}}
     </nav>

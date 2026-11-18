@@ -2083,9 +2083,12 @@ const areaChunks = [];
 const area = (used, load) => { if (used) areaChunks.push(load().then((m) => m.register(Alpine))); };
 area(/^\/(citizen|verify)(\/|$)/.test(areaPath), () => import('./scope-citizen'));
 area(/^\/admin\/(settings|users)(\/|$)/.test(areaPath), () => import('./scope-admin-settings'));
-// /admin/announcements and /admin/settings/support open the Communications page
-// too (its Balita and Feedback tabs), so they need its components (2026-10-18).
-area(/^\/admin\/(constituents|communications|announcements|settings\/support)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
+// /admin/announcements opens the Communications page too (its Balita tab), so
+// it needs its components (2026-10-18).
+area(/^\/admin\/(constituents|communications|announcements)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
+// The Feedback desk, a tab of Settings since 2026-11-18 (it was Balita's): on
+// every Settings address, since its tabs change without a page load.
+area(/^\/admin\/settings(\/|$)/.test(areaPath), () => import('./feedback-desk'));
 area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
 // Dokyu's Document types and Tulong's Tulong types (round 2, 2026-10-30):
 // the catalog editor, moved out of Settings, on those two pages only.
@@ -2109,7 +2112,7 @@ area(/^\/citizen\/assistance-requests(\/|$)/.test(areaPath), () => import('./wel
 area(/^\/admin\/assistance-requests(\/|$)/.test(areaPath), () => import('./welfare-admin'));
 // An event's registrations, attendance and certificates, on Balita > Events
 // (round 2, 2026-10-30): the page's addresses, as scope-admin-records'.
-area(/^\/admin\/(communications|announcements|settings\/support)(\/|$)/.test(areaPath), () => import('./event-desk'));
+area(/^\/admin\/(communications|announcements)(\/|$)/.test(areaPath), () => import('./event-desk'));
 // Registering for an event, and its certificate, on the resident's Events page.
 area(/^\/citizen\/events(\/|$)/.test(areaPath), () => import('./citizen-events'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());

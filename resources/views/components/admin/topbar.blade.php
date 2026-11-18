@@ -19,6 +19,8 @@
             ['en' => 'Internal Forms', 'icon' => 'clipboard-list', 'href' => route('admin.internal-forms')],
             ['en' => 'Settings', 'icon' => 'settings', 'href' => route('admin.settings')],
             ['en' => 'Direktoryo — Offices and Barangays', 'icon' => 'book-user', 'href' => route('admin.settings.directory')],
+            // A tab of Settings (2026-11-18). comm_feedback is a Communications submodule, so its holders hold the module.
+            ['en' => 'Feedback — Residents\' Tickets', 'icon' => 'message-square-reply', 'href' => route('admin.settings.feedback'), 'module' => 'communications'],
             ['en' => 'Audit Logs', 'icon' => 'scroll-text', 'href' => route('admin.audit-logs')],
         ],
         'routes' => [
@@ -48,7 +50,7 @@
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
         <div class="min-w-0">
-            {{-- data-page-*: a page with tabs may retitle itself (Balita's Feedback tab, 2026-10-15). --}}
+            {{-- data-page-*: a page with tabs may retitle itself (Balita's Feedback tab did, 2026-10-15, until Feedback moved to Settings, 2026-11-18). --}}
             <h1 data-page-title class="text-[22px] lg:text-[26px] font-extrabold tracking-[-.02em] leading-tight text-ink truncate">{{ $title }}</h1>
             @if($subtitle)
                 {{-- Two lines rather than cut off (2026-11-17: beside the clock, search and
@@ -161,10 +163,11 @@
                 <a href="#" @click.prevent="open = false; $dispatch('open-my-profile')" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-ink-muted"></i>My Profile
                 </a>
-                {{-- Without Settings: Direktoryo, or the Facebook Page card for anyone who can post in Balita (2026-10-29).
+                {{-- Without Settings: Feedback for whoever answers residents' tickets (2026-11-18), Direktoryo,
+                     or the Facebook Page card for anyone who can post in Balita (2026-10-29), in that order (as the page lands).
                      A Department Head's Service Catalog (their types, round 2) is not Settings: canSettings() in app.js. --}}
-                <a :href="$store.session.canSettings() ? '{{ route('admin.settings') }}' : (($store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view')) ? '{{ route('admin.settings.directory') }}' : '{{ route('admin.settings') }}?tab=integrations')" href="{{ route('admin.settings') }}"
-                   x-show="$store.session.canSettings() || $store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view') || $store.session.canPerm('comm_news', 'create') || $store.session.canPerm('set_system', 'view')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
+                <a :href="$store.session.canSettings() ? '{{ route('admin.settings') }}' : ($store.session.canPerm('comm_feedback', 'view') ? '{{ route('admin.settings.feedback') }}' : (($store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view')) ? '{{ route('admin.settings.directory') }}' : '{{ route('admin.settings') }}?tab=integrations'))" href="{{ route('admin.settings') }}"
+                   x-show="$store.session.canSettings() || $store.session.canPerm('comm_feedback', 'view') || $store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view') || $store.session.canPerm('comm_news', 'create') || $store.session.canPerm('set_system', 'view')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i>Settings
                 </a>
                 <div class="border-t border-brand-600/10 my-1.5"></div>

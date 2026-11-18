@@ -69,7 +69,8 @@ class EventRegistrationTest extends TestCase
         $this->assertStringContainsString("window.dispatchEvent(new CustomEvent('events-edit', { detail: key }));", $js);
         $this->assertStringContainsString("@include('admin.communications.event-desk')", $page);
         $this->assertStringContainsString('<div x-data="eventDesk()" x-on:event-desk.window="edShow($event.detail)">', $desk);
-        $this->assertStringContainsString("area(/^\\/admin\\/(communications|announcements|settings\\/support)(\\/|$)/.test(areaPath), () => import('./event-desk'));", $this->source('resources/js/app.js'));
+        // /admin/settings/support forwards to Settings > Feedback since 2026-11-18: no Balita page there.
+        $this->assertStringContainsString("area(/^\\/admin\\/(communications|announcements)(\\/|$)/.test(areaPath), () => import('./event-desk'));", $this->source('resources/js/app.js'));
 
         // Counts, check-in by code (with or without the dash, any case), walk-ins, the list.
         $this->assertStringContainsString('Check in by code', $desk);

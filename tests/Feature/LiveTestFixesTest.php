@@ -154,7 +154,7 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString('x-show="selectedRequest.canWithdraw"', $view);
     }
 
-    /** Owner, 2026-10-07: as few sidebar entries as possible. Directory and Blotter are tabs of Balita; Settings, with Support Tickets and Audit Logs, is in the profile menu. */
+    /** Owner, 2026-10-07: as few sidebar entries as possible. The Blotter is a tab of Balita; Settings, with Feedback and Audit Logs, is in the profile menu. */
     public function test_the_staff_sidebar_keeps_balita_whole_and_settings_in_the_profile_menu(): void
     {
         $sidebar = $this->source('resources/views/components/admin/sidebar.blade.php');
@@ -163,17 +163,20 @@ class LiveTestFixesTest extends TestCase
         foreach (['Balita & Events', 'label="Directory"', 'label="Blotter"', 'label="Settings"', 'label="Audit Logs"', 'label="Support Tickets"'] as $gone) {
             $this->assertStringNotContainsString($gone, $sidebar, $gone);
         }
-        // Support tickets moved to Balita's Feedback tab (scope round 2026-10-15);
-        // staff who only answer them get a Feedback entry instead of Balita.
+        // Support tickets were Balita's Feedback tab (scope round 2026-10-15),
+        // with a sidebar entry for desk-only staff; since 2026-11-18 they are
+        // Settings > Feedback, and the sidebar has no Feedback entry at all.
         $this->assertStringNotContainsString('Support Tickets', $this->source('resources/views/admin/settings.blade.php'));
-        $this->assertSame(1, substr_count($sidebar, ":href=\"route('admin.communications.feedback')\""), 'one Feedback entry, for desk-only staff');
+        $this->assertStringNotContainsString('label="Feedback"', $sidebar);
+        $this->assertStringNotContainsString('admin.communications.feedback', $sidebar);
 
         $balita = $this->source('resources/views/admin/communications.blade.php');
-        $this->assertStringContainsString("<x-layouts.admin :title=\"\$tab === 'feedback' ? 'Feedback' : 'Balita'\"", $balita);
+        $this->assertStringContainsString('<x-layouts.admin title="Balita"', $balita);
         $this->assertStringNotContainsString('inGroup(', $balita);
-        foreach (['balita', 'banners', 'events', 'blotter', 'feedback'] as $tab) {
+        foreach (['balita', 'banners', 'events', 'blotter'] as $tab) {
             $this->assertStringContainsString("<button x-show=\"tabAllowed('{$tab}')\" @click=\"go('{$tab}')\"", $balita, $tab);
         }
+        $this->assertStringNotContainsString("tabAllowed('feedback')", $balita);
         $this->assertStringContainsString('<i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i>Settings', $this->source('resources/views/components/admin/topbar.blade.php'));
         $this->assertStringContainsString("'audit-logs' => ['scroll-text', 'Audit Logs'", $this->source('resources/views/admin/settings.blade.php'));
     }
