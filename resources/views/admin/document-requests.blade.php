@@ -1629,7 +1629,7 @@
                 if (r) this.rejectRemarks = r.message;
             },
             // A [placeholder] still in the reason (QA 2026-11-18 #233): the remarks
-            // reach the resident as typed, and "[required document]" once did.
+            // reach the resident as typed, and [required document] once did.
             // The standard reasons no longer carry one; this keeps Reject off for
             // any that comes back, or one an officer types.
             get rejectHasPlaceholder() { return /\[[^\]]+\]/.test(this.rejectRemarks || ''); },

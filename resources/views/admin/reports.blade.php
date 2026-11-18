@@ -126,7 +126,7 @@
                     : Array.isArray(v) ? v.map(flat).filter((x) => x !== '').join('; ')
                     : typeof v === 'object' ? (v.full_label ?? v.label ?? v.name ?? v.en ?? v.ref ?? Object.entries(v).map(([k, x]) => k.replace(/_/g, ' ') + ': ' + flat(x)).join('; '))
                     : v;
-                const guard = (v, t) => typeof v !== 'number' && /^[=+\-@\t\r]/.test(t) ? "'" + t : t;
+                const guard = (v, t) => typeof v !== 'number' && /^[=+\-@\t\r]/.test(t) ? String.fromCharCode(39) + t : t;
                 const q = String.fromCharCode(34);
                 const cell = (v) => { const t = guard(v, String(flat(v))); return [',', q, String.fromCharCode(10), String.fromCharCode(13)].some((c) => t.includes(c)) ? q + t.split(q).join(q + q) + q : t; };
                 const columns = [...new Set(rows.flatMap((r) => Object.keys(r || {})))];

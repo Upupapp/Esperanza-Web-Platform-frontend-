@@ -438,7 +438,7 @@
             const keys = [...new Set(rows.flatMap(r => Object.keys(r || {})))].filter(k => rows.every(r => plain(r?.[k])));
             const text = (v) => v === null || v === undefined ? '' : Array.isArray(v) ? v.map(text).filter(Boolean).join('; ') : typeof v === 'object' ? text(v.en ?? v.name ?? v.label ?? v.ref) : String(v);
             const q = String.fromCharCode(34);
-            const guard = (v, t) => typeof v !== 'number' && /^[=+\-@\t\r]/.test(t) ? "'" + t : t;
+            const guard = (v, t) => typeof v !== 'number' && /^[=+\-@\t\r]/.test(t) ? String.fromCharCode(39) + t : t;
             const cell = (v) => { const t = guard(v, text(v)); return [',', q, String.fromCharCode(10), String.fromCharCode(13)].some(c => t.includes(c)) ? q + t.split(q).join(q + q) + q : t; };
             const csv = String.fromCharCode(0xFEFF) + [keys.map(cell).join(','), ...rows.map(r => keys.map(k => cell(r?.[k])).join(','))].join(String.fromCharCode(13, 10));
             const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), download: filename });

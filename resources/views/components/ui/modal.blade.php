@@ -34,6 +34,7 @@
         <div x-show="open" x-transition.opacity @click="open = false" style="position: absolute; inset: 0;" class="bg-navy-950/50 backdrop-blur-md"
         role="button"
         tabindex="0"
+        aria-label="Close dialog"
         @keydown.enter.prevent="open = false"
         @keydown.space.prevent="open = false"></div>
 
