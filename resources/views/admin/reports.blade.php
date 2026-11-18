@@ -239,7 +239,7 @@
                 <x-ui.card>
                     {{-- The period first: it applies to every report below. Each
                          group then has its own picker beside its reports (2026-11-03). --}}
-                    <div class="flex flex-wrap items-end gap-x-3 gap-y-1 mb-5">
+                    <div class="flex flex-wrap items-end gap-x-3 gap-y-1 mb-4">
                         <div class="flex flex-col gap-1">
                             <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Period</span>
                             <x-admin.dashboards.period-picker />
@@ -249,63 +249,56 @@
 
                     <template x-for="group in [{ key: 'office', title: 'Office reports', who: officeEntry ? (officeEntry.short || officeEntry.name) : '', rows: office ? departmentReports : [] }, { key: 'barangay', title: 'Barangay reports', who: barangay ? 'Brgy. ' + barangay : '', rows: barangay ? barangayReports : [] }]" :key="group.title">
                         <div x-show="group.rows.length" class="mb-6 last:mb-0">
-                            <div class="flex flex-wrap items-end gap-x-3 gap-y-2 mb-3 pb-3 border-b border-brand-600/10">
+                            {{-- One row of pickers (owner, 2026-11-18: "it can be compacted
+                                 more"): the office, then what its reports are narrowed to.
+                                 Each long-name picker has a set width and its chosen words
+                                 end in "…"; its list shows every name in full. On a phone
+                                 the office and the program each take the row, and sex,
+                                 age and sector go two to a row. --}}
+                            <div class="flex flex-wrap items-end gap-x-4 gap-y-2 mb-3 pb-3 border-b border-brand-600/10">
                                 <p class="w-full text-[13px] font-extrabold text-ink"><span x-text="group.title"></span><span class="text-ink-muted font-semibold" x-text="group.who ? ' · ' + group.who : ''"></span></p>
                                 {{-- x-if, not x-show: each picker exists once (one #pr-office on the page). --}}
                                 <template x-if="group.key === 'office'">
-                                {{-- As wide as the office's full name, up to the row, and an
-                                     ellipsis past that on a phone (UI sweep 2026-11-18: 260 px
-                                     cut 'MSWDO · Municipal Social Welfare &' with no ellipsis). --}}
-                                <div x-show="catalog.offices.length > 1" class="flex flex-col gap-1 min-w-0 max-w-full">
-                                    <label for="pr-office" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office</label>
-                                    <select id="pr-office" x-model="office" @change="service = ''" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-full text-ellipsis">
-                                        <template x-for="o in catalog.offices" :key="o.name">
-                                            <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
-                                        </template>
-                                    </select>
-                                </div>
+                                <x-ui.compact-select id="pr-office" label="Office" label-class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted" x-show="catalog.offices.length > 1" class="w-full sm:w-60" model="office" change="service = ''" shown="officeEntry ? (officeEntry.short ? officeEntry.short + ' · ' : '') + officeEntry.name : ''">
+                                    <template x-for="o in catalog.offices" :key="o.name">
+                                        <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
+                                    </template>
+                                </x-ui.compact-select>
                                 </template>
                                 <template x-if="group.key === 'barangay'">
-                                <div x-show="catalog.barangays.length > 1" class="flex flex-col gap-1">
-                                    <label for="pr-barangay" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Barangay</label>
-                                    <select id="pr-barangay" x-model="barangay" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
-                                        <template x-for="b in catalog.barangays" :key="b">
-                                            <option :value="b" x-text="'Brgy. ' + b" :selected="b === barangay"></option>
-                                        </template>
-                                    </select>
+                                <x-ui.compact-select id="pr-barangay" label="Barangay" label-class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted" x-show="catalog.barangays.length > 1" class="w-full sm:w-60" model="barangay" shown="barangay ? 'Brgy. ' + barangay : ''">
+                                    <template x-for="b in catalog.barangays" :key="b">
+                                        <option :value="b" x-text="'Brgy. ' + b" :selected="b === barangay"></option>
+                                    </template>
+                                </x-ui.compact-select>
+                                </template>
+                                {{-- An office's reports narrow as its dashboard does (2026-10-28). --}}
+                                <template x-if="group.key === 'office'">
+                                <div class="flex flex-col gap-1 w-full sm:w-auto min-w-0">
+                                    <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Narrowed to</span>
+                                    <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                                        <x-ui.compact-select id="pr-service" label="Program or document" model="service" x-show="services.length > 1" class="col-span-2 sm:w-60" shown="service ? (services.find((o) => o.key === service)?.name || service) : 'All programs and documents'">
+                                            <option value="">All programs and documents</option>
+                                            <template x-for="o in services" :key="o.key">
+                                                <option :value="o.key" x-text="o.name" :selected="o.key === service"></option>
+                                            </template>
+                                        </x-ui.compact-select>
+                                        <x-ui.compact-select id="pr-sex" label="Sex" model="sex" shown="sex ? (sexOptions.find((o) => o.value === sex)?.label || sex) : 'Any sex'">
+                                            <option value="">Any sex</option>
+                                            <template x-for="o in sexOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === sex"></option></template>
+                                        </x-ui.compact-select>
+                                        <x-ui.compact-select id="pr-age" label="Age group" model="age" shown="age ? (ageOptions.find((o) => o.value === age)?.label || age) : 'Any age'">
+                                            <option value="">Any age</option>
+                                            <template x-for="o in ageOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === age"></option></template>
+                                        </x-ui.compact-select>
+                                        <x-ui.compact-select id="pr-sector" label="Sector" model="sector" shown="sector ? (sectorOptions.find((o) => o.value === sector)?.label || sector) : 'Any sector'">
+                                            <option value="">Any sector</option>
+                                            <template x-for="o in sectorOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === sector"></option></template>
+                                        </x-ui.compact-select>
+                                        <button type="button" x-show="anyFilter()" x-cloak @click="service = ''; sex = ''; age = ''; sector = ''" class="justify-self-start inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear</button>
+                                    </div>
                                 </div>
                                 </template>
-                        {{-- An office's reports narrow as its dashboard does (2026-10-28). --}}
-                        <template x-if="group.key === 'office'">
-                        <div class="flex flex-col gap-1 min-w-0 max-w-full">
-                            <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Narrowed to</span>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <label class="sr-only" for="pr-service">Program or document</label>
-                                <select id="pr-service" x-model="service" x-show="services.length > 1" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[240px] text-ellipsis">
-                                    <option value="">All programs and documents</option>
-                                    <template x-for="o in services" :key="o.key">
-                                        <option :value="o.key" x-text="o.name" :selected="o.key === service"></option>
-                                    </template>
-                                </select>
-                                <label class="sr-only" for="pr-sex">Sex</label>
-                                <select id="pr-sex" x-model="sex" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
-                                    <option value="">Any sex</option>
-                                    <template x-for="o in sexOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === sex"></option></template>
-                                </select>
-                                <label class="sr-only" for="pr-age">Age group</label>
-                                <select id="pr-age" x-model="age" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
-                                    <option value="">Any age</option>
-                                    <template x-for="o in ageOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === age"></option></template>
-                                </select>
-                                <label class="sr-only" for="pr-sector">Sector</label>
-                                <select id="pr-sector" x-model="sector" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
-                                    <option value="">Any sector</option>
-                                    <template x-for="o in sectorOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === sector"></option></template>
-                                </select>
-                                <button type="button" x-show="anyFilter()" x-cloak @click="service = ''; sex = ''; age = ''; sector = ''" class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear</button>
-                            </div>
-                        </div>
-                        </template>
                             </div>
 
                             <div class="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
