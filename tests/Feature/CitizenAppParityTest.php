@@ -80,7 +80,8 @@ class CitizenAppParityTest extends TestCase
         $this->assertStringContainsString('if (!this.clientUuid) this.clientUuid = newUuid();', $js);
         $this->assertStringContainsString('// The form and its client_uuid stay as they were, for a retry.', $js);
         $this->assertStringContainsString("const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];", $js);
-        $this->assertStringContainsString('const MAX_PHOTO_BYTES = 10 * 1024 * 1024;', $js);
+        // The server's image limit, 5 MB; a bigger photo is made smaller first (QA 2026-11-18).
+        $this->assertStringContainsString('const MAX_PHOTO_BYTES = 5 * 1024 * 1024;', $js);
         $this->assertStringContainsString('en="For life-threatening emergencies, call a hotline first."', $page);
 
         // The list and the detail, with its timeline and photos (a null url is still being checked).

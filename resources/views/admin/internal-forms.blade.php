@@ -201,7 +201,9 @@
                 if (this.viewing?.ref !== s.ref) this.viewing = { ...s, fields: [], chain: [], approvals: [], loading: true };
                 try {
                     const res = await $api.get('/admin/internal-forms/submissions/' + encodeURIComponent(s.ref));
-                    this.viewing = { ...s, ...res.data };
+                    // loading: false - a Try again passes the placeholder (loading: true)
+                    // back in as s, and the answer has no loading key (2026-11-18).
+                    this.viewing = { ...s, ...res.data, loading: false };
                 } catch { this.viewFailed = true; } finally {
                     this.viewLoading = false;
                     this.$nextTick(() => window.renderIcons?.());

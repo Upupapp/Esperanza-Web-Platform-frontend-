@@ -35,8 +35,9 @@
         ->mapWithKeys(fn ($t) => [$t['key'] => ['kind' => $t['processingKind'] ?? null, 'couple' => ! empty($t['sessionCouple']), 'certificate' => $t['certificate']['title'] ?? null]])
         ->all();
 
-    // Where to follow up / claim assistance, keyed by office name.
-    $pickupDirectory = $__fixtures['pickupDirectory'];
+    // Where to follow up or claim assistance is no longer a list of numbers
+    // kept here: the tracker reads the Government Directory (GET /directory),
+    // the one the LGU keeps in Settings, as Dokyu does (QA 2026-11-18).
 
 @endphp
 
@@ -97,7 +98,16 @@
                     return this.tab === 'done' ? (isDone && !stopped) : !isDone;
                 });
             },
-            pickupDirectory: @js($pickupDirectory),
+            // The Government Directory's offices, for Who to Contact (QA
+            // 2026-11-18): the page's own numbers had drifted from it (MDRRMO
+            // 333-1090 against 333-1091) and the trunkline number it
+            // fell back on was the PNP hotline. Read once, when a case is first
+            // opened; a failed read is tried again next time.
+            directory: null,
+            async loadDirectory() {
+                if (this.directory) return;
+                try { this.directory = (await $api.get('/directory')).data || []; } catch { this.directory = null; }
+            },
             progressOpen: false,
             // The proof-of-release preview inside the request's progress view.
             proofOpen: false,
@@ -210,6 +220,7 @@
             },
             async openProgress(r) {
                 this.selectedRequest = r;
+                this.loadDirectory();
                 this.progressOpen = true;
                 this.proofOpen = false;
                 this.withdrawOpen = false;
@@ -317,12 +328,24 @@
                 // The directory is keyed by the office's short name ('MSWDO'),
                 // not the full name the API sends; where an office is listed as
                 // 'A / B', A is where to claim it.
-                const primaryOffice = (this.officeShortByKey[r.serviceKey] || r.office || '').split('/')[0].trim();
-                return this.pickupDirectory[primaryOffice] || { contact: 'Municipal Hall Trunkline (056) 333-1000', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
+                // The office's number as the Government Directory lists it, by its
+                // short name ('MSWDO') or the full one the API sends. No number
+                // when the directory has none: the box then points to the
+                // directory rather than guess one.
+                const names = [this.officeShortByKey[r.serviceKey], r.office]
+                    .map((n) => String(n || '').split('/')[0].trim().toLowerCase()).filter(Boolean);
+                const entry = names.length ? (this.directory || []).find((d) => d.contact && names.includes((d.office || '').trim().toLowerCase())) : null;
+                return { contact: entry?.contact || '', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
             },
             get expectedRelease() {
                 const r = this.selectedRequest;
                 if (!r) return '';
+                // No number in the processing time ('Next scheduled session', 'Per
+                // case plan'): there is no date to count to, so the office's own
+                // words are shown, not a guessed date five days on (QA 2026-11-18).
+                const days = String(r.days ?? '').trim();
+                if (!days) return $store.lang.current === 'en' ? 'The office will tell you' : 'Sasabihin ng opisina';
+                if (!/\d/.test(days) && !/same day/i.test(days)) return days;
                 const match = r.days.match(/(\d+)(?!.*\d)/);
                 let left = match ? parseInt(match[1]) : 5;
                 const d = new Date(r.submitted);
@@ -486,12 +509,19 @@
                     stepError: '',
                     stepWarning: '',
                     attachWarned: false,
-                    // The applicant's mobile number and any number field: '' when every one is fine.
+                    // A landline or office telephone ('Landline No.', 'Tel. Nos.') is
+                    // not a mobile number (QA 2026-11-18, as Dokyu): it takes a number
+                    // such as (056) 000-0000 as written, never cut to 11 digits nor
+                    // held to 09XXXXXXXXX.
+                    isLandline(f) {
+                        return f?.type === 'tel' && /landline|\btel\b|_tel_|tel\./i.test((f.key || '') + ' ' + (f.label || ''));
+                    },
+                    // The applicant's mobile number and any mobile number field: '' when every one is fine.
                     phoneProblem() {
                         const lang = this.$store.lang.current;
                         const own = window.phMobile.error(this.applicant.mobile, false, lang);
                         if (own) return own;
-                        for (const f of (this.types[this.selectedType]?.fields || []).filter((f) => f.type === 'tel')) {
+                        for (const f of (this.types[this.selectedType]?.fields || []).filter((f) => f.type === 'tel' && !this.isLandline(f))) {
                             const err = window.phMobile.error(this.formData[f.key], !!f.required, lang);
                             if (err) return f.label + ': ' + err;
                         }
@@ -850,9 +880,9 @@
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                 <input :aria-label="f.label"
                                                     :type="f.type" x-model="formData[f.key]"
-                                                    :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
+                                                    :inputmode="f.type === 'tel' ? (isLandline(f) ? 'tel' : 'numeric') : null" :maxlength="f.type === 'tel' ? (isLandline(f) ? 60 : 11) : null" :placeholder="f.type === 'tel' ? (isLandline(f) ? '(056) 000-0000' : '09XXXXXXXXX') : null"
                                                     :min="f.type === 'number' && !String(f.key).endsWith('net_income') ? 0 : null" :step="f.type === 'number' ? 'any' : null"
-                                                    @input="if (f.type === 'tel') formData[f.key] = window.phMobile.clean($event.target.value)"
+                                                    @input="if (f.type === 'tel') formData[f.key] = isLandline(f) ? $event.target.value.replace(/[^0-9()+\-\/,;. ]/g, '') : window.phMobile.clean($event.target.value)"
                                                     class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                 >
                                             </div>
@@ -1119,9 +1149,12 @@
                             <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2"><x-ui.t fil="Detalye ng Aplikasyon" en="Application Details" /></p>
                             <div class="rounded-xl border border-slate-200 divide-y divide-brand-600/[.08]">
                                 <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type !== 'table')" :key="f.key">
+                                    {{-- A label wraps and the answer takes at most half the row,
+                                         so a 160-character consent label cannot push the card
+                                         sideways on a phone (2026-11-18). --}}
                                     <div class="flex items-center justify-between gap-3 px-3.5 py-2 text-xs" x-show="fieldShown(f) && formData[f.key] && (!Array.isArray(formData[f.key]) || formData[f.key].length)">
-                                        <span class="text-ink-muted shrink-0" x-text="f.label"></span>
-                                        <span class="font-medium text-slate-700 text-right truncate" x-text="Array.isArray(formData[f.key]) ? formData[f.key].join(', ') : formData[f.key]"></span>
+                                        <span class="text-ink-muted min-w-0" x-text="f.label"></span>
+                                        <span class="font-medium text-slate-700 text-right truncate shrink-0 max-w-[50%]" x-text="Array.isArray(formData[f.key]) ? formData[f.key].join(', ') : formData[f.key]"></span>
                                     </div>
                                 </template>
                             </div>
@@ -1314,8 +1347,10 @@
                         <div x-show="isUnknownStatus(selectedRequest.status)" x-cloak role="status" class="mt-4 rounded-xl border border-dashed border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-900" data-testid="unknown-status">
                             <p><span class="font-semibold" x-text="lang('Status: ', 'Katayuan: ') + selectedRequest.status"></span> <span x-text="lang('This page does not recognise this status yet, so it cannot show the step. Your request is not lost: reload the page, or ask the office handling it.', 'Hindi pa kilala ng page na ito ang katayuang ito, kaya hindi maipakita ang hakbang. Hindi nawala ang iyong kahilingan: i-reload ang page, o magtanong sa opisinang humahawak nito.')"></span></p>
                         </div>
-                        <!-- Progress stepper -->
-                        <div class="flex items-center mt-6 mb-2" x-show="selectedRequest.status !== 'Rejected' && selectedRequest.status !== 'Cancelled' && !isUnknownStatus(selectedRequest.status)">
+                        <!-- Progress stepper. Seven labelled steps do not fit a phone,
+                             so below sm it is numbered dots with the current step
+                             named under them (2026-11-18). -->
+                        <div class="flex items-center mt-6 mb-2" data-testid="tulong-stepper" x-show="selectedRequest.status !== 'Rejected' && selectedRequest.status !== 'Cancelled' && !isUnknownStatus(selectedRequest.status)">
                             <template x-for="(label, i) in stepOrder" :key="i">
                                 <div class="flex-1 flex items-center">
                                     <div class="flex flex-col items-center gap-1.5 text-center">
@@ -1326,12 +1361,15 @@
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
                                             <span x-show="stepIndex(selectedRequest.status) <= i" x-text="i + 1"></span>
                                         </span>
-                                        <span class="text-xs max-w-[76px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="stepText(label)"></span>
+                                        <span class="hidden sm:block text-xs max-w-[76px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="stepText(label)"></span>
                                     </div>
-                                    <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
+                                    <div class="flex-1 h-0.5 sm:-mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
                                 </div>
                             </template>
                         </div>
+                        <p class="sm:hidden text-xs text-center mb-2" data-testid="tulong-stepper-current" x-show="selectedRequest.status !== 'Rejected' && selectedRequest.status !== 'Cancelled' && !isUnknownStatus(selectedRequest.status) && stepIndex(selectedRequest.status) >= 0">
+                            <span class="text-ink-muted" x-text="lang('Step ' + (stepIndex(selectedRequest.status) + 1) + ' of ' + stepOrder.length + ': ', 'Hakbang ' + (stepIndex(selectedRequest.status) + 1) + ' sa ' + stepOrder.length + ': ')"></span><span class="font-medium text-ink" x-text="stepText(stepOrder[stepIndex(selectedRequest.status)])"></span>
+                        </p>
 
                         {{-- Rejected is terminal — informational only, no
                              resubmit path out of it. --}}
@@ -1567,7 +1605,8 @@
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
                             <p class="text-sm font-medium text-ink" x-text="selectedRequest.office"></p>
                             <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.address"></span></p>
-                            <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="phone" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
+                            <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5" x-show="pickupInfo?.contact"><i data-lucide="phone" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
+                            <a href="{{ route('citizen.directory') }}" class="text-xs font-medium text-brand-600 hover:underline mt-1 inline-flex items-center gap-1.5" x-show="pickupInfo && !pickupInfo.contact"><i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i><x-ui.t fil="Tingnan ang numero sa Direktoryo ng Pamahalaan" en="See the number in the Government Directory" /></a>
                         </div>
 
                         <x-citizen.scope.request-timeline />

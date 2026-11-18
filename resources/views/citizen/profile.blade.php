@@ -164,6 +164,14 @@
             formatDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
 
             familyMembers: [],
+            // A family member's age in whole years from the server's date
+            // (2010-12-20): a year less until this year's birthday. The card
+            // said this year minus the birth year, a year too old before the
+            // birthday (sweep 2026-11-18). The date part only, so the day
+            // never shifts with the time zone. null when it is not a date.
+            // The one age rule (window.ageFromBirthDate in app.js): a year taken
+            // off until this year's birthday has come.
+            memberAge(dob) { return window.ageFromBirthDate(dob); },
             // The Resident Profile filed on the phone: the barangay's decision.
             profileVerification: null,
             profileReview: null,
@@ -574,7 +582,7 @@
                                 <div class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(member.name || '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('')"></div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-slate-700 truncate" x-text="member.name"></p>
-                                    <p class="text-xs text-ink-muted" x-text="member.dob ? (new Date().getFullYear() - new Date(member.dob).getFullYear()) + ' ' + ($store.lang.current === 'en' ? 'y/o' : 'taong gulang') : ''"></p>
+                                    <p class="text-xs text-ink-muted" x-text="memberAge(member.dob) !== null ? memberAge(member.dob) + ' ' + ($store.lang.current === 'en' ? 'y/o' : 'taong gulang') : ''"></p>
                                 </div>
                                 <span class="text-[10px] font-medium text-ink-muted bg-slate-100 rounded-full px-2 py-0.5 shrink-0" x-text="member.relation"></span>
                             </div>

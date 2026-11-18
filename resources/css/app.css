@@ -1924,3 +1924,11 @@ body.dp-printing .doc-paper.faced-sheet {
     -webkit-mask-image: linear-gradient(to right, #000 0%, #000 32%, rgba(0, 0, 0, 0.25) 72%, transparent 100%);
     mask-image: linear-gradient(to right, #000 0%, #000 32%, rgba(0, 0, 0, 0.25) 72%, transparent 100%);
 }
+
+/* A full-window layer (dialog backdrop) must not take the margin a parent's
+   space-y-* gives its children: inside a space-y-3 page the Sakuna dialogs'
+   backdrop stopped 12 px above the bottom of the window, leaving a light strip
+   (screen sweep, 2026-11-18). Unlayered, so it wins over the utility. */
+.fixed.inset-0 {
+    margin: 0;
+}

@@ -33,8 +33,12 @@
                 <option value="">All barangays</option>
                 @foreach($barangays as $b)<option value="{{ is_array($b) ? $b['name'] : $b }}">{{ is_array($b) ? $b['name'] : $b }}</option>@endforeach
             </select>
-            <button type="button" class="sk-daterange" @click="openRange($el)" :aria-expanded="rangeOpen ? 'true' : 'false'" aria-haspopup="dialog" aria-label="Date range" :title="rangeLabel">
-                <i data-lucide="calendar"></i><span x-text="rangeLabel">All dates</span><i data-lucide="chevron-down"></i>
+            {{-- With no From date the server counts 30 days, to the To date or
+                 today (SakunaReport::period): the button says that, never 'All
+                 dates' or 'Until …' over 30 days of figures (QA 2026-11-18). --}}
+            <button type="button" class="sk-daterange" @click="openRange($el)" :aria-expanded="rangeOpen ? 'true' : 'false'" aria-haspopup="dialog" aria-label="Date range"
+                :title="f.from ? rangeLabel : f.to ? '30 days to ' + new Date(f.to + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Last 30 days'">
+                <i data-lucide="calendar"></i><span x-text="f.from ? rangeLabel : f.to ? '30 days to ' + new Date(f.to + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Last 30 days'">Last 30 days</span><i data-lucide="chevron-down"></i>
             </button>
             <select x-model="f.type" @change="load(1)" aria-label="Disaster type" class="sk-sel" style="flex: 1 1 96px; min-width: 90px;">
                 <option value="">All types</option>
@@ -49,6 +53,9 @@
             <select x-model="f.case_kind" @change="load(1)" x-show="permsReady && tabShown('missing-persons')" x-cloak aria-label="Case kind" class="sk-sel" style="flex: 1 0 auto; min-width: 118px;">
                 @foreach($reportCaseKinds as $k => $label)<option value="{{ $k }}">{{ $label }}</option>@endforeach
             </select>
+            {{-- An occupation is kept only if it is in the group now chosen; 'All
+                 livelihoods' ('') has none, so it clears it (QA 2026-11-18: a
+                 B-2 chosen before stayed in every request, under 'All'). --}}
             <select x-model="f.livelihood_group" @change="groupChanged()" aria-label="Livelihood group" class="sk-sel" style="flex: 1 1 128px; min-width: 110px;">
                 <option value="">All livelihoods</option>
                 <template x-for="g in $store.livelihood.groups" :key="g.code"><option :value="g.code" x-text="g.code + ' · ' + g.label"></option></template>
@@ -69,14 +76,18 @@
             </div>
         </div>
 
-        {{-- The date range: presets apply at once; From/To wait for Apply. --}}
+        {{-- The date range: presets apply at once; From/To wait for Apply.
+             On a phone it spans the card (8px in from each side) instead of
+             starting at the button and running off the screen (QA 2026-11-18). --}}
         <div x-show="rangeOpen" x-cloak x-transition.opacity.duration.100ms @click.outside="if (!$event.target.closest('.sk-daterange')) cancelRange()"
-            role="dialog" aria-label="Choose the date range" class="sk-card sk-popover" :style="rangePos">
+            role="dialog" aria-label="Choose the date range" class="sk-card sk-popover max-sm:!left-2 max-sm:!right-2 max-sm:!w-auto" :style="rangePos">
             <div class="flex flex-wrap gap-1.5">
                 <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('week')">Last 7 days</button>
                 <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('month30')">Last 30 days</button>
                 <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('thisMonth')">This month</button>
-                <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('all')">All dates</button>
+                {{-- No 'All dates' preset: it sent no dates, and the server gave the
+                     last 30 days under that name (QA 2026-11-18). A whole season is
+                     a From date (To defaults to today). --}}
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <label class="flex flex-col gap-1 text-xs text-[#4B5568]">From
@@ -152,7 +163,11 @@
         <div x-show="section === 'overview'" class="space-y-3">
         <div class="sk-g4">
             <section class="sk-card sk-span2 flex flex-col">
-                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 0;"><h2 class="sk-ctitle">Incidents over time</h2><span class="sk-csub">Per day</span></div>
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 0;"><h2 class="sk-ctitle">Incidents over time</h2>
+                    {{-- The server counts by week once the period passes 62 days, each
+                         bar dated by its week's first day: buckets a week apart are
+                         said to be weekly, never 'Per day' (QA 2026-11-18). --}}
+                    <span class="sk-csub" x-text="(summary.incidents.trend || []).length > 1 && new Date(summary.incidents.trend[1].label + 'T00:00:00Z') - new Date(summary.incidents.trend[0].label + 'T00:00:00Z') > 864e5 ? 'Per week' : 'Per day'">Per day</span></div>
                 <div class="px-3.5 pb-3.5 pt-1.5">
                     <x-ui.clay-trend data="{ labels: reportTrendLabels(), bars: true, series: [{ label: 'Incidents', values: reportTrendData(), color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.18 }] }" label="Incidents reported in the period" />
                 </div>

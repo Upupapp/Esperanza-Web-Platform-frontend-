@@ -458,11 +458,14 @@
         </div>
 
         <!-- Watch Tutorial: the video when it is a file the page can play, the
-             write-up, and the link itself (a YouTube page opens in a new tab). -->
+             write-up, and the link itself (a YouTube page opens in a new tab).
+             The video exists only while the window is open (sweep 2026-11-18):
+             the window only hides itself, so a tutorial kept playing, sound
+             and all, after Close, Mark as Watched, Escape or the backdrop. -->
         <x-ui.modal title="Panoorin ang Gabay" titleEn="Watch Tutorial" maxWidth="lg">
             <template x-if="activeTutorial">
                 <div>
-                    <template x-if="activeTutorial.playable">
+                    <template x-if="open && activeTutorial.playable">
                         <video :src="activeTutorial.link" controls preload="metadata" class="w-full aspect-video rounded-xl bg-navy-950 mb-4"></video>
                     </template>
                     <span x-show="activeTutorial.category" class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full mb-2">

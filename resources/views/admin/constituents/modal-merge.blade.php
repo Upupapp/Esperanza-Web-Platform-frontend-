@@ -28,6 +28,8 @@
             const results = await Promise.all(refs.map(ref => $api.get('/admin/residents/' + ref).catch(() => null)));
             results.forEach((res, idx) => {
                 if (!res) return;
+                // Kept whether or not the list holds the record: dqRecord reads it.
+                fetchedRecords = { ...fetchedRecords, [refs[idx]]: res.data };
                 const i = individuals.findIndex(x => x.ref === refs[idx]);
                 if (i !== -1) individuals[i] = { ...individuals[i], ...res.data };
             });
@@ -55,7 +57,9 @@
         }
     },
 }">
-    <x-ui.modal maxWidth="2xl">
+    {{-- Bare: the window draws its own header and close button (QA sweep
+         2026-11-18: the modal's empty title bar and second X sat above them). --}}
+    <x-ui.modal maxWidth="2xl" :bare="true">
 
         {{-- ── MODAL HEADER ────────────────────────────────────────────────── --}}
         <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-brand-600/10">
@@ -137,7 +141,8 @@
                     Field-by-Field Comparison
                 </h3>
 
-                <div class="rounded-xl overflow-hidden border border-slate-200">
+                {{-- Scrolls sideways on a phone rather than cutting Record B off. --}}
+                <div class="rounded-xl overflow-x-auto border border-slate-200">
                     <table class="min-w-full text-sm">
                         <thead class="bg-slate-50 border-b border-slate-200">
                             <tr>

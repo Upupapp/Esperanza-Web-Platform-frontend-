@@ -61,6 +61,7 @@
         async init() {
             this.$watch('remoteKey', () => this.queueRemoteSearch());
             this.$watch('filterKey', () => { this.pages = {}; });
+            this.$watch('cvTagFilter', () => this.loadCvTagged());
             await this.loadRegistry();
             // From the top bar's search: a resident's record (?ref=) or a
             // barangay's registry (?barangay=).
@@ -152,16 +153,20 @@
                 meta('const_resident', '/admin/residents', { counts: 1 }),
                 meta('const_household', '/admin/households'),
                 meta('const_family', '/admin/families'),
-                meta('const_data_quality', '/admin/data-quality'),
+                // Open work only: the tile says Needs attention.
+                meta('const_data_quality', '/admin/data-quality', { status: 'Open,In Review' }),
             ]);
             this.tileCounts = { residents: res.total, households: hh.total, families: fam.total, verified: res.counts?.verified, pending: res.counts?.pending, issues: dq.total };
         },
 
         // What the server is asked for while the registry is too big to hold:
         // empty when everything is loaded or nothing is being looked for.
+        // A tag always goes to the server: the list rows carry no tags (only
+        // a resident's detail does), so filtering them here emptied the list
+        // (QA sweep 2026-11-18).
         get remoteKey() {
             const q = this.search.trim();
-            if (!this.registryTruncated || !(q || this.barangayFilter || this.verificationFilter || this.tagFilter)) return '';
+            if (!this.tagFilter && (!this.registryTruncated || !(q || this.barangayFilter || this.verificationFilter))) return '';
             return [q, this.barangayFilter, this.verificationFilter, this.tagFilter].join('|');
         },
         queueRemoteSearch(delay = 350) {
@@ -268,7 +273,9 @@
                 families: big ? this.registryTotals.families : this.families.length,
                 verified: big && c.verified != null ? c.verified : this.individuals.filter(i => i.verification === 'Verified').length,
                 pending: big && c.pending != null ? c.pending : this.individuals.filter(i => i.verification === 'For Validation').length,
-                issues: this.qualityIssues.length,
+                // Needs attention: a resolved issue is done (QA sweep 2026-11-18:
+                // the tile and the tab's badge counted every issue ever raised).
+                issues: this.qualityIssues.filter(i => i.status !== 'Resolved').length,
             };
             if (!this.loading && !this.failed) return listed;
             return Object.fromEntries(Object.keys(listed).map(k => [k, c[k] ?? '—']));
@@ -279,6 +286,20 @@
         cvStatusFilter: '',
         cvBarangayFilter: '',
         cvTagFilter: '',
+        // The residents carrying the tag chosen on To Verify, by ref, from the server:
+        // the list rows carry no tags, so the filter matched no one (QA sweep
+        // 2026-11-18). Asked again each time a tag is chosen.
+        cvTagged: { tag: '', refs: null, loading: false },
+        async loadCvTagged() {
+            const tag = this.cvTagFilter;
+            if (!tag) { this.cvTagged = { tag: '', refs: null, loading: false }; return; }
+            this.cvTagged = { tag, refs: null, loading: true };
+            let refs = new Set();
+            try {
+                refs = new Set(((await $api.getAll('/admin/residents', { params: { tag } })).data || []).map(r => r.ref));
+            } catch { /* nothing matches rather than everything */ }
+            if (this.cvTagFilter === tag) this.cvTagged = { tag, refs, loading: false };
+        },
         rejectAccountRemarks: '',
         processingCitizen: false,
         // The account review (modal-citizen-account): the detail is an
@@ -497,7 +518,7 @@
             let list = this.citizenAccountList.filter(i => {
                 if (this.cvStatusFilter && this.cvStatusOf(i) !== this.cvStatusFilter) return false;
                 if (this.cvBarangayFilter && i.barangay !== this.cvBarangayFilter) return false;
-                if (this.cvTagFilter && !(i.tags || []).includes(this.cvTagFilter)) return false;
+                if (this.cvTagFilter && !this.cvTagged.refs?.has(i.ref)) return false;
                 if (this.cvSearch) {
                     const q = this.cvSearch.toLowerCase();
                     return (i.name || '').toLowerCase().includes(q) || (i.ref || '').toLowerCase().includes(q) || (i.barangay || '').toLowerCase().includes(q) || (i.citizen_account?.email || '').toLowerCase().includes(q);
@@ -562,9 +583,16 @@
         get cvVerificationOptions() {
             return ['Unverified', 'For Validation', 'Partially Verified', 'Verified'];
         },
+        // The Needs Review card counts For Validation and Partially Verified
+        // together, so its filter keeps both (QA sweep 2026-11-18: it kept only
+        // Partially Verified, and the records residents sent in disappeared).
+        cvStatusMatches(v) {
+            if (!this.cvStatusFilter) return true;
+            return this.cvStatusFilter === 'Needs Review' ? ['Partially Verified', 'For Validation'].includes(v) : v === this.cvStatusFilter;
+        },
         get filteredCvFamilies() {
             let list = this.cvFamilyList.filter(f => {
-                if (this.cvStatusFilter && f.verification !== this.cvStatusFilter) return false;
+                if (!this.cvStatusMatches(f.verification)) return false;
                 if (this.cvBarangayFilter && f.barangay !== this.cvBarangayFilter) return false;
                 if (this.cvSearch) {
                     const q = this.cvSearch.toLowerCase();
@@ -577,7 +605,7 @@
         },
         get filteredCvHouseholds() {
             let list = this.cvHouseholdList.filter(h => {
-                if (this.cvStatusFilter && h.verification !== this.cvStatusFilter) return false;
+                if (!this.cvStatusMatches(h.verification)) return false;
                 if (this.cvBarangayFilter && h.barangay !== this.cvBarangayFilter) return false;
                 if (this.cvSearch) {
                     const q = this.cvSearch.toLowerCase();
@@ -654,7 +682,8 @@
                 if (!this.$store.session.inScope(r.barangay)) return false;
                 if (this.barangayFilter && r.barangay !== this.barangayFilter) return false;
                 if (this.verificationFilter && r.verification !== this.verificationFilter) return false;
-                if (this.tagFilter && !(r.tags||[]).includes(this.tagFilter)) return false;
+                // The server's page already holds only the tagged residents.
+                if (this.tagFilter && !this.remoteActive && !this.registryTags(r.tags).includes(this.tagFilter)) return false;
                 if (this.search) {
                     const q = this.search.toLowerCase();
                     return (r.name||'').toLowerCase().includes(q)||(r.ref||'').toLowerCase().includes(q)||(r.barangay||'').toLowerCase().includes(q)||(r.occupation||'').toLowerCase().includes(q)||(r.imported_from||'').toLowerCase()===q;
@@ -670,11 +699,28 @@
                 return true;
             });
         },
+        // A resident's tags as the staff keys (senior, pwd, 4ps, solo_parent):
+        // the list rows now carry tags (QA 2026-11-18 #30/#36), and the ones a
+        // resident ticks on their own profile are stored as words ('Senior
+        // Citizen', 'PWD', '4Ps', 'Solo Parent'). Each tag once, so the chips and
+        // the filter read both the same.
+        registryTags(tags) {
+            const words = { 'senior citizen': 'senior', 'senior': 'senior', 'pwd': 'pwd', '4ps': '4ps', '4ps beneficiary': '4ps', 'solo parent': 'solo_parent', 'solo_parent': 'solo_parent', 'osca member': 'osca' };
+            const out = [];
+            (Array.isArray(tags) ? tags : []).forEach(t => {
+                const raw = String(t ?? '').trim();
+                if (!raw) return;
+                const key = words[raw.toLowerCase()] || raw;
+                if (!out.includes(key)) out.push(key);
+            });
+            return out;
+        },
         get filteredHouseholds() {
             return this.households.filter(h => {
                 if (!this.$store.session.inScope(h.barangay)) return false;
                 if (this.barangayFilter && h.barangay !== this.barangayFilter) return false;
-                if (this.search) { const q=this.search.toLowerCase(); return (h.label||'').toLowerCase().includes(q)||(h.head_name||'').toLowerCase().includes(q)||(h.ref||'').toLowerCase().includes(q); }
+                // Sitio and address too, now that the list rows carry them (#35).
+                if (this.search) { const q=this.search.toLowerCase(); return (h.label||'').toLowerCase().includes(q)||(h.head_name||'').toLowerCase().includes(q)||(h.ref||'').toLowerCase().includes(q)||(h.sitio||'').toLowerCase().includes(q)||(h.address||'').toLowerCase().includes(q); }
                 return true;
             });
         },
@@ -695,14 +741,18 @@
         // instead of a second fetch per row.
         dqRecordName(ref) {
             if (!ref) return null;
-            const person = this.individuals.find(x => x.ref === ref);
+            const person = this.dqRecord(ref);
             if (person) return person.name;
             const hh = this.households.find(x => x.ref === ref);
             if (hh) return hh.label || hh.ref;
             return ref;
         },
+        // Residents fetched one by one (a merge's pair) are kept here too: the
+        // page holds the first 2,000 only, and a pair past them showed nothing
+        // but dashes to choose from (QA sweep 2026-11-18).
+        fetchedRecords: {},
         dqRecord(ref) {
-            return this.individuals.find(x => x.ref === ref) || null;
+            return this.individuals.find(x => x.ref === ref) || this.fetchedRecords[ref] || null;
         },
         async runDataQualityDetection() {
             if (this.dqScanning) return;
@@ -766,6 +816,12 @@
         },
 
         async openIndividual(r) {
+            // From a family's or household's members: that window closes, or
+            // the resident's opened behind it (each is teleported to the end of
+            // the page in include order) and the click seemed to do nothing
+            // (QA sweep 2026-11-18).
+            this.showFamilyDetail = false;
+            this.showHouseholdDetail = false;
             this.selectedIndividual = r;
             this.individualTab = 'Overview';
             this.rejectAccountRemarks = '';
@@ -836,6 +892,18 @@
             this.$nextTick(() => window.renderIcons?.());
         },
         noteDay(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
+        // The head of a new family or household: residents already on file by
+        // that name (in the chosen barangay), to be picked and linked by ref.
+        // A name typed alone always made a new resident, a second record of
+        // someone already on file (QA sweep 2026-11-18).
+        async headMatches(name, barangay) {
+            const q = (name || '').trim();
+            if (q.length < 3) return [];
+            try {
+                const res = await $api.get('/admin/residents', { params: { q, ...(barangay ? { barangay } : {}), per_page: 6 }, silent: true });
+                return res.data || [];
+            } catch { return []; }
+        },
         openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.loadMembers('family', f.ref);     this.$nextTick(()=>window.renderIcons?.()); },
         openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.loadMembers('household', h.ref);  this.$nextTick(()=>window.renderIcons?.()); },
         // What the page already has shows at once; the server's list replaces it.
@@ -858,6 +926,17 @@
         },
         openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
         openDQIssue(issue)       { this.selectedDQIssue=issue; this.showDQDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
+        // A household's electricity, water and toilet are words, not yes/no:
+        // the registry says Yes or No, a resident's profile None, Solar or Deep
+        // Well (QA sweep 2026-11-18: a household that reported None read
+        // Available). Empty is not recorded; None or No is not available.
+        amenityState(v) {
+            const s = String(v ?? '').trim().toLowerCase();
+            return !s ? 'unknown' : (['none', 'no'].includes(s) ? 'no' : 'yes');
+        },
+        hasAmenity(v) { return this.amenityState(v) === 'yes'; },
+        // The household's own word when it says more than yes or no.
+        amenityNote(v) { const s = String(v ?? '').trim(); return ['', 'yes', 'no', 'none'].includes(s.toLowerCase()) ? '' : s; },
         verificationBadge(v) {
             const m={'Verified':'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200','Partially Verified':'text-amber-700 bg-amber-50 ring-1 ring-amber-200','For Validation':'text-indigo-700 bg-indigo-50 ring-1 ring-indigo-200','Missing Documents':'text-orange-700 bg-orange-50 ring-1 ring-orange-200','Unverified':'text-ink-muted bg-slate-100 ring-1 ring-slate-200','Rejected':'text-rose-700 bg-rose-50 ring-1 ring-rose-200'};
             return { class: m[v]||m['Unverified'], label: v || 'Unverified' };
@@ -873,8 +952,15 @@
         exportCSV(rows, filename) {
             if (!rows.length) { this.$dispatch('toast',{message:'No records to export.',variant:'warning'}); return; }
             const keys=Object.keys(rows[0]).filter(k=>!['services','emergency','member_ids','family_ids','citizen_account','household','family','tags'].includes(k));
-            const csv=[keys.join(','),...rows.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))].join('\n');
-            const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:filename});
+            // One plain cell a value, quoted the spreadsheet way (QA sweep
+            // 2026-11-18): a livelihood or a programs list went out as JSON and
+            // its commas split the row, a backslash-escaped quote broke it, and a
+            // name typed as =HYPERLINK(...) ran as a formula. A cell that starts
+            // like a formula is opened as text.
+            const flat=v=>Array.isArray(v)?v.map(flat).filter(x=>x!=='').join('; '):(v&&typeof v==='object'?(v.full_label??v.label??v.name??v.ref??''):(v??''));
+            const cell=v=>{const s=String(flat(v));const safe=/^[=+\-@\t\r]/.test(s)?'\''+s:s;return /[\x22,\n\r]/.test(safe)?'\x22'+safe.replace(/\x22/g,'\x22\x22')+'\x22':safe;};
+            const csv='\uFEFF'+[keys.map(cell).join(','),...rows.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n');
+            const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),download:filename});
             a.click(); this.$dispatch('toast',{message:'Exported successfully.',variant:'success'});
         },
         // The same rows as a PDF (owner, 2026-10-15: PDF as well as the spreadsheet).

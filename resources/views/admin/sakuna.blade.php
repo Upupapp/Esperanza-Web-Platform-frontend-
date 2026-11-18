@@ -148,6 +148,14 @@
         get onLastCopy() { return !!(this.tabCopy && this.staleSince[this.tabCopy[0]]); },
         // A figure while its list is loading or failed is unknown, not zero.
         fig(value, unknown) { return unknown ? '—' : value; },
+        // A list longer than getAll's page bound arrives cut, and the tab's
+        // figures are counted from what arrived: the tab says how much that is
+        // rather than passing it off as every record (QA 2026-11-18).
+        listCut: {},
+        noteCut(name, res) {
+            const cut = res?.meta?.truncated ? { loaded: res.meta.loaded, total: res.meta.total } : null;
+            this.listCut = { ...this.listCut, [name]: cut };
+        },
         get liveStatus() {
             if (this.headerState === 'loading') return 'Checking…';
             if (this.headerState === 'failed') return 'Status unknown';
@@ -415,11 +423,25 @@
         },
         // Reused by any tab that wants a plain client-side CSV of already-loaded
         // real rows -- same one-liner already established for Constituents/Papeles.
+        // QA 2026-11-18: the columns came from the first row alone and a null
+        // there (typeof 'object') dropped that column for every row; lists were
+        // always dropped; quotes were escaped JSON-style; Excel misread n with
+        // tilde. Now as the PDF (table-pdf.js columnsOf) and Reports' saveCsv:
+        // every row's keys, lists joined, quotes doubled, a BOM, CRLF. A text
+        // cell that starts like a formula (= + - @, tab, CR) gets a leading
+        // apostrophe, so a name typed as =HYPERLINK(...) opens as text, never
+        // runs (QA 2026-11-18 #238, as constituents' exportCSV and csvCell in
+        // event-desk.js). A real number (a negative count) is left alone.
         exportCSV(rows, filename) {
             if (!rows.length) { this.toast('No records to export.', 'warning'); return; }
-            const keys = Object.keys(rows[0]).filter(k => !Array.isArray(rows[0][k]) && typeof rows[0][k] !== 'object');
-            const csv = [keys.join(','), ...rows.map(r => keys.map(k => JSON.stringify(r[k] ?? '')).join(','))].join('\n');
-            const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })), download: filename });
+            const plain = (v) => v === null || v === undefined || typeof v !== 'object' || Array.isArray(v) || 'en' in v;
+            const keys = [...new Set(rows.flatMap(r => Object.keys(r || {})))].filter(k => rows.every(r => plain(r?.[k])));
+            const text = (v) => v === null || v === undefined ? '' : Array.isArray(v) ? v.map(text).filter(Boolean).join('; ') : typeof v === 'object' ? text(v.en ?? v.name ?? v.label ?? v.ref) : String(v);
+            const q = String.fromCharCode(34);
+            const guard = (v, t) => typeof v !== 'number' && /^[=+\-@\t\r]/.test(t) ? "'" + t : t;
+            const cell = (v) => { const t = guard(v, text(v)); return [',', q, String.fromCharCode(10), String.fromCharCode(13)].some(c => t.includes(c)) ? q + t.split(q).join(q + q) + q : t; };
+            const csv = String.fromCharCode(0xFEFF) + [keys.map(cell).join(','), ...rows.map(r => keys.map(k => cell(r?.[k])).join(','))].join(String.fromCharCode(13, 10));
+            const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), download: filename });
             a.click();
             this.toast('Exported successfully.', 'success');
         },
@@ -449,6 +471,8 @@
         centerSaving: false,
         centerForm: { ref: null, name: '', barangay: '', address: '', capacity: '', services: [], lat: null, lng: null },
         centerEvacuees: [],
+        centerEvacueesLoading: false,
+        centerEvacueesFailed: false,
         // GET /sakuna/centers (real, derived occupancy; lat/lng since
         // 2026-10-26 -- no manager/contact column, no inspection/room/personnel
         // sub-model; see tab-centers.blade.php's header comment).
@@ -521,12 +545,25 @@
         async openCenterDetail(c) {
             this.selectedCenter = c;
             this.showCenterDetail = true;
-            this.centerEvacuees = [];
             this.$nextTick(() => window.renderIcons?.());
+            this.loadCenterEvacuees(c);
+        },
+        // Loading and a failed load are said as such, never 'No families
+        // currently checked in here' while families may be inside (QA
+        // 2026-11-18); a late answer for another center is dropped.
+        async loadCenterEvacuees(c = this.selectedCenter) {
+            if (!c) return;
+            this.centerEvacuees = [];
+            this.centerEvacueesLoading = true;
+            this.centerEvacueesFailed = false;
             try {
                 const res = await $api.getAll('/admin/sakuna/evacuees', { params: { center: c.ref } });
-                this.centerEvacuees = res.data || [];
-            } catch { /* the tab just shows no families rather than failing the modal */ }
+                if (this.selectedCenter?.ref === c.ref) this.centerEvacuees = res.data || [];
+            } catch {
+                if (this.selectedCenter?.ref === c.ref) this.centerEvacueesFailed = true;
+            } finally {
+                if (this.selectedCenter?.ref === c.ref) this.centerEvacueesLoading = false;
+            }
         },
         async confirmOpenCenter() {
             if (!this.pendingCenterAction) return;
@@ -585,6 +622,7 @@
                     this.mayListCenters() ? $api.getAll('/admin/sakuna/centers').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.evacueesList = ev.data || [];
+                this.noteCut('evacuees', ev);
                 this.evacueeCentersOpen = (centers.data || []).filter(c => c.status === 'Processing');
                 this.evacueesFailed = false;
                 this.saveCopy('evacuees', { list: this.evacueesList, centers: this.evacueeCentersOpen });
@@ -811,14 +849,20 @@
             this.showCreateResource = true;
             this.$nextTick(() => window.renderIcons?.());
         },
+        // The quantity never goes below the units out in the field (QA
+        // 2026-11-18: 2 with 5 deployed made 'available' -3 and blocked Deploy).
+        // deployed is shown, never sent.
+        get resourceQuantityTooLow() {
+            return this.resourceFormMode === 'edit' && this.resourceForm.quantity !== '' && Number(this.resourceForm.quantity) < (this.resourceForm.deployed || 0);
+        },
         openEditResource(r) {
-            this.resourceForm = { ref: r.ref, name: r.name, category: r.category, quantity: r.quantity, unit: r.unit || '', readiness: r.readiness || '', barangay: r.barangay || '' };
+            this.resourceForm = { ref: r.ref, name: r.name, category: r.category, quantity: r.quantity, unit: r.unit || '', readiness: r.readiness || '', barangay: r.barangay || '', deployed: r.deployed || 0 };
             this.resourceFormMode = 'edit';
             this.showCreateResource = true;
             this.$nextTick(() => window.renderIcons?.());
         },
         async saveResource() {
-            if (this.resourceSaving || !this.resourceForm.name || !this.resourceForm.category || this.resourceForm.quantity === '') return;
+            if (this.resourceSaving || !this.resourceForm.name || !this.resourceForm.category || this.resourceForm.quantity === '' || this.resourceQuantityTooLow) return;
             this.resourceSaving = true;
             const payload = { name: this.resourceForm.name, category: this.resourceForm.category, quantity: Number(this.resourceForm.quantity), unit: this.resourceForm.unit || null, readiness: this.resourceForm.readiness || null, barangay: this.resourceForm.barangay || null };
             try {
@@ -895,6 +939,7 @@
             try {
                 const res = await $api.getAll('/admin/sakuna/relief');
                 this.reliefList = res.data || [];
+                this.noteCut('relief', res);
                 this.reliefFailed = false;
                 this.saveCopy('relief', this.reliefList);
             } catch {
@@ -915,7 +960,7 @@
             // The sheltered families, for the FACED card picker, when the
             // Evacuees tab has not loaded them yet.
             if (!this.evacueesList.length && this.can('sakuna_evacuees', 'view')) {
-                $api.getAll('/admin/sakuna/evacuees').then(r => { this.evacueesList = r.data || []; }).catch(() => {});
+                $api.getAll('/admin/sakuna/evacuees').then(r => { this.evacueesList = r.data || []; this.noteCut('evacuees', r); }).catch(() => {});
             }
             this.loadReliefCenters();
             this.showCreateDistribution = true;
@@ -1019,8 +1064,15 @@
             this.showCreateAssessment = true;
             this.$nextTick(() => window.renderIcons?.());
         },
+        // The fields an edit may send empty, to clear them (QA 2026-11-18: a
+        // cleared Units, Cost, Notes or '— None —' incident was left out of the
+        // request, so the old value stayed). Only fields whose saved value the
+        // form holds: notes and the incident link arrive with the detail fetch,
+        // and until then an empty one means 'not loaded', not 'cleared'.
+        damageClearable: [],
         openEditAssessment(d) {
             this.damageForm = { ref: d.ref, barangay: d.barangay, sector: d.sector, units_affected: d.units_affected ?? '', estimated_cost: d.estimated_cost ?? '', notes: d.notes || '', incident_id: '', photoFile: null };
+            this.damageClearable = ['units_affected', 'estimated_cost'];
             this.damageFormMode = 'edit';
             this.showCreateAssessment = true;
             this.$nextTick(() => window.renderIcons?.());
@@ -1028,9 +1080,12 @@
             // filled only while the form is still this assessment's and untouched.
             $api.get('/admin/sakuna/damage/' + d.ref).then((res) => {
                 if (this.damageForm.ref !== d.ref) return;
-                if (!this.damageForm.notes && res.data?.notes) this.damageForm.notes = res.data.notes;
+                if (this.damageForm.notes === (d.notes || '') && res.data?.notes) this.damageForm.notes = res.data.notes;
                 const inc = (this.damageIncidentsOpen || []).find((i) => i.ref === res.data?.incident_ref);
                 if (inc && !this.damageForm.incident_id) this.damageForm.incident_id = inc.id;
+                // A link to an incident this list does not hold cannot be shown,
+                // so it is never sent as cleared.
+                this.damageClearable = ['units_affected', 'estimated_cost', 'notes', ...(inc || !res.data?.incident_ref ? ['incident_id'] : [])];
             }).catch(() => {});
         },
         // PHP never populates a multipart body's fields on a true PUT request
@@ -1042,10 +1097,15 @@
             const body = new FormData();
             body.append('barangay', this.damageForm.barangay);
             body.append('sector', this.damageForm.sector);
-            if (this.damageForm.units_affected !== '') body.append('units_affected', this.damageForm.units_affected);
-            if (this.damageForm.estimated_cost !== '') body.append('estimated_cost', this.damageForm.estimated_cost);
-            if (this.damageForm.notes) body.append('notes', this.damageForm.notes);
-            if (this.damageForm.incident_id) body.append('incident_id', this.damageForm.incident_id);
+            // An emptied field is sent on edit: '' (the server stores null), but
+            // Units as 0, as a new assessment without it gets: its column is NOT
+            // NULL with a default of 0, so a null failed the save.
+            const clears = (key) => this.damageFormMode === 'edit' && this.damageClearable.includes(key);
+            ['units_affected', 'estimated_cost', 'notes', 'incident_id'].forEach((key) => {
+                const v = this.damageForm[key] ?? '';
+                if (v !== '') body.append(key, v);
+                else if (clears(key)) body.append(key, key === 'units_affected' ? '0' : '');
+            });
             if (this.damageForm.photoFile) body.append('photo', this.damageForm.photoFile);
             try {
                 let res;
@@ -1197,7 +1257,18 @@
             this.$nextTick(() => window.renderIcons?.());
             this.focusAlertForm();
         },
-        openEditAlert(a) {
+        async openEditAlert(a) {
+            // A list row has no message text (only GET /alerts/{ref} adds the
+            // body), so Edit from the list opened a draft with both messages
+            // blank (QA 2026-11-18). Read the alert first; never open it empty.
+            if (!a.body) {
+                try {
+                    a = { ...a, ...(await $api.get('/admin/sakuna/alerts/' + a.ref)).data };
+                } catch (err) {
+                    this.toast(err.localised ? err.localised('en') : 'Could not open this alert to edit.', 'error');
+                    return;
+                }
+            }
             this.alertForm = { ref: a.ref, type: a.type, level: a.level, audience: (a.barangays || []).length ? 'barangays' : 'all', title_fil: a.title?.fil || '', title_en: a.title?.en || '', body_fil: a.body?.fil || '', body_en: a.body?.en || '', target_barangays: [...(a.barangays || [])], channels: [...(a.channels || ['in_app'])], expires_at: this.localInput(a.expires_at) };
             this.alertFormMode = 'edit';
             this.alertFormSnapshot = JSON.stringify(this.alertForm);
@@ -1926,8 +1997,10 @@
     "
     @click="const b = $event.target.closest('[data-info]'); if (b) { const r = b.getBoundingClientRect(); infoTip = infoTip && infoTip.text === b.title ? null : { text: b.title, top: r.bottom + 6, left: Math.max(16, Math.min(r.left - 140, window.innerWidth - 336)) }; } else if (infoTip) infoTip = null;"
     @keydown.escape.window="infoTip = null" @scroll.window="infoTip = null"
-    class="sk space-y-3 max-w-[1480px]"
+    class="sk space-y-3"
 >
+    {{-- Full width like every other staff page, no max-width: a 1480px cap
+         left an empty band on the right of wide screens (QA 2026-11-18). --}}
     {{-- What an (i) button says, on a press as well as a hover (critique, eighth run). --}}
     <div x-show="infoTip" x-cloak role="status" class="fixed z-50 w-80 max-w-[calc(100vw-32px)] rounded-xl bg-navy-900 text-white text-[13px] leading-snug px-3 py-2 shadow-float"
         :style="infoTip ? 'top:' + infoTip.top + 'px; left:' + infoTip.left + 'px' : ''" x-text="infoTip?.text || ''"></div>
@@ -1990,6 +2063,12 @@
             <i data-lucide="cloud-off" class="w-4 h-4 shrink-0"></i>
             <span x-text="tabCopy && staleSince[tabCopy[0]] ? 'Showing the last copy, from ' + new Date(staleSince[tabCopy[0]]).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + '. ' + offlineWhy : ''"></span>
             <button type="button" @click="tabCopy && tabCopy[1]()" class="font-semibold underline underline-offset-2 hover:text-amber-950">Try again</button>
+        </div>
+        {{-- The tab's list arrived cut (listCut): its counts cover what arrived. --}}
+        <div x-show="tabCopy && listCut[tabCopy[0]]" x-cloak role="status"
+            class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
+            <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+            <span x-text="tabCopy && listCut[tabCopy[0]] ? 'Showing ' + listCut[tabCopy[0]].loaded.toLocaleString('en-US') + ' of ' + listCut[tabCopy[0]].total.toLocaleString('en-US') + ' records. The counts and totals on this tab cover these ' + listCut[tabCopy[0]].loaded.toLocaleString('en-US') + ' only.' : ''"></span>
         </div>
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
         <div

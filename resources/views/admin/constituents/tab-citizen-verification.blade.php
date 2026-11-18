@@ -27,13 +27,15 @@
     {{-- ── ENTITY TYPE SWITCHER — its own bordered/shadowed toolbar card so
          it's anchored the same way the Registry tab's view switcher is,
          instead of a bare pill floating directly on the page background. ── --}}
-    <div class="surface-glass rounded-[26px] p-1.5 w-fit">
-        <div class="inline-flex items-center gap-1 surface-pressed rounded-xl p-1">
+    {{-- Scrolls inside itself on a phone (QA sweep 2026-11-18: the three
+         buttons need about 440 px and ran off a 390 px screen). --}}
+    <div class="surface-glass rounded-[26px] p-1.5 w-fit max-w-full">
+        <div class="inline-flex max-w-full overflow-x-auto items-center gap-1 surface-pressed rounded-xl p-1">
             <template x-for="t in ['Individual', 'Family', 'Household']" :key="t">
                 <button
                     type="button"
                     @click="cvType = t; cvStatusFilter = ''; cvSearch = ''; cvBarangayFilter = ''; cvTagFilter = ''"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors"
+                    class="inline-flex shrink-0 items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors whitespace-nowrap"
                     :class="cvType === t ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                 >
                     <i :data-lucide="t === 'Individual' ? 'user' : (t === 'Family' ? 'users-round' : 'house')" class="w-3.5 h-3.5"></i>
@@ -60,14 +62,14 @@
     {{-- ── SUMMARY STAT CARDS — Family ─────────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-show="cvType === 'Family'" x-cloak>
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvFamilyCounts.unverified" icon="shield-x" color="orange" :delay="0" />
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" sublabel="For Validation or Partially Verified" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Needs Review'" class="cursor-pointer" label="Needs Review" sublabel="For Validation or Partially Verified" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvFamilyCounts.verified" icon="shield-check" color="green" :delay="150" />
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Household ──────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-show="cvType === 'Household'" x-cloak>
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvHouseholdCounts.unverified" icon="shield-x" color="orange" :delay="0" />
-        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" sublabel="For Validation or Partially Verified" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Needs Review'" class="cursor-pointer" label="Needs Review" sublabel="For Validation or Partially Verified" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvHouseholdCounts.verified" icon="shield-check" color="green" :delay="150" />
     </div>
 
@@ -102,7 +104,8 @@
                         </template>
                     </template>
                     <template x-if="cvType !== 'Individual'">
-                        <template x-for="s in cvVerificationOptions" :key="s">
+                        {{-- Needs Review is the card's pair: For Validation and Partially Verified. --}}
+                        <template x-for="s in ['Needs Review', ...cvVerificationOptions]" :key="s">
                             <option :value="s" x-text="s"></option>
                         </template>
                     </template>
@@ -177,6 +180,7 @@
                     <span x-show="cvSearch !== '' || cvStatusFilter !== '' || cvBarangayFilter !== '' || cvTagFilter !== ''" x-cloak>
                         &mdash; filtered from <span class="font-semibold" x-text="citizenAccountList.length"></span> total
                     </span>
+                    <span x-show="cvTagged.loading" x-cloak class="ml-2 inline-flex items-center gap-1 text-brand-700"><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i>Finding the residents with this tag…</span>
                 </p>
             </template>
             <template x-if="cvType === 'Family'">
@@ -205,7 +209,11 @@
          Registry tab's flush single-card tables) instead of being nested
          inside a second x-ui.card, which was the double-boxed, padded,
          "floating" look. ── --}}
-    <x-ui.table x-show="cvType === 'Individual'">
+    {{-- Each list's pager sits with its table, so only the list on screen
+         shows one (QA sweep 2026-11-18: the accounts' pager showed over the
+         family and household lists and paged a list that was not there). --}}
+    <div x-show="cvType === 'Individual'" class="space-y-6">
+    <x-ui.table>
             <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
                 <thead class="bg-well/70">
                     <tr>
@@ -320,9 +328,11 @@
             </table>
     </x-ui.table>
     <x-admin.pager list="filteredCitizenAccounts" key="cv" />
+    </div>
 
     {{-- ── FAMILY QUEUE TABLE ──────────────────────────────────────────────── --}}
-    <x-ui.table x-show="cvType === 'Family'" x-cloak>
+    <div x-show="cvType === 'Family'" x-cloak class="space-y-6">
+    <x-ui.table>
             <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
                 <thead class="bg-well/70">
                     <tr>
@@ -391,9 +401,11 @@
             </table>
     </x-ui.table>
     <x-admin.pager list="filteredCvFamilies" key="cvFam" />
+    </div>
 
     {{-- ── HOUSEHOLD QUEUE TABLE ───────────────────────────────────────────── --}}
-    <x-ui.table x-show="cvType === 'Household'" x-cloak>
+    <div x-show="cvType === 'Household'" x-cloak class="space-y-6">
+    <x-ui.table>
             <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
                 <thead class="bg-well/70">
                     <tr>
@@ -462,5 +474,6 @@
             </table>
     </x-ui.table>
     <x-admin.pager list="filteredCvHouseholds" key="cvHh" />
+    </div>
     </div>
 </div>

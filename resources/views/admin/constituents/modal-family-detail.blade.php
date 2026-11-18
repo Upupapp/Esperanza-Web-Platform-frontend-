@@ -7,15 +7,40 @@
     editing: false,
     saving: false,
     edit: {},
+    // A new head picked from the registry, as in Add Family: a typed name
+    // alone made a second record of a resident already on file, often a
+    // member of this very family (QA sweep 2026-11-18).
+    heads: [],
+    head: null,
+    headSeq: 0,
+    async lookHead() {
+        const seq = ++this.headSeq;
+        const rows = await headMatches(this.edit.head_name, selectedFamily.barangay);
+        if (seq === this.headSeq) this.heads = rows;
+    },
+    pickHead(r) { this.head = { ref: r.ref, name: r.name }; this.edit.head_name = r.name; this.heads = []; },
+    get headPicked() { return !!this.head && this.head.name === (this.edit.head_name || '').trim(); },
     startEdit() {
         this.edit = { family_type: selectedFamily.family_type, sitio: selectedFamily.sitio, head_name: selectedFamily.head_name, notes: selectedFamily.notes, programs: [...(selectedFamily.programs || [])] };
+        this.head = null;
+        this.heads = [];
         this.editing = true;
     },
     async saveEdit() {
         if (this.saving) return;
         this.saving = true;
+        // The head goes out only when it was changed (QA sweep 2026-11-18:
+        // sent every time, it made the server create the same head again and
+        // fail, so no family with a head could be edited). Blank keeps the
+        // current head; one picked goes by ref; a name not picked is made a
+        // resident of this family's barangay.
+        const payload = { ...this.edit };
+        const head = (payload.head_name || '').trim();
+        if (this.headPicked) { delete payload.head_name; payload.head_ref = this.head.ref; }
+        else if (!head || head === (selectedFamily.head_name || '').trim()) delete payload.head_name;
+        else { payload.head_name = head; payload.barangay = selectedFamily.barangay; }
         try {
-            const res = await $api.put('/admin/families/' + selectedFamily.ref, this.edit);
+            const res = await $api.put('/admin/families/' + selectedFamily.ref, payload);
             Object.assign(selectedFamily, res.data);
             const idx = this.families.findIndex(x => x.ref === selectedFamily.ref);
             if (idx !== -1) this.families[idx] = { ...this.families[idx], ...res.data };
@@ -232,7 +257,17 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-head">Head of Family</label>
-                                <input id="fam-edit-head" type="text" x-model="edit.head_name" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
+                                <input id="fam-edit-head" type="text" x-model="edit.head_name" @input.debounce.300ms="lookHead()" autocomplete="off" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
+                                <div x-show="heads.length && !headPicked" x-cloak class="mt-1.5 rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                                    <p class="px-3 pt-2 pb-1 text-[10.5px] font-semibold text-ink-muted">Already on file — pick to link them</p>
+                                    <template x-for="r in heads" :key="r.ref">
+                                        <button type="button" @click="pickHead(r)" class="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors">
+                                            <span class="block text-xs font-semibold text-ink truncate" x-text="r.name"></span>
+                                            <span class="block text-[10.5px] text-ink-muted font-mono truncate" x-text="r.ref + (r.age != null ? ' · ' + r.age + ' yrs' : '')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                                <p x-show="headPicked" x-cloak class="text-[10.5px] text-emerald-700 mt-1" x-text="headPicked ? ('Linked to ' + head.ref + ', already a resident on file.') : ''"></p>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-notes">Notes</label>

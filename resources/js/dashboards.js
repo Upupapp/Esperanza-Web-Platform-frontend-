@@ -244,6 +244,7 @@ export function deptDashboard() {
         failed: false,
         error: '',
         seq: 0,
+        liveAfter: false,
         peso,
         pesoTile,
         num,
@@ -274,6 +275,11 @@ export function deptDashboard() {
         // the new ones come, and a failed reload keeps them.
         async load(quiet = false) {
             if (!this.office) { this.loading = false; return; }
+            // A live reload never replaces a load the officer asked for (QA
+            // 2026-11-18): it dropped the new period's answer, and when it then
+            // failed the old figures stayed under the new period's name. It
+            // runs once that load is done.
+            if (quiet && this.loading) { this.liveAfter = true; return; }
             // Only the latest answer is shown: an earlier period's, arriving late, is dropped.
             const mine = ++this.seq;
             if (!quiet) {
@@ -298,6 +304,7 @@ export function deptDashboard() {
                 if (mine === this.seq) {
                     this.loading = false;
                     this.$nextTick(() => window.renderIcons?.());
+                    if (this.liveAfter) { this.liveAfter = false; this.load(true); }
                 }
             }
         },
@@ -360,6 +367,7 @@ export function brgyDashboard() {
         failed: false,
         error: '',
         seq: 0,
+        liveAfter: false,
         peso,
         pesoTile,
         num,
@@ -378,6 +386,7 @@ export function brgyDashboard() {
         // quiet: as the office dashboard's.
         async load(quiet = false) {
             if (!this.barangay) { this.loading = false; return; }
+            if (quiet && this.loading) { this.liveAfter = true; return; }
             const mine = ++this.seq;
             if (!quiet) {
                 this.loading = true;
@@ -397,6 +406,7 @@ export function brgyDashboard() {
                 if (mine === this.seq) {
                     this.loading = false;
                     this.$nextTick(() => window.renderIcons?.());
+                    if (this.liveAfter) { this.liveAfter = false; this.load(true); }
                 }
             }
         },
@@ -495,8 +505,13 @@ export function reportSheet() {
         params: null,
         report: null,
         signatories: [],
+        seq: 0,
         chartSvg,
+        // Only the latest report asked for is shown (QA 2026-11-18): a slower
+        // earlier one arriving last replaced it, and Print, PDF and Excel then
+        // sent that report's key with the other one's filters.
         async show(detail) {
+            const mine = ++this.seq;
             this.params = detail;
             this.open = true;
             this.loading = true;
@@ -504,14 +519,18 @@ export function reportSheet() {
             this.report = null;
             try {
                 const res = await api.get('/admin/reports/' + detail.key, { params: this.query() });
+                if (mine !== this.seq) return;
                 this.report = res.data;
                 this.signatories = (res.data.signatories || []).map((s) => ({ ...s, name: s.name || '', position: s.position || '' }));
             } catch (e) {
+                if (mine !== this.seq) return;
                 this.failed = true;
                 this.error = e?.localised ? e.localised('en') : 'Could not open the report.';
             } finally {
-                this.loading = false;
-                this.$nextTick(() => window.renderIcons?.());
+                if (mine === this.seq) {
+                    this.loading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             }
         },
         query() {

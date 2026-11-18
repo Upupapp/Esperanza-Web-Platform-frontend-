@@ -109,6 +109,9 @@
                 <input id="gd-address" type="text" x-model="gdForm.address" maxlength="250" class="w-full rounded-xl py-2 px-3 text-sm text-ink-body border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
             </div>
         </div>
+        {{-- What an empty field does for a role the number and address are hidden
+             from (QA 2026-11-18 #34): gdSave leaves them out for the same guardian. --}}
+        <p x-show="gdWithheld && gdWas" x-cloak class="text-[11px] text-ink-muted">The number and address on record are hidden for your role. For the same guardian, leave them empty to keep them; anything you type replaces them.</p>
         <p x-show="gdMode === 'linked'" class="text-[11px] text-ink-muted">The name comes from the linked record. Leave the number or address empty to use the record's own.</p>
         <div class="flex items-center gap-2">
             <x-ui.button type="submit" size="sm" icon="check" x-bind:disabled="gdBusy || !gdReady"><span x-text="gdBusy ? 'Saving…' : 'Save guardian'"></span></x-ui.button>

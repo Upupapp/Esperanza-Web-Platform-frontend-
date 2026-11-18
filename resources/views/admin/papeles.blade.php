@@ -443,8 +443,13 @@
         </x-ui.modal>
 
         {{-- ═══════════════ Document preview (nested above the citizen profile modal) ═══════════════ --}}
+        {{-- Its own focus trap (QA 2026-11-18): it sits outside the resident
+             window, whose trap sent every focus here back to the eye button,
+             so the Return and Archive reasons could not be typed in. A trap
+             opened on top pauses the one below and hands focus back on close. --}}
         <div
             data-modal-overlay x-show="previewDoc" x-cloak
+            x-trap="!!previewDoc"
             x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
             x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"

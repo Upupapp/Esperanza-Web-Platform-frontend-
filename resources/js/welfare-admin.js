@@ -101,9 +101,32 @@ function catalogEntry(type, live) {
         if (Array.isArray(sv.requirements)) t.requirements = Array.isArray(sv.requirement_rules) ? sv.requirement_rules : sv.requirements;
         if (Array.isArray(sv.fields)) t.fields = JSON.parse(JSON.stringify(sv.fields));
     }
+    if (sv && sv.submodule_key) t.submodule = sv.submodule_key;
     t.rules = window.requirementRules ? window.requirementRules(t.requirements) : (t.requirements || []).map((r) => ({ label: String(r), showIf: null }));
     return t;
 }
+
+/**
+ * A Tulong type made under Tulong types after the page was built: in the
+ * server's list only, never in the page's catalog (sweep 2026-11-18). In the
+ * page catalog's shape; catalogEntry() then lays its version over it.
+ */
+function liveOnlyEntry(sv) {
+    return {
+        key: sv.key, name: sv.name || sv.key, category: sv.category || null,
+        office: sv.office || null, office_short: sv.office_short || null, level: sv.level || null,
+        requirements: [], fields: [],
+        processingKind: sv.processing_kind || null, sessionCouple: !!sv.session_couple,
+        sensitive: !!sv.sensitive, staffOnly: !!sv.staff_only, certificate: sv.certificate || null,
+    };
+}
+
+/**
+ * The permission a type is filed and released under: its RBAC submodule.
+ * A type made under Tulong types shares the one of the type it was made
+ * like (submodule_key); the page's own types are their submodule.
+ */
+const typePerm = (t) => (t && (t.submodule || t.key)) || '';
 
 // ------------------------------------------------------------ Person search
 
@@ -243,14 +266,23 @@ export function tulongApply() {
             this.$watch('apOpen', (open) => { if (!open && this.apFiled && !this.apBusy) this.apFinish(); });
         },
 
-        /** Every Tulong service in the page's catalog, the server's wording over it. */
+        /**
+         * Every Tulong service in the page's catalog, the server's wording
+         * over it, and those the server lists that the page's catalog does
+         * not have (made under Tulong types since the page was built).
+         */
         apCatalog() {
             const byName = this.tulongTypesByName || {};
-            return Object.values(byName).filter((t) => t && t.key).map((t) => catalogEntry(t, this.apLive));
+            const page = Object.values(byName).filter((t) => t && t.key);
+            const known = new Set(page.map((t) => t.key));
+            const added = Object.values(this.apLive || {})
+                .filter((sv) => sv && sv.key && !known.has(sv.key) && (!sv.type || sv.type === 'tulong'))
+                .map(liveOnlyEntry);
+            return [...page, ...added].map((t) => catalogEntry(t, this.apLive));
         },
         /** The services this officer may file (each service's own create). */
         apCreatable() {
-            return this.apCatalog().filter((t) => can(t.key, 'create'));
+            return this.apCatalog().filter((t) => can(typePerm(t), 'create'));
         },
         apGroups() {
             const q = this.apSearch.trim().toLowerCase();
@@ -350,7 +382,7 @@ export function tulongApply() {
             return ageOn(this.apForm[f.derived_from]);
         },
         apMayRecord() {
-            return !!this.apKey && !this.apSessionRef && can(this.apKey, 'release');
+            return !!this.apKey && !this.apSessionRef && can(typePerm(this.apType || { key: this.apKey }), 'release');
         },
         apShowsAmount() {
             return !['goods', 'registration', 'counseling', 'session', 'referral'].includes(this.apType?.processingKind);
@@ -622,6 +654,11 @@ export function caseNotes() {
             return 'Note anything done on the case as it happens: an interview, a home visit, a call, a referral.';
         },
         cnSync() {
+            // The case window closed: its notes are read again when it next
+            // opens, on the same case too. `selected` stays set behind the
+            // closed window, so a colleague's note, or the one a finished
+            // session added, was missing on reopening (sweep 2026-11-18).
+            if (this.open === false) { this.cnFor = null; return; }
             const ref = this.selected?.ref || null;
             if (!this.cnShown() || !ref) return;
             if (ref === this.cnFor) return;
@@ -765,7 +802,9 @@ export function sessionList() {
             try {
                 const params = { status: this.slTab };
                 if (this.slService) params.service_key = this.slService;
-                const res = await api.get('/admin/tulong/sessions', { params });
+                // Every page: the list is 25 a page, and a tab of more
+                // showed only its first 25 (sweep 2026-11-18).
+                const res = await api.getAll('/admin/tulong/sessions', { params });
                 if (seq !== this.slSeq) return;
                 const rows = Array.isArray(res?.data) ? res.data : [];
                 // Upcoming soonest first; done and cancelled newest first.
@@ -1117,7 +1156,8 @@ export function caseSession() {
             this.csLoading = true;
             this.csError = '';
             try {
-                const res = await api.get('/admin/tulong/sessions', { params: { status: 'Scheduled', service_key: this.selected.service_key } });
+                // Every scheduled session of the type, not the first page of 25.
+                const res = await api.getAll('/admin/tulong/sessions', { params: { status: 'Scheduled', service_key: this.selected.service_key } });
                 this.csOptions = (res?.data || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
             } catch (err) {
                 this.csError = says(err, 'Could not load the sessions.');

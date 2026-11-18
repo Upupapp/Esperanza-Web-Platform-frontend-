@@ -123,23 +123,37 @@
                 async init() {
                     const [verification, papeles] = await Promise.all([
                         $api.get('/citizen/verification/id').catch(() => null),
-                        $api.get('/citizen/papeles').catch(() => null),
+                        // The wallet's IDs only: a page of Papeles is 25 papers,
+                        // newest first, and the ID kept at registration is
+                        // the oldest of them.
+                        $api.get('/citizen/papeles', { params: { category: 'Government ID', per_page: 100 } }).catch(() => null),
                     ]);
+                    // The ID sent to verify says Accepted once the account is
+                    // verified (Pending Review, Rejected or Superseded before);
+                    // an ID in the wallet says Approved once an officer checked
+                    // it (Submitted before). Accepted read as Unverified, and
+                    // the wallet's IDs (category Government ID, named by their
+                    // kind) were never listed (sweep 2026-11-18).
                     const labels = {
+                        'Accepted': ['Verified', 'Verified'],
                         'Approved': ['Verified', 'Verified'],
                         'Pending Review': ['Under review', 'Sinusuri'],
+                        'Submitted': ['Under review', 'Sinusuri'],
                         'Rejected': ['Not accepted', 'Hindi tinanggap'],
                     };
                     const entry = (type, status) => {
                         const [en, fil] = labels[status] || ['Unverified', 'Unverified'];
-                        return { type, status: status === 'Approved' ? 'Verified' : 'Unverified', labelEn: en, labelFil: fil };
+                        return { type, status: en === 'Verified' ? 'Verified' : 'Unverified', labelEn: en, labelFil: fil };
                     };
                     const list = [];
                     const sent = verification?.data?.submission;
                     if (sent) list.push(entry(sent.id_type, sent.status));
                     (papeles?.data || [])
-                        .filter((d) => d.category === 'Identity / Verification')
-                        .forEach((d) => { if (!list.some((x) => x.type === d.type)) list.push(entry(d.type, d.status)); });
+                        .filter((d) => d.category === 'Government ID')
+                        .forEach((d) => {
+                            const name = d.name || d.type;
+                            if (name && !list.some((x) => x.type === name)) list.push(entry(name, d.status));
+                        });
                     this.myIds = list;
                     this.$nextTick(() => window.renderIcons?.());
                 },

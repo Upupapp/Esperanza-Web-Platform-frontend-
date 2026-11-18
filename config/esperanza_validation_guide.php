@@ -120,11 +120,16 @@ return [
 
     // ── Section 5: Standard Copy-Ready Reasons — selectable canned messages
     // an admin can drop straight into their remarks, then edit as needed.
+    // Each one reads complete as it stands, with no [placeholder] in it
+    // (sweep 2026-11-18): the remarks go to the resident as they are, and
+    // "Please upload: [required document]." and "...: [specific criterion]."
+    // reached residents word for word when nobody filled them in. The
+    // officer adds the document or the rule after the message.
     'standard_reasons' => [
         ['label' => 'Unreadable upload', 'message' => 'The uploaded document is not readable enough to verify the required information. Please upload a clearer photo or scan showing the complete document.'],
         ['label' => 'Cropped / incomplete', 'message' => 'The uploaded document is incomplete or cropped. Please upload the full page and all required sides/pages.'],
         ['label' => 'Missing front/back', 'message' => 'Please upload both the front and back of the required ID/document.'],
-        ['label' => 'Wrong document type', 'message' => 'The uploaded file does not match the required document. Please upload: [required document].'],
+        ['label' => 'Wrong document type', 'message' => 'The uploaded file does not match the required document. Please check the list of requirements for this service and upload the document it names.'],
         ['label' => 'Expired document', 'message' => 'The uploaded document is expired and a current document is required for this application. Please upload an updated copy.'],
         ['label' => 'Name mismatch', 'message' => 'The name on the uploaded document does not match the resident profile. Please provide a supporting document explaining the difference or update your resident profile if needed.'],
         ['label' => 'DOB mismatch', 'message' => 'The date of birth on the uploaded document conflicts with the resident profile. The application is on hold for verification. Please provide a stronger official record such as a PSA certificate or valid government ID.'],
@@ -133,7 +138,7 @@ return [
         ['label' => 'Relationship proof needed', 'message' => 'The submitted documents do not sufficiently establish your relationship to the beneficiary/deceased/record holder. Please upload appropriate civil-registry or authorization evidence.'],
         ['label' => 'Stronger identity proof', 'message' => 'The current upload is not sufficient to confirm identity. Please provide a clear government-issued ID or another accepted official identity document.'],
         ['label' => 'Manual issuer verification', 'message' => 'The document appears complete, but the issuing office/registry must verify the record before a decision can be made.'],
-        ['label' => 'Confirmed ineligible', 'message' => 'After review, the application does not meet the eligibility requirements for this service/program: [specific criterion].'],
+        ['label' => 'Confirmed ineligible', 'message' => 'After review, the application does not meet the eligibility requirements for this service/program.'],
         ['label' => 'Confirmed fraudulent/altered', 'message' => 'The submitted document was confirmed to be altered, fraudulent, or not issued for this applicant. The application is rejected and may be referred for appropriate administrative action.'],
     ],
 

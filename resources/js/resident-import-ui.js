@@ -85,6 +85,8 @@ export function residentImport() {
         stopRequested: false,
         running: false,
         stoppedAt: null,
+        // Every row is in, but closing the import (POST .../finish) failed.
+        closeFailed: false,
         summary: null,
 
         history: [],
@@ -132,7 +134,7 @@ export function residentImport() {
             if (this.running) return;
             Object.assign(this, {
                 step: 1, error: '', fileName: '', format: '', tables: [], tableIndex: 0, headerRow: 0, headers: [], body: [], mapping: [],
-                fixedBarangay: '', barangayValues: [], rows: [], filter: 'all', page: 1, importRef: null, summary: null, stoppedAt: null,
+                fixedBarangay: '', barangayValues: [], rows: [], filter: 'all', page: 1, importRef: null, summary: null, stoppedAt: null, closeFailed: false,
                 progress: { done: 0, total: 0 }, onMatch: 'skip', verification: 'Unverified', surnameFirst: false, groupHouseholds: true,
                 editing: null, draftErrors: [],
             });
@@ -447,7 +449,7 @@ export function residentImport() {
         get leftovers() { return this.rows.filter((r) => r.status === 'error' && !r.outcome).length; },
         fixLeftovers() {
             if (this.running) return;
-            Object.assign(this, { importRef: null, summary: null, stoppedAt: null, progress: { done: 0, total: 0 }, error: '', step: 3, filter: 'error', page: 1, editing: null });
+            Object.assign(this, { importRef: null, summary: null, stoppedAt: null, closeFailed: false, progress: { done: 0, total: 0 }, error: '', step: 3, filter: 'error', page: 1, editing: null });
             this.$nextTick(() => window.renderIcons?.());
         },
         get pageRows() { return this.filtered.slice((this.page - 1) * this.perPage, this.page * this.perPage); },
@@ -517,7 +519,18 @@ export function residentImport() {
         async runImport() {
             if (this.running) return;
             const batches = this.batches();
-            if (!batches.length) return;
+            if (!batches.length) {
+                // Every row is in and only closing the import failed: Try
+                // again closes it (2026-11-18).
+                if (this.importRef && !this.summary) {
+                    this.running = true;
+                    try { await this.finish(); } finally {
+                        this.running = false;
+                        this.$nextTick(() => window.renderIcons?.());
+                    }
+                }
+                return;
+            }
             this.running = true;
             this.step = 4;
             this.error = '';
@@ -593,13 +606,24 @@ export function residentImport() {
                     failed: this.leftovers,
                     households: d.households_created,
                     occupations: d.occupations || {},
-                    // Stopped, or finished with what is in after a drop.
-                    stopped: this.stoppedAt !== null,
+                    // Stopped, or finished with what is in after a drop (not
+                    // when every row was sent and only the close was retried).
+                    stopped: this.stoppedAt !== null && !this.closeFailed,
                 };
+                this.closeFailed = false;
+                this.error = '';
                 emit('residents-imported', { ref: d.ref });
                 if (!this.open) emit('toast', { message: 'Import ' + d.ref + ' finished: ' + d.created + ' residents added.', variant: 'success' });
             } catch (e) {
-                this.error = e?.localised ? e.localised('en') : 'The rows are in, but the import could not be closed. Open Past imports to see it.';
+                this.error = e?.localised ? e.localised('en') : 'The rows are in, but the import could not be closed. Try again to close it.';
+                // The import stays In Progress on the server until it is
+                // closed. The paused panel's Try again and Finish with what
+                // is in show while stoppedAt is set: it showed "Import
+                // paused" with no button at all (2026-11-18).
+                if (this.stoppedAt === null) {
+                    this.closeFailed = true;
+                    this.stoppedAt = 0;
+                }
             }
         },
 

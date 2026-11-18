@@ -347,7 +347,12 @@
                         <span class="text-xs text-ink-muted shrink-0" x-text="f.member_count + ' member(s)'"></span>
                     </div>
                 </template>
-                <div x-show="centerEvacuees.length === 0" class="px-4 py-8 text-center text-xs text-ink-muted">No families currently checked in here.</div>
+                <div x-show="centerEvacueesLoading" class="px-4 py-8 text-center text-xs text-ink-muted">Loading the families…</div>
+                <div x-show="!centerEvacueesLoading && centerEvacueesFailed" x-cloak role="alert" class="px-4 py-8 text-center text-xs text-amber-900">
+                    Could not load the families. <span x-text="offlineWhy"></span>
+                    <button type="button" @click="loadCenterEvacuees()" class="font-semibold underline underline-offset-2">Try again</button>
+                </div>
+                <div x-show="!centerEvacueesLoading && !centerEvacueesFailed && centerEvacuees.length === 0" class="px-4 py-8 text-center text-xs text-ink-muted">No families currently checked in here.</div>
             </div>
             <div class="flex justify-end">
                 <button @click="setTab('evacuees')" class="sk-btn sk-btn-soft">

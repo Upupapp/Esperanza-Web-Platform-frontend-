@@ -14,10 +14,12 @@
 //   The casualty list          GET  /admin/sakuna/missing/export (edit; audited)
 //
 // Used as x-data="sakunaCasualties" inside the Sakuna page, so `this` also
-// reaches the page's can(), toast(), saveCopy()/lastCopy()/useCopy(),
-// exportCSV() and markMissingOff().
+// reaches the page's can(), toast(), saveCopy()/lastCopy()/useCopy()
+// and markMissingOff(). The casualty list's CSV is written here, with
+// resident-import's writer (BOM, quotes doubled, formulas guarded).
 
 import api from './api/client';
+import { downloadCsv } from './resident-import';
 
 const FILTERS = { q: '', category: '', validation: '', lives: '', happened: '', status: '', kind: '', barangay: '', incident: '', from: '', to: '' };
 
@@ -77,7 +79,8 @@ function sakunaCasualties() {
             // Live updates (2026-11-15): a change to Sakuna anywhere reloads this
             // page of the list and the counts quietly; they wait while a case,
             // the form or a dialog is open, or a field is in use.
-            this.$store.live.on(this.$el, 'sakuna', () => Promise.all([this.load(this.page, true), this.loadSummary(true)]), { busy: () => !!this.open || this.adding || !!this.editing || this.saving });
+            // They also wait for a load the officer asked for (QA 2026-11-18).
+            this.$store.live.on(this.$el, 'sakuna', () => Promise.all([this.load(this.page, true), this.loadSummary(true)]), { busy: () => !!this.open || this.adding || !!this.editing || this.saving || this.loading });
         },
 
         when(iso) { return iso ? new Date(iso).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '—'; },
@@ -86,29 +89,37 @@ function sakunaCasualties() {
 
         // quiet (a live update): the rows on screen stay until the new ones
         // come, and a failed reload keeps them.
+        // Only the latest call's answer is used (QA 2026-11-18): a quiet reload
+        // with the old filters that answered after a pill or barangay change
+        // put every category back under the highlighted 'Dead'.
+        loadSeq: 0, summarySeq: 0,
         async load(page = 1, quiet = false) {
             this.page = page;
+            const seq = ++this.loadSeq;
+            const params = this.params();
             if (!quiet) { this.loading = true; this.failed = false; }
             try {
-                const res = await api.get('/admin/sakuna/missing', { params: this.params() });
+                const res = await api.get('/admin/sakuna/missing', { params });
+                if (seq !== this.loadSeq) return;
                 this.rows = res.data || []; this.total = res.meta?.total ?? this.rows.length; this.lastPage = res.meta?.last_page || 1;
                 this.failed = false;
-                this.saveCopy?.('missing', { params: JSON.stringify(this.params()), rows: this.rows, total: this.total, lastPage: this.lastPage });
+                this.saveCopy?.('missing', { params: JSON.stringify(params), rows: this.rows, total: this.total, lastPage: this.lastPage });
             } catch (err) {
-                if (quiet) return;
+                if (quiet || seq !== this.loadSeq) return;
                 const copy = this.lastCopy?.('missing');
                 if (err?.code === 'FEATURE_OFF' || err?.status === 404) { this.off = true; if (err?.code === 'FEATURE_OFF') this.markMissingOff?.(); }
-                else if (copy && copy.data.params === JSON.stringify(this.params())) { this.useCopy?.('missing'); this.rows = copy.data.rows || []; this.total = copy.data.total || 0; this.lastPage = copy.data.lastPage || 1; }
+                else if (copy && copy.data.params === JSON.stringify(params)) { this.useCopy?.('missing'); this.rows = copy.data.rows || []; this.total = copy.data.total || 0; this.lastPage = copy.data.lastPage || 1; }
                 else this.failed = true;
-            } finally { this.loading = false; }
+            } finally { if (seq === this.loadSeq) this.loading = false; }
         },
         // The stat strip: people, not cases; for the incident, barangay and dates chosen.
         // quiet: a failed reload keeps the counts on screen.
         loadSummary(quiet = false) {
+            const seq = ++this.summarySeq;
             const scope = Object.fromEntries(['incident', 'barangay', 'from', 'to'].filter((k) => this.f[k]).map((k) => [k, this.f[k]]));
             return api.get('/admin/sakuna/missing/summary', { params: scope })
-                .then((r) => { this.summary = r.data; this.saveCopy?.('missing-summary', r.data); })
-                .catch(() => { if (!quiet) this.summary = this.lastCopy?.('missing-summary')?.data || null; });
+                .then((r) => { if (seq !== this.summarySeq) return; this.summary = r.data; this.saveCopy?.('missing-summary', r.data); })
+                .catch(() => { if (!quiet && seq === this.summarySeq) this.summary = this.lastCopy?.('missing-summary')?.data || null; });
         },
         setCategory(c) { this.f.category = c; this.load(1); },
         filtered() { this.load(1); this.loadSummary(); },
@@ -219,14 +230,25 @@ function sakunaCasualties() {
         },
 
         // ------------------------------------------------ Record or correct a person
-        async loadIncidents() {
-            try { this.incidents = (await api.get('/admin/sakuna/incidents', { params: { per_page: 100 } })).data || []; } catch { this.incidents = []; }
+        // Every incident, not the newest hundred (a page's cap; QA 2026-11-18):
+        // last quarter's typhoon must still be choosable. The one the link
+        // asked for (?incident=REF) is fetched on its own if the list lacks it.
+        async loadIncidents(want = '') {
+            let list = [];
+            try { list = (await api.getAll('/admin/sakuna/incidents')).data || []; } catch { list = []; }
+            if (want && !list.some((i) => i.ref === want)) {
+                try {
+                    const one = (await api.get('/admin/sakuna/incidents/' + encodeURIComponent(want))).data;
+                    if (one?.ref) list = [one, ...list];
+                } catch { /* not found, or outside the officer's scope */ }
+            }
+            this.incidents = list;
         },
         async startAdd() {
             this.editing = ''; this.form = blankForm(); this.residents = []; this.residentQuery = '';
             this.adding = true;
-            await this.loadIncidents();
             const want = this.f.incident || '';
+            await this.loadIncidents(want);
             if (want && this.incidents.some((i) => i.ref === want)) this.$nextTick(() => { this.form.incident = want; this.incidentChosen(); });
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -343,7 +365,15 @@ function sakunaCasualties() {
                     [COUNTED]: r.counted === false ? 'No' : 'Yes',
                 }));
                 if (!rows.length) { this.toast?.('No records to export.', 'warning'); return; }
-                if (as === 'csv') { this.exportCSV(rows, 'casualty-list.csv'); return; }
+                // The province's name list (QA 2026-11-18): a BOM so Excel reads
+                // Peña and Niño, quotes doubled, and a name or remark that starts
+                // like a formula (= + - @) opened as text, never run.
+                if (as === 'csv') {
+                    const keys = Object.keys(rows[0]);
+                    downloadCsv('casualty-list.csv', [keys, ...rows.map((r) => keys.map((k) => r[k]))]);
+                    this.toast?.('Exported successfully.', 'success');
+                    return;
+                }
                 const c = this.summary?.casualties || {};
                 const line = (k, label) => label + ': ' + (c[k]?.total ?? 0) + ' (' + (c[k]?.validated ?? 0) + ' validated, ' + (c[k]?.for_validation ?? 0) + ' for validation)';
                 const here = rows.filter((r) => r[COUNTED] === 'Yes');

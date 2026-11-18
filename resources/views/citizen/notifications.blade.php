@@ -54,13 +54,18 @@
             get unreadTotal() { return this.$store.citizenNotifications.unreadCount; },
             get dokyuTotalCount() { return this.$store.citizenNotifications.visible.filter((n) => n.portal === 'dokyu').length; },
             get tulongTotalCount() { return this.$store.citizenNotifications.visible.filter((n) => n.portal === 'tulong').length; },
+            // The store does not throw when the server refuses: it puts the
+            // unread marks back and answers false (sweep 2026-11-18: the green
+            // toast came after a failed request too, over the unread dots that
+            // had come back).
             markAllRead() {
                 if (this.markingAll) return;
                 this.markingAll = true;
-                this.$store.citizenNotifications.markAllRead().finally(() => {
-                    this.markingAll = false;
-                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'All notifications marked as read.' : 'Lahat ng abiso ay minarkahan nang nabasa na.', variant: 'success' });
-                });
+                this.$store.citizenNotifications.markAllRead().then((ok) => {
+                    this.$dispatch('toast', ok === false
+                        ? { message: this.$store.lang.current === 'en' ? 'Could not mark the notifications as read. Please try again.' : 'Hindi namarkahan nang nabasa ang mga abiso. Pakisubukang muli.', variant: 'error' }
+                        : { message: this.$store.lang.current === 'en' ? 'All notifications marked as read.' : 'Lahat ng abiso ay minarkahan nang nabasa na.', variant: 'success' });
+                }).finally(() => { this.markingAll = false; });
             },
         }"
         class="animate-fade-up"

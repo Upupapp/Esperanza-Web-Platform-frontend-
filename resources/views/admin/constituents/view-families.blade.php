@@ -9,7 +9,9 @@
             Showing <span class="font-semibold text-ink" x-text="filteredFamilies.length"></span>
             <span x-text="filteredFamilies.length === 1 ? 'family' : 'families'"></span>
         </p>
-        <button
+        {{-- Only a role that may add families sees it (QA sweep 2026-11-18: view-only
+             roles filled in the whole form and were refused on Save). --}}
+        <button x-show="can('const_family','create')"
             @click="showAddFamily = true; addFamilyStep = 1; $nextTick(()=>window.renderIcons?.())"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >

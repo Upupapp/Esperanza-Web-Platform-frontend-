@@ -33,6 +33,10 @@ let stream = null;
 let reader = null;
 let timer = null;
 let run = 0;
+// The look-up on screen: reset() and each new look-up move it on, so a slow
+// answer for an earlier scan (closed, reopened, another ID scanned) is
+// dropped instead of putting that person over the new one (2026-11-18).
+let ask = 0;
 
 function stopCamera() {
     run += 1;
@@ -118,6 +122,7 @@ function idScan() {
             setTimeout(() => { if (this.open) document.getElementById('id-scan-code')?.focus({ preventScroll: true }); }, 320);
         },
         reset() {
+            ask += 1;
             this.state = 'idle';
             this.result = null;
             this.failure = '';
@@ -200,6 +205,7 @@ function idScan() {
         },
         async lookup(value) {
             if (this.state === 'loading') return;
+            const mine = ++ask;
             stopCamera();
             this.camera = 'idle';
             this.state = 'loading';
@@ -209,9 +215,11 @@ function idScan() {
             this.closeReveal();
             try {
                 const res = await scanId(value);
+                if (mine !== ask) return;
                 this.result = res.data || null;
                 this.state = this.result ? 'found' : 'notfound';
             } catch (err) {
+                if (mine !== ask) return;
                 if (err?.status === 404) this.state = 'notfound';
                 else if (err?.status === 429) this.state = 'toomany';
                 else {
@@ -269,18 +277,21 @@ function idScan() {
         get rvProblem() { return revealProblem(this.rvReason, this.rvNote); },
         async reveal() {
             if (this.rvBusy || this.rvProblem || !this.asked) return;
+            const mine = ask;
             this.rvBusy = true;
             this.rvError = '';
             try {
                 const res = await scanId(this.asked, { reveal: { reason: this.rvReason, note: this.rvNote } });
+                if (mine !== ask) return;
                 this.result = res.data || this.result;
                 if (this.result?.guardian) this.rvOpen = false;
                 else if (!this.result?.guardian_withheld) this.rvError = 'No guardian contact came back for this person.';
             } catch (err) {
+                if (mine !== ask) return;
                 if (err?.status === 429) this.rvError = 'You have reached the limit of 30 guardian look-ups an hour. Try again later, or contact the MSWDO.';
                 else if (err?.status !== 403) this.rvError = err?.explain ? err.explain('en') : 'Could not get the guardian’s contact right now.';
             } finally {
-                this.rvBusy = false;
+                if (mine === ask) this.rvBusy = false;
                 window.Alpine?.nextTick(() => window.renderIcons?.());
             }
         },

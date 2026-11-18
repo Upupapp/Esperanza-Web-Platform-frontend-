@@ -9,7 +9,9 @@
             Showing <span class="font-semibold text-ink" x-text="filteredHouseholds.length"></span>
             <span x-text="filteredHouseholds.length === 1 ? 'household' : 'households'"></span>
         </p>
-        <button
+        {{-- Only a role that may add households sees it (QA sweep 2026-11-18: view-only
+             roles filled in the whole form and were refused on Save). --}}
+        <button x-show="can('const_household','create')"
             @click="showAddHousehold = true; addHouseholdStep = 1; $nextTick(()=>window.renderIcons?.())"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
@@ -65,8 +67,10 @@
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-ink truncate" x-text="h.label"></p>
                                 <p class="text-xs text-ink-muted font-mono" x-text="h.ref"></p>
-                                {{-- Flood risk chip --}}
-                                <span
+                                {{-- Flood risk chip, only when the row carries the household's
+                                     flood risk (QA sweep 2026-11-18: the list rows have none,
+                                     and every household read Unknown Flood Risk). --}}
+                                <span x-show="h.flood_risk !== undefined"
                                     class="inline-flex items-center mt-0.5 gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
                                     :class="{
                                         'bg-emerald-100 text-emerald-700': h.flood_risk === 'Low',
@@ -84,7 +88,8 @@
                     {{-- Barangay / Sitio --}}
                     <td class="px-4 py-3 hidden xl:table-cell">
                         <p class="text-sm text-ink font-medium" x-text="h.barangay"></p>
-                        <p class="text-xs text-ink-muted" x-text="h.sitio ? ('Sitio ' + h.sitio) : '—'"></p>
+                        {{-- The street address too, when the row carries it (#35). --}}
+                        <p class="text-xs text-ink-muted truncate max-w-[16rem]" :title="h.address || ''" x-text="[h.sitio ? ('Sitio ' + h.sitio) : '', h.address || ''].filter(Boolean).join(' · ') || '—'"></p>
                     </td>
 
                     {{-- Head --}}
@@ -108,19 +113,22 @@
                         <p class="text-xs text-ink-muted mt-0.5" x-text="h.housing_tenure || ''"></p>
                     </td>
 
-                    {{-- Amenities: electricity / water / toilet icons --}}
+                    {{-- Amenities: electricity / water / toilet icons, read from the
+                         household's words (None is not available), and only when the
+                         row carries them: a dash, not 'No Electricity', otherwise. --}}
                     <td class="px-4 py-3 hidden 2xl:table-cell">
-                        <div class="flex items-center justify-center gap-2">
-                            <span :title="h.electricity ? 'Has Electricity' : 'No Electricity'">
-                                <i data-lucide="zap" class="w-4 h-4 transition-colors" :class="h.electricity ? 'text-amber-500' : 'text-ink-faint'"></i>
+                        <div x-show="h.electricity !== undefined || h.water !== undefined || h.toilet !== undefined" class="flex items-center justify-center gap-2">
+                            <span :title="'Electricity: ' + (h.electricity || 'not recorded')">
+                                <i data-lucide="zap" class="w-4 h-4 transition-colors" :class="hasAmenity(h.electricity) ? 'text-amber-500' : 'text-ink-faint'"></i>
                             </span>
-                            <span :title="h.water ? 'Has Water Source' : 'No Water Source'">
-                                <i data-lucide="droplets" class="w-4 h-4 transition-colors" :class="h.water ? 'text-blue-500' : 'text-ink-faint'"></i>
+                            <span :title="'Water source: ' + (h.water || 'not recorded')">
+                                <i data-lucide="droplets" class="w-4 h-4 transition-colors" :class="hasAmenity(h.water) ? 'text-blue-500' : 'text-ink-faint'"></i>
                             </span>
-                            <span :title="h.toilet ? 'Has Toilet Facility' : 'No Toilet Facility'">
-                                <i data-lucide="toilet" class="w-4 h-4 transition-colors" :class="h.toilet ? 'text-emerald-500' : 'text-ink-faint'"></i>
+                            <span :title="'Toilet facility: ' + (h.toilet || 'not recorded')">
+                                <i data-lucide="toilet" class="w-4 h-4 transition-colors" :class="hasAmenity(h.toilet) ? 'text-emerald-500' : 'text-ink-faint'"></i>
                             </span>
                         </div>
+                        <p x-show="h.electricity === undefined && h.water === undefined && h.toilet === undefined" class="text-center text-sm text-ink-faint">—</p>
                     </td>
 
                     {{-- Verification badge --}}

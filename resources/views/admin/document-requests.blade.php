@@ -111,6 +111,9 @@
             mineOnly: false,
             overdueOnly: false,
             loadSeq: 0,
+            // How many requests the server holds when the list loaded only the
+            // newest of them (a load stops at 2,000), else 0.
+            requestsTotal: 0,
             showAdvancedFilters: false,
             open: false,
             selected: null,
@@ -223,7 +226,13 @@
                 if (r.previewType && r.formSnapshot) {
                     return { previewType: r.previewType, docKey: r.docKey, certTitle: r.certTitle, certSubtitle: r.certSubtitle, snapshot: r.formSnapshot, barangayOfficials: r.barangayOfficials || (this.barangayCatalog[r.barangay]?.officials ?? null) };
                 }
-                const meta = this.docTypeLookup[r.type];
+                // By the service key first, as the resident's page does: five
+                // services' display names (Senior Citizen ID (OSCA Membership),
+                // Business Permit (New Application), the three MCRO papers)
+                // have no name entry, so staff saw 'No prepared document on
+                // file' for a paper the resident could see (sweep 2026-11-18).
+                const meta = (r.service_key && Object.values(this.docTypeLookup).find((m) => m.docKey === r.service_key))
+                    || this.docTypeLookup[r.type];
                 if (!meta) return null;
                 // Synthesized once per request, then cached onto the request
                 // itself (r.formSnapshot) so admin edits to individual fields
@@ -295,13 +304,8 @@
                 // it here the same way, whenever a date_of_birth made it
                 // into the snapshot above but age itself didn't.
                 if (!snapshot.age && snapshot.date_of_birth) {
-                    const dob = new Date(snapshot.date_of_birth);
-                    if (!isNaN(dob)) {
-                        const today = new Date();
-                        let age = today.getFullYear() - dob.getFullYear();
-                        if (today.getMonth() < dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) age--;
-                        snapshot.age = String(age);
-                    }
+                    const age = window.ageFromBirthDate(snapshot.date_of_birth);
+                    if (age !== null) snapshot.age = String(age);
                 }
                 r.formSnapshot = snapshot;
                 }
@@ -1624,6 +1628,11 @@
                 const r = this.standardReasons.find(x => x.label === label);
                 if (r) this.rejectRemarks = r.message;
             },
+            // A [placeholder] still in the reason (QA 2026-11-18 #233): the remarks
+            // reach the resident as typed, and "[required document]" once did.
+            // The standard reasons no longer carry one; this keeps Reject off for
+            // any that comes back, or one an officer types.
+            get rejectHasPlaceholder() { return /\[[^\]]+\]/.test(this.rejectRemarks || ''); },
             get flaggedRequirements() {
                 return (this.selected?.requirements || []).filter(r => r.reject_reason || r.remarks);
             },
@@ -1647,8 +1656,8 @@
             derivedAgeDisplay(step, field) {
                 const source = step.fields.find(f => f.key === field.derivedFromKey);
                 if (!source?.answer) return '—';
-                const [y] = source.answer.split('-').map(Number);
-                return (2026 - y) + ' years old';
+                const age = window.ageFromBirthDate(source.answer);
+                return age === null ? '—' : age + ' years old';
             },
             fieldIcon(field) {
                 const byKey = {
@@ -1704,13 +1713,35 @@
                 // (GET .../requests/{ref}) starts its review on the server, so
                 // the list waits while a request is open and reloads once it closes.
                 this.$store.live.on(this.$el, 'requests', () => this.loadRequests(true), { busy: () => this.open });
-                this.loadRequests().then(() => {
+                this.loadRequests().then(async () => {
                     // Arriving from a notification (see components/admin/topbar.blade.php)
                     // — jump straight into that exact request, not just the filtered list.
+                    // One older than the loaded list is asked of the server.
                     if (!ref) return;
-                    const match = this.requests.find(r => r.ref === ref);
+                    const match = await this.findByRef(ref);
                     if (match) this.$nextTick(() => this.openRequest(match));
                 });
+            },
+            // A request by its reference: the loaded row, else the server's
+            // (GET .../requests?q=, which matches the ref and opens nothing).
+            // The list holds only the newest 2,000, and a link or a typed ref to
+            // an older one found nothing (sweep 2026-11-18).
+            async findByRef(ref) {
+                const text = String(ref || '').trim();
+                if (!text) return null;
+                const same = (x) => x.ref.toLowerCase() === text.toLowerCase();
+                let r = this.requests.find(same);
+                if (r) return r;
+                try {
+                    const res = await $api.get('/admin/' + this.requestType + '/requests', { params: { q: text, per_page: 10 } });
+                    const rows = (res.data || []).filter((row) => !this.requests.some((x) => x.ref === row.ref));
+                    this.requests.unshift(...rows.map((row) => this.fromApi(row)));
+                    r = this.requests.find(same) || null;
+                    if (!r) this.$dispatch('toast', { message: 'No request has the reference ' + text + '.', variant: 'error' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not look up ' + text + '.'), variant: 'error' });
+                }
+                return r;
             },
             // ---- The queue, from the API -----------------------------------
             // Every action below calls the lifecycle endpoint it names and then
@@ -1789,6 +1820,7 @@
                     const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params });
                     if (seq === this.loadSeq) {
                         this.requests = (res.data || []).map((row) => this.fromApi(row));
+                        this.requestsTotal = res.meta?.truncated ? res.meta.total : 0;
                         this.requestsFailed = false;
                     }
                 } catch (err) {
@@ -2090,7 +2122,7 @@
             // The resident is notified by the server on every transition
             // (NotificationService::notifyTransition); nothing to send here.
             async reject() {
-                if (this.processing || !this.rejectRemarks.trim()) return;
+                if (this.processing || !this.rejectRemarks.trim() || this.rejectHasPlaceholder) return;
                 this.processing = true;
                 const r = this.selected;
                 try {
@@ -2425,7 +2457,7 @@
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <x-ui.stat-card layout="compact" @click="tab = 'all'" class="cursor-pointer" label="Total Requests" value="{{ count($requests) }}" valueBind="requests.length" icon="file-text" color="brand" sublabel="All statuses" :delay="0" />
-            <x-ui.stat-card layout="compact" @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or verification" :delay="40" />
+            <x-ui.stat-card layout="compact" @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Waiting on the office" :delay="40" />
             <x-ui.stat-card layout="compact" @click="tab = 'release'" class="cursor-pointer" label="Mark to Release" value="{{ collect($requests)->where('status', 'Mark to Release')->count() }}" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
             <x-ui.stat-card layout="compact" :href="route('admin.analytics')" label="Avg. Processing Time" value="—" valueBind="avgProcessingLabel" icon="timer" color="purple" sublabel="No request released yet" sublabelBind="avgProcessingNote" :delay="120" />
         </div>
@@ -2468,6 +2500,12 @@
                 </div>
                 <x-admin.scope.queue-chips />
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' requests'"></p>
+                {{-- The list holds the newest 2,000 (sweep 2026-11-18: it stopped there without a word). --}}
+                <p x-show="requestsTotal > requests.length" x-cloak class="w-full text-[11px] text-amber-800 bg-amber-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
+                    <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    <span x-text="'Showing the newest ' + requests.length.toLocaleString() + ' of ' + requestsTotal.toLocaleString() + ' requests. An older one opens by its reference.'"></span>
+                    <button type="button" class="font-medium underline" x-show="search.trim() && !requests.some((r) => r.ref.toLowerCase() === search.trim().toLowerCase())" @click="findByRef(search).then((r) => { if (r) openRequest(r); })">Look Up Reference</button>
+                </p>
                 <p x-show="importFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
                     <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
                     <span x-text="'Showing the ' + filteredRequests.length.toLocaleString() + ' records imported from ' + importFilter + '.'"></span>
@@ -2887,6 +2925,7 @@
                             x-model="rejectRemarks" rows="2" placeholder="e.g. Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached."
                             class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                         ></textarea>
+                        <p x-show="rejectHasPlaceholder" x-cloak class="mt-1.5 text-[11px] text-amber-700 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>Replace the part in [brackets] first: the resident reads this reason word for word.</p>
                     </div>
                     </div>
 
@@ -3129,7 +3168,7 @@
                         <p x-show="approveBlocked" class="mr-auto text-xs text-amber-700 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i><span x-text="approveBlocked"></span></p>
                         <p x-show="selected.status === 'Submitted' && !may('review')" class="mr-auto text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i><span>Not reviewed yet: the review starts when an officer who reviews this request opens it.</span></p>
                         <template x-if="canReject">
-                            <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
+                            <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim() || rejectHasPlaceholder" @click="reject()">
                                 <span class="inline-flex items-center gap-1.5">
                                     <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                     <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>

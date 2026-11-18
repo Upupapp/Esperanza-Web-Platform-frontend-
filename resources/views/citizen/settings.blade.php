@@ -25,14 +25,24 @@
             // answers come first (owner's manual test, 2026-11-06).
             dataFormOpen: false,
 
-            async init() {
+            // A list that did not load says so and offers Try again (sweep
+            // 2026-11-18): both used to fall back to an empty list, so a failed
+            // load read 'You have no requests yet.' to a resident with a pending
+            // erasure or correction request, who might file it again.
+            notifPrefsFailed: false,
+            dataRequestsFailed: false,
+            init() {
+                this.loadNotifPrefs();
+                this.loadDataRequests();
+            },
+            async loadNotifPrefs() {
                 this.notifPrefsLoading = true;
+                this.notifPrefsFailed = false;
                 try {
                     const result = await $api.get('/citizen/notification-preferences');
                     this.notifPrefs = result.data?.preferences || [];
                     this.smsAvailable = result.data?.sms_available !== false;
-                } catch { this.notifPrefs = []; } finally { this.notifPrefsLoading = false; }
-                this.loadDataRequests();
+                } catch { this.notifPrefs = []; this.notifPrefsFailed = true; } finally { this.notifPrefsLoading = false; }
             },
             // One switch per channel. The old single switch set in-app, SMS and
             // email together off the in-app flag -- which the server always
@@ -65,10 +75,11 @@
             },
             async loadDataRequests() {
                 this.dataRequestsLoading = true;
+                this.dataRequestsFailed = false;
                 try {
                     const result = await $api.get('/citizen/data-requests');
                     this.dataRequests = result.data || [];
-                } catch { this.dataRequests = []; } finally { this.dataRequestsLoading = false; }
+                } catch { this.dataRequests = []; this.dataRequestsFailed = true; } finally { this.dataRequestsLoading = false; }
             },
             async updatePassword() {
                 if (this.savingPassword) return;
@@ -162,7 +173,10 @@
                                 </template>
                             </div>
                         </template>
-                        <p class="py-6 text-center text-xs text-ink-muted" x-show="!notifPrefsLoading && !notifPrefs.length">
+                        <div x-show="!notifPrefsLoading && notifPrefsFailed" x-cloak>
+                            <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'Your notification preferences could not be loaded.' : 'Hindi ma-load ang iyong mga kagustuhan sa abiso.'" retryExpr="loadNotifPrefs()" class="!py-8" />
+                        </div>
+                        <p class="py-6 text-center text-xs text-ink-muted" x-show="!notifPrefsLoading && !notifPrefsFailed && !notifPrefs.length">
                             <x-ui.t fil="Walang mga kagustuhan sa abiso." en="No notification preferences available." />
                         </p>
                     </div>
@@ -213,7 +227,10 @@
                             <x-ui.button variant="secondary" size="sm" icon="plus" x-show="!dataFormOpen" @click="dataFormOpen = true; $nextTick(() => $refs.dataDetail?.focus())"><x-ui.t fil="Bagong hiling" en="New request" /></x-ui.button>
                         </div>
                         <div x-show="dataRequestsLoading"><x-ui.skeleton class="h-12" /></div>
-                        <p x-show="!dataRequestsLoading && !dataRequests.length" class="text-xs text-ink-muted"><x-ui.t fil="Wala ka pang hiling." en="You have no requests yet." /></p>
+                        <div x-show="!dataRequestsLoading && dataRequestsFailed" x-cloak>
+                            <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'Your data requests could not be loaded.' : 'Hindi ma-load ang iyong mga hiling sa datos.'" retryExpr="loadDataRequests()" class="!py-8" />
+                        </div>
+                        <p x-show="!dataRequestsLoading && !dataRequestsFailed && !dataRequests.length" class="text-xs text-ink-muted"><x-ui.t fil="Wala ka pang hiling." en="You have no requests yet." /></p>
                         <ul class="divide-y divide-brand-600/[.08]" x-show="!dataRequestsLoading && dataRequests.length">
                             <template x-for="req in dataRequests" :key="req.ref">
                                 <li class="py-3 flex items-start justify-between gap-3">

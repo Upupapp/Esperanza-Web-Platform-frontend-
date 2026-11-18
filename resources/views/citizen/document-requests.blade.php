@@ -98,14 +98,26 @@
     // municipal services. The name maps stay as the fallback.
     $daysByKey = collect($documentTypes)->merge($barangayDocTemplate ?? [])
         ->filter(fn ($d) => ! empty($d['key']))->pluck('days', 'key');
-    // The pickup directory below is keyed by an office's SHORT name, which the
-    // API does not send; the catalog has it per service key.
-    $officeShortByKey = collect($documentTypes)->filter(fn ($d) => ! empty($d['key']))->pluck('office_short', 'key');
+    // What the issued copy prints besides the form, by service key: the form
+    // number and the signature block (QA 2026-11-18). A request from the API
+    // never carries them, so Track Request's copy left both out.
+    $printByKey = collect($documentTypes)->filter(fn ($d) => ! empty($d['key']))
+        ->mapWithKeys(fn ($d) => [$d['key'] => collect($d)->only(['formNo', 'officiant', 'officiantTitle', 'technician', 'technicianTitle', 'verifier', 'verifierTitle'])->filter()->all()])
+        ->filter();
 
-    // Where to follow up / claim a released document, keyed by office name.
-    // Barangay Hall entries vary per barangay (the office string already
-    // carries "Barangay Hall (Brgy. X)"), so those are matched by prefix.
-    $pickupDirectory = $__fixtures['pickupDirectory'];
+    // A document about another person (a death record's deceased, a birth
+    // record's child): the catalog marks those questions 'prefill' => false,
+    // and the issued copy must not fill them, or the rest of that person's
+    // details, from the requester's own profile (QA 2026-11-18 #120, as the
+    // app's documentData). By service key: the form's own field keys.
+    $aboutAnotherByKey = collect(config('esperanza_municipal_documents.documents'))
+        ->filter(fn ($d) => collect($d['fields'] ?? [])->contains(fn ($f) => ($f['prefill'] ?? true) === false))
+        ->mapWithKeys(fn ($d) => [$d['key'] => collect($d['fields'] ?? [])->pluck('key')->filter()->values()->all()])
+        ->all();
+
+    // Where to follow up or claim a document is no longer a list of numbers
+    // kept here: the tracker reads the Government Directory (GET /directory),
+    // the one the LGU keeps in Settings (QA 2026-11-18).
 
     $fileCardStyle = $__fixtures['fileCardStyle'];
 @endphp
@@ -119,7 +131,8 @@
             requestsFailed: false,
             daysByType: @js($daysByType),
             daysByKey: @js($daysByKey),
-            officeShortByKey: @js($officeShortByKey),
+            printByKey: @js($printByKey),
+            aboutAnotherByKey: @js($aboutAnotherByKey),
             officeByType: @js($officeByType),
             papeles: [],
             papelesLoading: true,
@@ -163,7 +176,15 @@
                     return this.tab === 'done' ? (isDone && !stopped) : !isDone;
                 });
             },
-            pickupDirectory: @js($pickupDirectory),
+            // The Government Directory's offices, for Who to Contact (QA
+            // 2026-11-18): the page's own numbers had drifted from it (BPLO,
+            // OSCA) and never followed an edit in Settings. Read once, when a
+            // request is first opened; a failed read is tried again next time.
+            directory: null,
+            async loadDirectory() {
+                if (this.directory) return;
+                try { this.directory = (await $api.get('/directory')).data || []; } catch { this.directory = null; }
+            },
             // Same lookup the New Request wizard uses for its live preview's
             // letterhead (seal/officials per barangay) — duplicated here (it's
             // a small array, already computed once server-side) so the Track
@@ -276,6 +297,7 @@
                 this.selectedRequest = r;
                 this.progressOpen = true;
                 this.proofOpen = false;
+                this.loadDirectory();
                 try {
                     const res = await $api.get('/citizen/requests/' + encodeURIComponent(r.ref));
                     this.applyDetail(r, res.data);
@@ -349,15 +371,23 @@
                     const hall = r.office.startsWith('Barangay Hall') ? r.office : 'Barangay Hall (Brgy. ' + (r.barangay || this.myBarangay || '') + ')';
                     return { contact: 'Visit your Barangay Hall', address: hall + ', Esperanza, Masbate' };
                 }
-                // The directory is keyed by the office's short name; where an
-                // office is listed as 'A / B', A is where to claim it.
-                const short = (this.officeShortByKey[r.serviceKey] || r.office || '').split('/')[0].trim();
-                return this.pickupDirectory[short]
-                    || { contact: 'Municipal Hall Trunkline (056) 333-1000', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
+                // The office's number as the Government Directory lists it;
+                // where an office is listed as 'A / B', A is where to claim it.
+                // No number when the directory has none: the box then points
+                // to the directory rather than guess one.
+                const name = (r.office || '').split('/')[0].trim().toLowerCase();
+                const entry = name ? (this.directory || []).find((d) => d.contact && (d.office || '').trim().toLowerCase() === name) : null;
+                return { contact: entry?.contact || '', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
             },
             get expectedRelease() {
                 const r = this.selectedRequest;
                 if (!r) return '';
+                // No number in the processing time ('Next scheduled session', 'Per
+                // case plan'): there is no date to count to, so the office's own
+                // words are shown, not a guessed date five days on (QA 2026-11-18).
+                const days = String(r.days ?? '').trim();
+                if (!days) return $store.lang.current === 'en' ? 'The office will tell you' : 'Sasabihin ng opisina';
+                if (!/\d/.test(days) && !/same day/i.test(days)) return days;
                 if (/same day/i.test(r.days)) return r.submitted + ' (' + ($store.lang.current === 'en' ? 'same day' : 'ngayon din') + ')';
                 const match = r.days.match(/(\d+)(?!.*\d)/);
                 let left = match ? parseInt(match[1]) : 5;
@@ -381,7 +411,7 @@
                 const r = this.selectedRequest;
                 if (!r) return null;
                 if (r.previewType && r.formSnapshot) {
-                    return { previewType: r.previewType, docKey: r.docKey, certTitle: r.certTitle, certSubtitle: r.certSubtitle, snapshot: r.formSnapshot, barangay: r.barangay || this.myBarangay };
+                    return { previewType: r.previewType, docKey: r.docKey, certTitle: r.certTitle, certSubtitle: r.certSubtitle, snapshot: r.formSnapshot, barangay: r.barangay || this.myBarangay, ...(this.printByKey[r.docKey] || {}) };
                 }
                 const meta = (r.serviceKey && Object.values(this.docTypeLookup).find((m) => m.docKey === r.serviceKey))
                     || this.docTypeLookup[r.type];
@@ -402,6 +432,10 @@
                 // docKey's template actually uses instead of leaving them
                 // blank just because this request never had its own
                 // formSnapshot. Never overwrites a field already set above.
+                // On a document about another person, the person's own details
+                // (and any question of its form) are never the requester's.
+                const formKeys = this.aboutAnotherByKey[meta.docKey] || null;
+                const personKeys = ['age', 'date_of_birth', 'sex', 'civil_status', 'citizenship', 'occupation', 'residence'];
                 if (account) {
                     const purok = (account.purok || '').replace(/^Purok\s+/i, '');
                     const bioFields = {
@@ -410,10 +444,12 @@
                         address: account.address, residence: account.address, purok: purok || null,
                     };
                     for (const [key, value] of Object.entries(bioFields)) {
+                        if (formKeys && (personKeys.includes(key) || formKeys.includes(key))) continue;
                         if (!(key in snapshot) && value) snapshot[key] = value;
                     }
                 }
-                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot, barangay: r.barangay || this.myBarangay };
+                // The form number and signature block the filing wizard showed.
+                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot, barangay: r.barangay || this.myBarangay, ...(this.printByKey[meta.docKey] || {}) };
             },
             get documentReady() {
                 const r = this.selectedRequest;
@@ -913,12 +949,19 @@
                         stepError: '',
                         stepWarning: '',
                         attachWarned: false,
-                        // The applicant's mobile number and any number field: '' when every one is fine.
+                        // A landline or office telephone (the PWD ID form's 'Landline
+                        // No. (if any)' and 'Organization — Tel. Nos.') is not a mobile
+                        // number (QA 2026-11-18): it takes a number such as (056) 000-0000 as written,
+                        // never cut to 11 digits nor held to 09XXXXXXXXX.
+                        isLandline(f) {
+                            return f?.type === 'tel' && /landline|\btel\b|_tel_|tel\./i.test((f.key || '') + ' ' + (f.label || ''));
+                        },
+                        // The applicant's mobile number and any mobile number field: '' when every one is fine.
                         phoneProblem() {
                             const lang = this.$store.lang.current;
                             const own = window.phMobile.error(this.applicant.mobile, false, lang);
                             if (own) return own;
-                            for (const f of (this.docs[this.selectedDoc]?.fields || []).filter((f) => f.type === 'tel')) {
+                            for (const f of (this.docs[this.selectedDoc]?.fields || []).filter((f) => f.type === 'tel' && !this.isLandline(f))) {
                                 const err = window.phMobile.error(this.formData[f.key], !!f.required, lang);
                                 if (err) return f.label + ': ' + err;
                             }
@@ -1349,8 +1392,8 @@
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                     <input :aria-label="f.label"
                                                         :type="f.type" x-model="formData[f.key]"
-                                                    :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
-                                                    @input="if (f.type === 'tel') formData[f.key] = window.phMobile.clean($event.target.value)"
+                                                    :inputmode="f.type === 'tel' ? (isLandline(f) ? 'tel' : 'numeric') : null" :maxlength="f.type === 'tel' ? (isLandline(f) ? 60 : 11) : null" :placeholder="f.type === 'tel' ? (isLandline(f) ? '(056) 000-0000' : '09XXXXXXXXX') : null"
+                                                    @input="if (f.type === 'tel') formData[f.key] = isLandline(f) ? $event.target.value.replace(/[^0-9()+\-\/,;. ]/g, '') : window.phMobile.clean($event.target.value)"
                                                         class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                     >
                                                 </div>
@@ -2016,7 +2059,8 @@
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
                             <p class="text-sm font-medium text-ink" x-text="selectedRequest.office"></p>
                             <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.address"></span></p>
-                            <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="phone" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
+                            <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5" x-show="pickupInfo?.contact"><i data-lucide="phone" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
+                            <a href="{{ route('citizen.directory') }}" class="text-xs font-medium text-brand-600 hover:underline mt-1 inline-flex items-center gap-1.5" x-show="pickupInfo && !pickupInfo.contact"><i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i><x-ui.t fil="Tingnan ang numero sa Direktoryo ng Pamahalaan" en="See the number in the Government Directory" /></a>
                         </div>
 
                         <x-citizen.scope.request-timeline />
@@ -2067,13 +2111,13 @@
                                     title="resolvedDocument.certTitle"
                                     verify="selectedRequest.issuedDocuments"
                                     office="selectedRequest.office"
-                                    formNo="selectedRequest.formNo"
-                                    officiant="selectedRequest.officiant"
-                                    officiantTitle="selectedRequest.officiantTitle"
-                                    technician="selectedRequest.technician"
-                                    technicianTitle="selectedRequest.technicianTitle"
-                                    verifier="selectedRequest.verifier"
-                                    verifierTitle="selectedRequest.verifierTitle"
+                                    formNo="resolvedDocument.formNo"
+                                    officiant="resolvedDocument.officiant"
+                                    officiantTitle="resolvedDocument.officiantTitle"
+                                    technician="resolvedDocument.technician"
+                                    technicianTitle="resolvedDocument.technicianTitle"
+                                    verifier="resolvedDocument.verifier"
+                                    verifierTitle="resolvedDocument.verifierTitle"
                                 />
                             </template>
                         </div>

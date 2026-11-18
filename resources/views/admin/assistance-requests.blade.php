@@ -90,6 +90,9 @@
             mineOnly: false,
             overdueOnly: false,
             loadSeq: 0,
+            // How many cases the server holds when the list loaded only the
+            // newest of them (a load stops at 2,000), else 0.
+            requestsTotal: 0,
             showAdvancedFilters: false,
             open: false,
             selected: null,
@@ -179,6 +182,10 @@
                 const r = this.standardReasons.find(x => x.label === label);
                 if (r) this.sideReason = r.message;
             },
+            // A [placeholder] still in the reason (QA 2026-11-18 #233): it reaches
+            // the resident as typed. The standard reasons no longer carry one;
+            // this keeps the confirm button off for any that comes back.
+            get sideReasonHasPlaceholder() { return /\[[^\]]+\]/.test(this.sideReason || ''); },
             get flaggedRequirements() {
                 return (this.selected?.requirements || []).filter(r => r.reject_reason || r.remarks);
             },
@@ -202,8 +209,8 @@
             derivedAgeDisplay(step, field) {
                 const source = step.fields.find(f => f.key === field.derivedFromKey);
                 if (!source?.answer) return '—';
-                const [y] = source.answer.split('-').map(Number);
-                return (2026 - y) + ' years old';
+                const age = window.ageFromBirthDate(source.answer);
+                return age === null ? '—' : age + ' years old';
             },
             fieldIcon(field) {
                 const byKey = {
@@ -258,13 +265,35 @@
                 // (GET .../requests/{ref}) starts its review on the server, so
                 // the list waits while a request is open and reloads once it closes.
                 this.$store.live.on(this.$el, 'requests', () => this.loadRequests(true), { busy: () => this.open });
-                this.loadRequests().then(() => {
+                this.loadRequests().then(async () => {
                     // Arriving from a notification (see components/admin/topbar.blade.php)
                     // — jump straight into that exact request, not just the filtered list.
+                    // One older than the loaded list is asked of the server.
                     if (!ref) return;
-                    const match = this.requests.find(r => r.ref === ref);
+                    const match = await this.findByRef(ref);
                     if (match) this.$nextTick(() => this.openRequest(match));
                 });
+            },
+            // A case by its reference: the loaded row, else the server's
+            // (GET .../requests?q=, which matches the ref and opens nothing).
+            // The list holds only the newest 2,000, and a link or a typed ref to
+            // an older one found nothing (sweep 2026-11-18).
+            async findByRef(ref) {
+                const text = String(ref || '').trim();
+                if (!text) return null;
+                const same = (x) => x.ref.toLowerCase() === text.toLowerCase();
+                let r = this.requests.find(same);
+                if (r) return r;
+                try {
+                    const res = await $api.get('/admin/' + this.requestType + '/requests', { params: { q: text, per_page: 10 } });
+                    const rows = (res.data || []).filter((row) => !this.requests.some((x) => x.ref === row.ref));
+                    this.requests.unshift(...rows.map((row) => this.fromApi(row)));
+                    r = this.requests.find(same) || null;
+                    if (!r) this.$dispatch('toast', { message: 'No case has the reference ' + text + '.', variant: 'error' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not look up ' + text + '.'), variant: 'error' });
+                }
+                return r;
             },
             // ---- The queue, from the API -----------------------------------
             // Every action calls the lifecycle endpoint it names and takes the
@@ -320,6 +349,7 @@
                     const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params });
                     if (seq === this.loadSeq) {
                         this.requests = (res.data || []).map((row) => this.fromApi(row));
+                        this.requestsTotal = res.meta?.truncated ? res.meta.total : 0;
                         this.requestsFailed = false;
                     }
                 } catch (err) {
@@ -484,6 +514,11 @@
                 // A group session's case: { ref, date, start_time, venue, status }
                 // of its session, or null while it waits (welfare round, 2026-10-29).
                 r.session = d.session || null;
+                // The applicant's birth date (registry record, else account) and the
+                // server's own Art. 16 reading: csArt16 never saw the date, so a
+                // couple aged 18 to 25 read 'Check the ages' (QA 2026-11-18 #254).
+                r.applicant_birth_date = d.applicant_birth_date || null;
+                r.art16 = d.art16 || null;
                 // How it was filed (channel online / walk_in / referral / record):
                 // a case recorded as help already given still takes its scans (round 2).
                 r.filed = d.filed || null;
@@ -602,13 +637,24 @@
                 'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
                 'Cancelled': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
             },
+            // A status picked under Advanced is the whole filter: picking one
+            // moves the tabs to All, and a tab or a card clears it again. The
+            // tabs and cards used to change only their highlight while a status
+            // hidden in the closed panel kept the list (sweep 2026-11-18).
             matchesTab(r) {
                 if (this.statusFilter) return r.status === this.statusFilter;
                 if (this.tab === 'all') return true;
                 if (this.tab === 'action') return this.actionStatuses.includes(r.status);
                 if (this.tab === 'release') return r.status === 'Ready for Release';
-                if (this.tab === 'done') return this.terminalStatuses.includes(r.status);
+                // Completed means Completed, as the tab, the card and its count
+                // say; Rejected and Cancelled are under All, or by status.
+                if (this.tab === 'done') return r.status === 'Completed';
                 return true;
+            },
+            pickTab(tab) {
+                this.tab = tab;
+                this.statusFilter = '';
+                this.openOnly = false;
             },
             get filteredRequests() {
                 const q = this.search.trim().toLowerCase();
@@ -735,7 +781,7 @@
             },
             async confirmSideForm() {
                 const reason = this.sideReason.trim();
-                if (!reason || !this.sideForm) return;
+                if (!reason || !this.sideForm || this.sideReasonHasPlaceholder) return;
                 const ref = this.selected.ref;
                 if (this.sideForm === 'reject') {
                     await this.moveCase('reject', { decision_remarks: reason }, 'Case ' + ref + ' rejected.', 'error');
@@ -1045,15 +1091,15 @@
              own pattern — these used to be hardcoded literals ("417",
              "34", "112") that never actually reflected the mock data. --}}
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card layout="compact" @click="tab = 'all'" class="cursor-pointer" label="Active Cases" value="{{ collect($requests)->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled', 'Archived'])->count() }}" valueBind="requests.filter(r => !terminalStatuses.includes(r.status)).length" icon="hand-heart" color="purple" :delay="0" />
-            <x-ui.stat-card layout="compact" @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or assessment" :delay="40" />
-            <x-ui.stat-card layout="compact" @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card layout="compact" @click="pickTab('all'); openOnly = true" class="cursor-pointer" label="Active Cases" value="{{ collect($requests)->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled', 'Archived'])->count() }}" valueBind="requests.filter(r => !terminalStatuses.includes(r.status)).length" icon="hand-heart" color="purple" :delay="0" />
+            <x-ui.stat-card layout="compact" @click="pickTab('action')" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or assessment" :delay="40" />
+            <x-ui.stat-card layout="compact" @click="pickTab('release')" class="cursor-pointer" label="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
             {{-- These two were hard-coded peso figures ("₱1.8M of ₱2.5M") shown as
                  if they were the municipality's budget. No budget or
                  disbursement amount is recorded anywhere, so they count what is
                  real instead. --}}
-            <x-ui.stat-card layout="compact" @click="tab = 'done'" class="cursor-pointer" label="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="hand-coins" color="gold" sublabel="Assistance received" :delay="120" />
-            <x-ui.stat-card layout="compact" @click="tab = 'all'" class="cursor-pointer" label="All Cases" value="0" valueBind="requests.length" icon="wallet" color="brand" sublabel="Every status" :delay="160" />
+            <x-ui.stat-card layout="compact" @click="pickTab('done')" class="cursor-pointer" label="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="hand-coins" color="gold" sublabel="Assistance received" :delay="120" />
+            <x-ui.stat-card layout="compact" @click="pickTab('all')" class="cursor-pointer" label="All Cases" value="0" valueBind="requests.length" icon="wallet" color="brand" sublabel="Every status" :delay="160" />
         </div>
 
         <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
@@ -1069,7 +1115,7 @@
                 <button
                     type="button" @click="showAdvancedFilters = !showAdvancedFilters"
                     class="inline-flex items-center gap-1.5 text-xs font-medium rounded-2xl px-3 py-2 border transition-colors shrink-0"
-                    :class="showAdvancedFilters || officeFilter || levelFilter || assignedFilter || barangayFilter ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-slate-50 border-slate-200 text-ink-muted hover:text-slate-700'"
+                    :class="showAdvancedFilters || statusFilter || officeFilter || levelFilter || assignedFilter || barangayFilter ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-slate-50 border-slate-200 text-ink-muted hover:text-slate-700'"
                 >
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
                 </button>
@@ -1093,7 +1139,7 @@
                 <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                     @foreach($tabs as $key => $label)
                         <button
-                            type="button" @click="tab = '{{ $key }}'"
+                            type="button" @click="pickTab('{{ $key }}')"
                             class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
                             :class="tab === '{{ $key }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                         >{{ $label }}</button>
@@ -1101,6 +1147,12 @@
                 </div>
                 <x-admin.scope.queue-chips />
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' cases'"></p>
+                {{-- The list holds the newest 2,000 (sweep 2026-11-18: it stopped there without a word). --}}
+                <p x-show="requestsTotal > requests.length" x-cloak class="w-full text-[11px] text-amber-800 bg-amber-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
+                    <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    <span x-text="'Showing the newest ' + requests.length.toLocaleString() + ' of ' + requestsTotal.toLocaleString() + ' cases. An older one opens by its reference.'"></span>
+                    <button type="button" class="font-medium underline" x-show="search.trim() && !requests.some((r) => r.ref.toLowerCase() === search.trim().toLowerCase())" @click="findByRef(search).then((r) => { if (r) openRequest(r); })">Look Up Reference</button>
+                </p>
                 <p x-show="importFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
                     <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
                     <span x-text="'Showing the ' + filteredRequests.length.toLocaleString() + ' records imported from ' + importFilter + '.'"></span>
@@ -1120,7 +1172,7 @@
                 {{-- Milestone 20 — every Tulong status individually
                      selectable, without crowding the quick-tab bar above
                      with 11 buttons. --}}
-                <select aria-label="Status filter" x-model="statusFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
+                <select aria-label="Status filter" x-model="statusFilter" @change="if ($event.target.value) { tab = 'all'; openOnly = false; }" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     <option value="">All Statuses</option>
                     <template x-for="s in allTulongStatuses" :key="s"><option :value="s" x-text="s"></option></template>
                 </select>
@@ -1526,8 +1578,9 @@
                                         <input type="text" x-model="intake.referring_party" maxlength="160" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
                                     <label class="block text-[11px] font-medium text-slate-600">Beneficiary (if not the client)
                                         <input type="text" x-model="intake.beneficiary_name" maxlength="160" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
-                                    <label class="block text-[11px] font-medium text-slate-600">Client's relationship to the beneficiary
-                                        <input type="text" x-model="intake.beneficiary_relation" maxlength="60" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                    {{-- The printed General Intake Sheet reads "<beneficiary> (<relation> of the client)", as the DSWD paper asks it: the BENEFICIARY's relationship to the client. Asked the other way round, a mother filing for her son printed "Juan (Mother of the client)" (sweep 2026-11-18). --}}
+                                    <label class="block text-[11px] font-medium text-slate-600">Beneficiary's relationship to the client
+                                        <input type="text" x-model="intake.beneficiary_relation" maxlength="60" placeholder="e.g. Son" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
                                 </div>
                                 <label class="block text-[11px] font-medium text-slate-600">Problem presented
                                     <textarea x-model="intake.problem_presented" rows="2" maxlength="2000" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink resize-none"></textarea></label>
@@ -1629,8 +1682,9 @@
                         </div>
                         <textarea aria-label="Reason" x-model="sideReason" rows="3" maxlength="2000" placeholder="Type the reason…"
                             class="w-full mt-2 rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none border-0 surface-pressed-sm"></textarea>
+                        <p x-show="sideReasonHasPlaceholder" x-cloak class="mt-1.5 text-[11px] text-amber-700 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>Replace the part in [brackets] first: the resident reads this reason word for word.</p>
                         <div class="flex items-center gap-2 mt-2">
-                            <button type="button" x-bind:disabled="processing || !sideReason.trim()" @click="confirmSideForm()"
+                            <button type="button" x-bind:disabled="processing || !sideReason.trim() || sideReasonHasPlaceholder" @click="confirmSideForm()"
                                 class="inline-flex items-center justify-center min-h-[36px] px-3.5 py-2 text-xs font-semibold rounded-2xl text-white shadow-card transition-colors disabled:opacity-40 disabled:pointer-events-none"
                                 :class="sideForm === 'reject' ? 'bg-rose-600 hover:bg-rose-700' : (sideForm === 'return' ? 'bg-orange-700 hover:bg-orange-800' : 'bg-slate-700 hover:bg-slate-800')"
                                 x-text="processing ? 'Saving…' : sideForms[sideForm]?.confirm"></button>

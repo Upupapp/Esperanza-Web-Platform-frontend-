@@ -112,15 +112,28 @@ window.viewableImage = async (url, mime) => {
 };
 
 // `canvasClass` styles each page; a thumbnail draws page 1 only, edge to edge.
-window.renderPdfInto = async (el, url, { maxPages = 15, canvasClass = 'block w-full h-auto rounded-lg border border-slate-200 bg-white mb-2' } = {}) => {
+// `isCurrent`: false once the viewer has moved on to another file. Nothing more
+// is drawn into `el` then, and the result is null: a long scan still drawing
+// put its pages under the next file's title, so an officer read the wrong
+// document while checking requirements (sweep 2026-11-18).
+window.renderPdfInto = async (el, url, { maxPages = 15, canvasClass = 'block w-full h-auto rounded-lg border border-slate-200 bg-white mb-2', isCurrent = () => true } = {}) => {
     const pdfjs = await window.loadPdfJs();
     const res = await fetch(url);
     if (!res.ok) throw new Error('file ' + res.status);
-    const doc = await pdfjs.getDocument({ data: await res.arrayBuffer(), isEvalSupported: false, enableXfa: false }).promise;
+    const data = await res.arrayBuffer();
+    if (!isCurrent()) return null;
+    const doc = await pdfjs.getDocument({ data, isEvalSupported: false, enableXfa: false }).promise;
+    const stale = () => {
+        if (isCurrent()) return false;
+        doc.destroy();
+        return true;
+    };
+    if (stale()) return null;
     el.replaceChildren();
     const width = el.clientWidth || 600;
     for (let n = 1; n <= Math.min(doc.numPages, maxPages); n++) {
         const page = await doc.getPage(n);
+        if (stale()) return null;
         const scale = (width / page.getViewport({ scale: 1 }).width) * Math.min(window.devicePixelRatio || 1, 2);
         const viewport = page.getViewport({ scale });
         const canvas = document.createElement('canvas');
@@ -130,6 +143,7 @@ window.renderPdfInto = async (el, url, { maxPages = 15, canvasClass = 'block w-f
         canvas.setAttribute('aria-label', 'Page ' + n + ' of ' + doc.numPages);
         el.appendChild(canvas);
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        if (stale()) return null;
     }
 
     return doc.numPages;
@@ -556,6 +570,21 @@ const TRIGGER_NOTES = {
 
 window.historyNote = (trigger) => TRIGGER_NOTES[trigger] || '';
 
+// A person's age today, in whole years, from a birth date the API or a form
+// sends (2000-12-25, or with a time: 2000-12-25T00:00:00.000). One year is
+// taken off until this year's birthday has come. Only the date part is read,
+// so the day never shifts with the time zone. null when it is not a date.
+// The officer review pages' Age field used to say 2026 minus the birth year,
+// a year too old before the birthday and a year too young from 2027
+// (sweep 2026-11-18).
+window.ageFromBirthDate = (iso, today = new Date()) => {
+    const [y, m, d] = String(iso ?? '').slice(0, 10).split('-').map(Number);
+    if (!y || !m || !d) return null;
+    let age = today.getFullYear() - y;
+    if (today.getMonth() + 1 < m || (today.getMonth() + 1 === m && today.getDate() < d)) age--;
+    return age >= 0 ? age : null;
+};
+
 // A path the API hands back unprefixed (`images/esperanza/...`), because the
 // file it names is one of THIS site's own bundled static assets (public/...),
 // not something the backend hosts. An <img> given that raw string resolves it
@@ -612,6 +641,40 @@ function writeJson(key, value) {
         // Private mode with storage disabled -- the session still works for
         // this page load, it just will not survive a reload.
     }
+}
+
+// The resident's cached profile (name, birth date, address, mobile...) is kept
+// beside the sign-in: in localStorage only when the sign-in is ("Remember me"
+// ticked), else for the tab only, so it goes when the tab closes on a shared
+// or internet-cafe computer. It used to stay in localStorage for good (sweep
+// 2026-11-18). 'esperanza_token' is api/client.js's TOKEN_KEY.
+const CITIZEN_CACHE_KEY = 'esperanza_citizen_session';
+function citizenCacheStorage() {
+    try {
+        if (localStorage.getItem('esperanza_token')) return localStorage;
+        if (sessionStorage.getItem('esperanza_token')) return sessionStorage;
+    } catch { /* storage blocked */ }
+    return null;
+}
+function readCitizenCache() {
+    const store = citizenCacheStorage();
+    try {
+        // One left in localStorage by a tab-only sign-in (or by an older build)
+        // is removed at once.
+        if (store !== localStorage) localStorage.removeItem(CITIZEN_CACHE_KEY);
+        if (!store) { sessionStorage.removeItem(CITIZEN_CACHE_KEY); return null; }
+        return JSON.parse(store.getItem(CITIZEN_CACHE_KEY) || 'null');
+    } catch {
+        return null;
+    }
+}
+function writeCitizenCache(value) {
+    try {
+        localStorage.removeItem(CITIZEN_CACHE_KEY);
+        sessionStorage.removeItem(CITIZEN_CACHE_KEY);
+        const store = value === null ? null : citizenCacheStorage();
+        if (store) store.setItem(CITIZEN_CACHE_KEY, JSON.stringify(value));
+    } catch { /* storage blocked: the profile stays for this page load */ }
 }
 
 document.addEventListener('alpine:init', () => {
@@ -880,7 +943,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('citizenSession', {
         // Nothing cached is trusted without a sign-in: one kept for a tab only
         // ("Remember me" unticked) is gone once the tab closes.
-        account: api.getToken() ? readJson('esperanza_citizen_session') : null,
+        account: readCitizenCache(),
 
         setAccount(p) {
             this.account = {
@@ -915,7 +978,7 @@ document.addEventListener('alpine:init', () => {
                 // refresh() on every page (the top bar showed initials only).
                 photoUrl: p.photo?.url || null,
             };
-            writeJson('esperanza_citizen_session', this.account);
+            writeCitizenCache(this.account);
         },
 
         async login(identifier, password, remember = true) {
@@ -931,7 +994,7 @@ document.addEventListener('alpine:init', () => {
 
         clear() {
             this.account = null;
-            writeJson('esperanza_citizen_session', null);
+            writeCitizenCache(null);
         },
 
         async logout() {
@@ -1123,6 +1186,9 @@ document.addEventListener('alpine:init', () => {
 
             // One call clears every unread notification, including ones on
             // pages not loaded here, and it holds after a refresh.
+            // True once the server took it; false when it refused, after the
+            // unread marks are put back, so a caller can tell the two apart
+            // (QA 2026-11-18) rather than guess from the count.
             async markAllRead() {
                 const before = this.items.filter((n) => n.unread).map((n) => n.id);
                 const count = this.serverUnread;
@@ -1130,9 +1196,11 @@ document.addEventListener('alpine:init', () => {
                 this.serverUnread = 0;
                 try {
                     await api.post(`${path}/read-all`);
+                    return true;
                 } catch {
                     this.items.forEach((n) => { if (before.includes(n.id)) n.unread = true; });
                     this.serverUnread = count;
+                    return false;
                 }
             },
 
@@ -1413,48 +1481,60 @@ document.addEventListener('alpine:init', () => {
     // Draws a PDF in place (window.renderPdfInto); anything else is left to
     // the page's own image preview or download link.
     // Also shows an uploaded photo: <img x-show="image" :src="image"> inside.
-    Alpine.data('pdfPreview', () => ({
-        loading: false,
-        failed: false,
-        pages: 0,
-        shown: null,
-        image: null,
-        async show(url, mime) {
-            const kind = window.previewKind(url, mime);
-            if (!kind) { this.reset(); return; }
-            if (this.shown === url) return;
-            this.reset();
-            this.shown = url;
-            this.loading = true;
-            try {
-                if (kind === 'pdf') {
-                    this.pages = await window.renderPdfInto(this.$refs.pages, url);
-                } else {
-                    const blobUrl = await window.imageBlobUrl(url, kind);
-                    // Another file was opened meanwhile: drop this one.
-                    if (this.shown !== url) { URL.revokeObjectURL(blobUrl); return; }
-                    this.image = blobUrl;
-                    this.pages = 1;
+    Alpine.data('pdfPreview', () => {
+        // Which opening of the viewer is current: reset() and every new file move
+        // it on, so a file still loading from before (even the same file, closed
+        // and opened again) never draws or counts into this one. Kept out of the
+        // reactive data: show() runs in an x-effect.
+        let run = 0;
+        return {
+            loading: false,
+            failed: false,
+            pages: 0,
+            shown: null,
+            image: null,
+            async show(url, mime) {
+                const kind = window.previewKind(url, mime);
+                if (!kind) { this.reset(); return; }
+                if (this.shown === url) return;
+                this.reset();
+                this.shown = url;
+                this.loading = true;
+                const mine = run;
+                const current = () => run === mine;
+                try {
+                    if (kind === 'pdf') {
+                        const pages = await window.renderPdfInto(this.$refs.pages, url, { isCurrent: current });
+                        if (current()) this.pages = pages;
+                    } else {
+                        const blobUrl = await window.imageBlobUrl(url, kind);
+                        // Another file was opened meanwhile: drop this one.
+                        if (!current()) { URL.revokeObjectURL(blobUrl); return; }
+                        this.image = blobUrl;
+                        this.pages = 1;
+                    }
+                } catch (e) {
+                    if (current()) this.failed = true;
+                } finally {
+                    if (current()) this.loading = false;
                 }
-            } catch (e) {
-                if (this.shown === url) this.failed = true;
-            } finally {
-                if (this.shown === url) this.loading = false;
-            }
-        },
-        reset() {
-            if (this.image) URL.revokeObjectURL(this.image);
-            this.image = null;
-            this.shown = null;
-            this.pages = 0;
-            this.failed = false;
-            this.loading = false;
-            this.$refs.pages?.replaceChildren();
-        },
-        destroy() {
-            if (this.image) URL.revokeObjectURL(this.image);
-        },
-    }));
+            },
+            reset() {
+                run += 1;
+                if (this.image) URL.revokeObjectURL(this.image);
+                this.image = null;
+                this.shown = null;
+                this.pages = 0;
+                this.failed = false;
+                this.loading = false;
+                this.$refs.pages?.replaceChildren();
+            },
+            destroy() {
+                run += 1;
+                if (this.image) URL.revokeObjectURL(this.image);
+            },
+        };
+    });
 
     Alpine.data('dropdown', () => ({
         open: false,
@@ -1498,13 +1578,83 @@ document.addEventListener('alpine:init', () => {
     //             can apply for (the wizard opens on it), Balita, events
     //   staff:    pages they hold, Dokyu and Tulong requests (opened), residents
     //             (their record opens), barangays (the registry, filtered)
+    const searchRequestItem = (type, base) => (r) => ({
+        group: type, icon: type === 'tulong' ? 'hand-heart' : 'file-text', photo: r.applicant_photo || null,
+        title: r.ref + ' · ' + (r.applicant || ''),
+        sub: [r.service, r.status, r.barangay ? 'Brgy. ' + r.barangay : null].filter(Boolean).join(' · '),
+        href: base + '?ref=' + encodeURIComponent(r.ref),
+    });
+    const searchResidentItem = (base) => (r) => ({
+        group: 'residents', icon: 'user-round', title: r.name || r.ref,
+        sub: [r.ref, r.barangay ? 'Brgy. ' + r.barangay : null].filter(Boolean).join(' · '),
+        href: base + '?ref=' + encodeURIComponent(r.ref),
+    });
     Alpine.data('globalSearch', (cfg) => ({
         q: '',
         open: false,
-        loading: false,
+        // The lists loaded on first focus, or (staff) a search the server is
+        // answering: either one shows Searching… in the list.
+        listsLoading: false,
+        finding: false,
+        get loading() { return this.listsLoading || this.finding; },
         loaded: false,
         active: 0,
         items: [],
+        // Staff: what the server found for the text typed (find() below).
+        found: [],
+        findSeq: 0,
+        findTimer: null,
+        // A request list longer than one load holds (getAll stops at 2,000).
+        partial: {},
+        init() {
+            if (cfg.portal !== 'admin') return;
+            this.$watch('q', (value) => {
+                clearTimeout(this.findTimer);
+                const seq = ++this.findSeq;
+                const text = String(value || '').trim();
+                if (text.length < 2) { this.found = []; this.finding = false; return; }
+                this.finding = true;
+                this.findTimer = setTimeout(() => this.find(text, seq), 300);
+            });
+        },
+        // Residents come from the server for each search (sweep 2026-11-18).
+        // The registry list is sorted by name from Z, and a load stops at
+        // 2,000 rows, so once a municipality was imported the names early in
+        // the alphabet were never there to match. GET /admin/residents?q=
+        // matches a name or a ref across the whole registry. A request list
+        // longer than its load is asked by reference the same way (?q= matches
+        // the ref).
+        async find(text, seq) {
+            const session = Alpine.store('session');
+            await session.whenReady?.();
+            const can = (m) => session.can(m);
+            const R = cfg.routes || {};
+            const params = { q: text, per_page: 10 };
+            const ask = (url, p = params) => api.get(url, { params: p }).then((r) => r?.data || []).catch(() => []);
+            const byRef = /\d/.test(text) && !/\s/.test(text);
+            // The server matches the text as one phrase, so "dela cruz juan"
+            // or "juan cruz" found no Juan Dela Cruz, which the loaded list
+            // matched word by word. Several words also ask by the longest
+            // one, and results (below) keeps the names holding every word.
+            const words = text.split(/\s+/);
+            const longest = words.reduce((a, w) => (w.length > a.length ? w : a), '');
+            const residentsFound = () => Promise.all([
+                ask('/admin/residents'),
+                words.length > 1 ? ask('/admin/residents', { q: longest, per_page: 100 }) : [],
+            ]).then(([phrase, word]) => [...phrase, ...word.filter((r) => !phrase.some((x) => x.ref === r.ref))]);
+            const [residents, dokyu, tulong] = await Promise.all([
+                can('constituents') ? residentsFound() : [],
+                can('dokyu') && byRef && (this.partial.dokyu || !this.loaded) ? ask('/admin/dokyu/requests') : [],
+                can('tulong') && byRef && (this.partial.tulong || !this.loaded) ? ask('/admin/tulong/requests') : [],
+            ]);
+            if (seq !== this.findSeq) return;
+            this.found = [
+                ...dokyu.map(searchRequestItem('dokyu', R.dokyu)),
+                ...tulong.map(searchRequestItem('tulong', R.tulong)),
+                ...residents.map(searchResidentItem(R.constituents)),
+            ];
+            this.finding = false;
+        },
         t(en, fil) {
             if (cfg.portal === 'admin') return en;
             return Alpine.store('lang')?.current === 'en' ? en : (fil || en);
@@ -1514,8 +1664,8 @@ document.addEventListener('alpine:init', () => {
             this.load();
         },
         async load() {
-            if (this.loaded || this.loading) return;
-            this.loading = true;
+            if (this.loaded || this.listsLoading) return;
+            this.listsLoading = true;
             const rows = (promise) => promise.then((r) => r?.data || []).catch(() => []);
             const R = cfg.routes || {};
             const out = [];
@@ -1548,24 +1698,16 @@ document.addEventListener('alpine:init', () => {
                     const session = Alpine.store('session');
                     await session.whenReady?.();
                     const can = (m) => session.can(m);
-                    const [dokyu, tulong, residents] = await Promise.all([
-                        can('dokyu') ? rows(api.getAll('/admin/dokyu/requests')) : [],
-                        can('tulong') ? rows(api.getAll('/admin/tulong/requests')) : [],
-                        can('constituents') ? rows(api.getAll('/admin/residents')) : [],
+                    // Residents are not loaded here: find() asks the server.
+                    const listed = (key, promise) => promise
+                        .then((r) => { this.partial[key] = !!r?.meta?.truncated; return r?.data || []; })
+                        .catch(() => []);
+                    const [dokyu, tulong] = await Promise.all([
+                        can('dokyu') ? listed('dokyu', api.getAll('/admin/dokyu/requests')) : [],
+                        can('tulong') ? listed('tulong', api.getAll('/admin/tulong/requests')) : [],
                     ]);
-                    const request = (type, base) => (r) => out.push({
-                        group: type, icon: type === 'tulong' ? 'hand-heart' : 'file-text', photo: r.applicant_photo || null,
-                        title: r.ref + ' · ' + (r.applicant || ''),
-                        sub: [r.service, r.status, r.barangay ? 'Brgy. ' + r.barangay : null].filter(Boolean).join(' · '),
-                        href: base + '?ref=' + encodeURIComponent(r.ref),
-                    });
-                    dokyu.forEach(request('dokyu', R.dokyu));
-                    tulong.forEach(request('tulong', R.tulong));
-                    residents.forEach((r) => out.push({
-                        group: 'residents', icon: 'user-round', title: r.name || r.ref,
-                        sub: [r.ref, r.barangay ? 'Brgy. ' + r.barangay : null].filter(Boolean).join(' · '),
-                        href: R.constituents + '?ref=' + encodeURIComponent(r.ref),
-                    }));
+                    dokyu.forEach((r) => out.push(searchRequestItem('dokyu', R.dokyu)(r)));
+                    tulong.forEach((r) => out.push(searchRequestItem('tulong', R.tulong)(r)));
                     if (can('constituents')) {
                         (cfg.barangays || []).forEach((b) => out.push({ group: 'barangays', icon: 'map-pin', title: 'Brgy. ' + b, sub: '', href: R.constituents + '?barangay=' + encodeURIComponent(b) }));
                     }
@@ -1573,7 +1715,7 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.items = out;
                 this.loaded = true;
-                this.loading = false;
+                this.listsLoading = false;
             }
         },
         get pages() {
@@ -1588,7 +1730,10 @@ document.addEventListener('alpine:init', () => {
             const phrase = words.join(' ');
             const order = ['pages', 'requests', 'dokyu', 'tulong', 'residents', 'barangays', 'balita', 'events'];
             const groups = {};
-            [...this.pages, ...this.items].forEach((it) => {
+            // What the server found, less what the loaded lists already hold.
+            const listedHrefs = this.found.length ? new Set(this.items.map((it) => it.href)) : null;
+            const found = this.found.filter((it) => !listedHrefs.has(it.href));
+            [...this.pages, ...this.items, ...found].forEach((it) => {
                 const hay = (it.title + ' ' + (it.alt || '') + ' ' + it.sub).toLowerCase();
                 if (!words.every((w) => hay.includes(w))) return;
                 const title = it.title.toLowerCase();

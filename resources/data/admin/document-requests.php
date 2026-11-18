@@ -303,7 +303,12 @@ return [
 
     'tabs' => ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Mark to Release', 'done' => 'Completed'],
 
-    'actionStatuses' => ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted'],
+    // Waiting on the office, the same set as the dashboard's Needs Action tile
+    // (esperanza-backend DepartmentDashboard::NEEDS_ACTION, QA 2026-11-18 #237):
+    // Under Review is the resident's turn (a document was flagged for them to
+    // replace), and an Approved document is still the office's to prepare.
+    // The sidebar badge (components/admin/sidebar.blade.php) reads this too.
+    'actionStatuses' => ['Submitted', 'Under Verification', 'Resubmitted', 'Approved'],
 
     'doneStatuses' => ['Completed', 'Released'],
 

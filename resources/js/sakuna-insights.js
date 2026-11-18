@@ -19,6 +19,10 @@ const peso = (n) => 'PHP ' + Number(n || 0).toLocaleString('en-PH', { maximumFra
 const plural = (n, one, many = one + 's') => num(n) + ' ' + (Number(n) === 1 ? one : many);
 const pct = (part, whole) => (whole > 0 ? Math.round((part / whole) * 100) : 0);
 const day = (iso, year = false) => new Date(iso + 'T00:00:00').toLocaleDateString('en-US', year ? { month: 'short', day: 'numeric', year: 'numeric' } : { month: 'short', day: 'numeric' });
+// The server's incident trend is weekly for a period over 62 days, each
+// bucket labelled with its week's Monday (SakunaReport::trend): labels a week
+// apart, not a day (QA 2026-11-18).
+export const isWeeklyTrend = (trend) => (trend || []).length > 1 && Date.parse(trend[1].label) - Date.parse(trend[0].label) > 864e5;
 const entries = (obj) => Object.entries(obj || {}).filter(([, v]) => Number(v) > 0).sort((a, b) => b[1] - a[1]);
 /** "a, b and c" */
 const list = (items) => (items.length <= 1 ? items.join('') : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]);
@@ -109,7 +113,7 @@ export function executiveSummary(d) {
     if (inc.total >= 3 && trend.length) {
         const peak = trend.reduce((a, b) => (b.count > a.count ? b : a));
         const share = peak.count / inc.total;
-        if (peak.count >= 2) p2.push('The busiest day was ' + day(peak.label, true) + ' with ' + plural(peak.count, 'incident') + (share === 1 ? ', every incident in the period' : share >= 0.5 ? ', ' + pct(peak.count, inc.total) + '% of all incidents in the period' : '') + '.');
+        if (peak.count >= 2) p2.push((isWeeklyTrend(trend) ? 'The busiest week was the week of ' : 'The busiest day was ') + day(peak.label, true) + ' with ' + plural(peak.count, 'incident') + (share === 1 ? ', every incident in the period' : share >= 0.5 ? ', ' + pct(peak.count, inc.total) + '% of all incidents in the period' : '') + '.');
         if (trend.length >= 6 && share < 0.5) {
             const half = Math.floor(trend.length / 2);
             const a = trend.slice(0, half).reduce((x, t) => x + t.count, 0);
@@ -150,8 +154,9 @@ export function kpis(d) {
     ];
 }
 
-/** Daily counts, or weekly sums once the period is longer than a month. */
+/** Daily counts, or weekly sums once the period is longer than a month; the server's weekly buckets as they are. */
 function trendPoints(trend) {
+    if (isWeeklyTrend(trend)) return trend.map((t) => ['Wk of ' + day(t.label), t.count]);
     if (trend.length <= 31) return trend.map((t) => [day(t.label), t.count]);
     const out = [];
     for (let i = 0; i < trend.length; i += 7) {
@@ -170,8 +175,9 @@ export function charts(d) {
     const out = [];
     const add = (c) => { if (c.series.some((x) => x.values.some((v) => Number(v) > 0))) out.push(c); };
 
-    const tp = trendPoints(s.incidents.trend || []);
-    add({ key: 'trend', title: 'Incidents over time', note: tp.length > 31 ? 'Weekly totals' : 'Per day', kind: 'column', categories: tp.map((t) => t[0]),
+    const trend = s.incidents.trend || [];
+    const tp = trendPoints(trend);
+    add({ key: 'trend', title: 'Incidents over time', note: isWeeklyTrend(trend) || trend.length > 31 ? 'Weekly totals' : 'Per day', kind: 'column', categories: tp.map((t) => t[0]),
         series: [{ name: 'Incidents', values: tp.map((t) => t[1]), color: BLUE }], format: 'count' });
     const types = entries(s.incidents.by_type);
     add({ key: 'type', title: 'Incidents by disaster type', kind: 'bar', categories: types.map((t) => t[0]),

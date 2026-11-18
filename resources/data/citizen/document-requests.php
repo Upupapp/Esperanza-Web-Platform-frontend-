@@ -55,14 +55,6 @@ return [
 
     'barangayNames' => [],
 
-    'pickupDirectory' => [
-        "Treasurer's Office" => ['contact' => '(056) 333-1032', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'MCRO' => ['contact' => '(056) 333-1067', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'MSWDO' => ['contact' => '(056) 333-1044', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'BPLO' => ['contact' => '(056) 333-1050', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'OSCA' => ['contact' => '(056) 333-1088', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-    ],
-
     'submittedDocs' => [
         ['name' => 'PhilSys National ID.jpg', 'category' => 'IMG', 'type' => 'Valid ID', 'size' => '1.2 MB', 'uploaded' => 'Jul 8, 2026', 'status' => 'Approved'],
         ['name' => 'Barangay Certificate.pdf', 'category' => 'PDF', 'type' => 'Proof of Residency', 'size' => '480 KB', 'uploaded' => 'Jul 3, 2026', 'status' => 'Approved'],

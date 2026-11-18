@@ -279,7 +279,11 @@
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-photo">
                     <span x-text="damageFormMode === 'create' ? 'Photo Evidence' : 'Add Another Photo'"></span>
                 </label>
+                {{-- The window stays in the page, so the input showed the last
+                     file while nothing was sent, and picking it again did not
+                     fire: it is emptied whenever the form holds no photo (QA 2026-11-18). --}}
                 <input id="dmg-photo" type="file" accept="image/*" @change="damageForm.photoFile = $event.target.files[0] || null"
+                    x-effect="if (!damageForm.photoFile) $el.value = ''"
                     class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-2xl file:border-0 file:bg-brand-50 file:text-brand-700 file:text-sm file:font-medium hover:file:bg-brand-100">
             </div>
         </div>

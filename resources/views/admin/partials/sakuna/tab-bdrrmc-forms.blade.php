@@ -33,6 +33,9 @@
         saving: false,
         submissions: [],
         submissionsLoading: false,
+        submissionsFailed: false,
+        submissionsTotal: 0,
+        submissionsTruncated: false,
         formNames: @js(collect($bdrrmcForms)->pluck('name', 'key')),
         formCodes: @js(collect($bdrrmcForms)->pluck('code', 'key')),
         rowsOf: { evacuees: 'evacueeRows', 'human-housing': 'housingRows', agriculture: 'agriRows', fishing: 'fishingRows', business: 'businessRows', rds: 'rdsRows' },
@@ -151,9 +154,21 @@
         async loadSubmissions() {
             if (!this.canListSubmissions) return;
             this.submissionsLoading = true;
+            this.submissionsFailed = false;
             try {
-                this.submissions = (await $api.get('/admin/sakuna/bdrrmc-forms/submissions', { params: { sort: '-created_at' } })).data || [];
-            } catch { this.submissions = []; }
+                // Every page (QA 2026-11-18): one get() returned the newest 25
+                // only, so an older Submitted form could not be opened or
+                // approved here. 'created_at' is the server's sort key; its
+                // default direction is newest first.
+                const res = await $api.getAll('/admin/sakuna/bdrrmc-forms/submissions', { params: { sort: 'created_at' } });
+                this.submissions = res.data || [];
+                this.submissionsTotal = res.meta?.total ?? this.submissions.length;
+                this.submissionsTruncated = !!res.meta?.truncated;
+            } catch {
+                // A failed load is not 'nothing saved yet': the rows already
+                // shown stay, and the card says it could not load.
+                this.submissionsFailed = true;
+            }
             finally { this.submissionsLoading = false; this.$nextTick(() => window.renderIcons?.()); }
         },
         // The list's Approve opens the form first; the form asks once more.
@@ -220,7 +235,9 @@
             <button type="button" @click="loadSubmissions()" class="sk-btn sk-btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
         </div>
         <p x-show="submissionsLoading" class="sk-empty">Loading…</p>
-        <p x-show="!submissionsLoading && !submissions.length" class="sk-empty">No capture form has been saved yet.</p>
+        <p x-show="!submissionsLoading && submissionsFailed" x-cloak role="alert" class="sk-empty">Could not load the submitted forms. <span x-text="offlineWhy"></span> <button type="button" @click="loadSubmissions()" class="sk-link">Try again</button></p>
+        <p x-show="!submissionsLoading && !submissionsFailed && !submissions.length" class="sk-empty">No capture form has been saved yet.</p>
+        <p x-show="!submissionsLoading && submissionsTruncated" x-cloak role="status" class="px-3.5 py-2 text-xs sk-muted border-b border-[#EEF2F7]">Showing the newest <span x-text="submissions.length.toLocaleString('en-US')"></span> of <span x-text="submissionsTotal.toLocaleString('en-US')"></span> saved forms.</p>
         <div x-show="submissions.length" class="sk-scroll" tabindex="0" role="region" aria-label="Submitted forms table (scrolls sideways)">
             <table class="sk-tbl sk-tbl-act">
                 <thead>

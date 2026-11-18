@@ -4,8 +4,13 @@
      scheduled sessions). For pre-marriage counseling, whether Family Code
      art. 16 requires it; and the certificate once issued. Inside the Tulong
      case window; logic: caseSession() in resources/js/welfare-admin.js.
-     LANGUAGE (TAB 09): staff site, English only by owner ruling. --}}
-<div x-data="caseSession()" x-show="csShown()" x-cloak class="rounded-xl border border-indigo-200 bg-indigo-50/30 p-3.5 mt-4" data-testid="case-session">
+     LANGUAGE (TAB 09): staff site, English only by owner ruling.
+     The session window opened from here finishes, takes off or cancels on
+     top of this case window, and the server moves the case with it (status,
+     certificate, note): the case is read again when its session changes
+     (2026-11-18). Not while csAdd runs: it reads the case itself. --}}
+<div x-data="caseSession()" x-show="csShown()" x-cloak class="rounded-xl border border-indigo-200 bg-indigo-50/30 p-3.5 mt-4" data-testid="case-session"
+     x-on:welfare-session-changed.window="if (open && !csBusy && selected?.session?.ref && selected.session.ref === $event.detail?.ref && typeof refreshSelected === 'function') refreshSelected().catch(() => null)">
     <div class="flex flex-wrap items-center justify-between gap-2">
         <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Session</p>
         <span x-show="csArt16()" class="text-[10.5px] font-semibold rounded-full px-2 py-0.5" :class="csArt16()?.required === true ? 'bg-rose-50 text-rose-700' : (csArt16()?.required === false ? 'bg-slate-100 text-slate-600' : 'bg-amber-50 text-amber-700')" x-text="csArt16()?.required === true ? 'Required (Art. 16)' : (csArt16()?.required === false ? 'Optional' : 'Check ages (Art. 16)')"></span>

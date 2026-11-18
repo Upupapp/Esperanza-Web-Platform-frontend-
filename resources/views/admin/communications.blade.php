@@ -415,7 +415,10 @@
                                         </div>
                                         <div x-show="bcModerate" class="shrink-0">
                                             <button type="button" x-show="!c.hidden && bcHiding !== c.id" @click="bcHiding = c.id; bcReason = ''" class="text-[11px] font-semibold text-rose-700 hover:underline">Hide</button>
-                                            <button type="button" x-show="c.hidden" :disabled="bcBusy" @click="bcRestore(c)" class="text-[11px] font-semibold text-brand-700 hover:underline">Show again</button>
+                                            {{-- Only a comment staff hid can be shown again: one its author removed
+                                                 has no hidden_by, and the API refuses it (REMOVED_BY_AUTHOR,
+                                                 QA 2026-11-18 #55). --}}
+                                            <button type="button" x-show="c.hidden && c.hidden_by" :disabled="bcBusy" @click="bcRestore(c)" class="text-[11px] font-semibold text-brand-700 hover:underline">Show again</button>
                                         </div>
                                     </div>
                                     <form x-show="bcHiding === c.id" x-cloak @submit.prevent="bcHide(c)" class="mt-2 flex flex-wrap items-center gap-2">
@@ -443,8 +446,16 @@
                 loading: true, failed: false,
                 entries: [],
                 search: '', barangayFilter: 'All',
-                showAdd: false, processing: false,
+                showAdd: false, processing: false, entryTried: false,
                 newEntry: { barangay: '{{ config('esperanza.barangays')[0] ?? '' }}', incident_date: '', incident_type: '', narrative: '' },
+                // What Log entry still needs, said under the form: a click on an
+                // empty field used to do nothing at all (QA 2026-11-18).
+                get entryMissing() {
+                    const e = this.newEntry;
+                    const missing = [!e.incident_date && 'the date', !e.incident_type.trim() && 'the incident type', !e.narrative.trim() && 'the details'].filter(Boolean);
+                    if (!missing.length) return '';
+                    return 'Fill in ' + (missing.length > 1 ? missing.slice(0, -1).join(', ') + ' and ' + missing[missing.length - 1] : missing[0]) + '.';
+                },
                 async load() {
                     this.loading = true; this.failed = false;
                     try {
@@ -459,11 +470,14 @@
                     );
                 },
                 async addEntry() {
-                    if (this.processing || !this.newEntry.incident_date || !this.newEntry.incident_type.trim() || !this.newEntry.narrative.trim()) return;
+                    if (this.processing) return;
+                    this.entryTried = true;
+                    if (this.entryMissing) return;
                     this.processing = true;
                     try {
                         await $api.post('/admin/blotter', this.newEntry);
                         this.showAdd = false;
+                        this.entryTried = false;
                         this.newEntry = { barangay: this.barangayNames?.[0] || '', incident_date: '', incident_type: '', narrative: '' };
                         this.$dispatch('toast', { message: 'Blotter entry logged.', variant: 'success' });
                         await this.load();
@@ -487,7 +501,7 @@
                     <option value="All">All Barangays</option>
                     <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
                 </select>
-                <button @click="showAdd = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3.5 py-2 shadow-card transition-colors ml-auto">
+                <button @click="showAdd = true; entryTried = false; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3.5 py-2 shadow-card transition-colors ml-auto">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add entry
                 </button>
             </div>
@@ -534,18 +548,19 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-date">Date</label>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-date">Date <span class="text-rose-500">*</span></label>
                                 <input id="blotter-date" type="date" x-model="newEntry.incident_date" :max="new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-type">Incident Type</label>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-type">Incident Type <span class="text-rose-500">*</span></label>
                                 <input id="blotter-type" type="text" x-model="newEntry.incident_type" placeholder="e.g. Noise Complaint" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-narrative">Details</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-narrative">Details <span class="text-rose-500">*</span></label>
                             <textarea id="blotter-narrative" rows="4" x-model="newEntry.narrative" placeholder="Describe the incident..." class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                         </div>
+                        <p x-show="entryTried && entryMissing" x-cloak class="text-xs text-rose-700" role="alert" data-testid="blotter-missing" x-text="entryMissing"></p>
                     </div>
                     <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-brand-600/10 bg-slate-50/60">
                         <x-ui.button variant="secondary" size="sm" @click="showAdd = false">Cancel</x-ui.button>

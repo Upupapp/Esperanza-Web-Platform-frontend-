@@ -549,9 +549,14 @@ export function viewerStore() {
         label: '',
         english: false,
         show(items, index = 0, label = '', english = false) {
+            // index is a place in the list as passed: the item there is found
+            // again after the ones with no address are dropped, so a gap before
+            // it does not open the photo after it (QA 2026-11-18).
+            const target = (items || [])[index];
             this.items = (items || []).filter((m) => m && m.url);
             if (!this.items.length) return;
-            this.index = Math.max(0, Math.min(index, this.items.length - 1));
+            const at = this.items.indexOf(target);
+            this.index = at !== -1 ? at : Math.max(0, Math.min(index, this.items.length - 1));
             this.label = label || '';
             this.english = english;
             this.open = true;

@@ -12,6 +12,10 @@
             events: [],
             alerts: [],
             kpi: { dokyu: 0, dokyuReady: 0, tulong: 0, tulongApproved: 0 },
+            // A part that could not load says so, with Try again (QA 2026-11-18):
+            // it showed 'no requests', zero tiles and no emergency alerts instead.
+            // A failed quiet (live) reload keeps what is on screen.
+            failed: { requests: false, balita: false, events: false, alerts: false },
 
             async init() {
                 // Live updates (2026-11-15): each part reloads quietly when its
@@ -26,6 +30,7 @@
             },
 
             async loadRequests(quiet = false) {
+                let loaded = false;
                 try {
                     // The tiles count ALL of the resident's requests. They used to
                     // count only the five most recent rows fetched for the list
@@ -39,9 +44,12 @@
                     this.kpi.tulong = all.filter((r) => r.type === 'tulong').length;
                     // A Tulong case is approved once it reaches Assistance Processing.
                     this.kpi.tulongApproved = all.filter((r) => r.type === 'tulong' && ['Assistance Processing', 'Ready for Release', 'Completed'].includes(r.status) && (r.submitted || '').startsWith(thisMonth)).length;
+                    loaded = true;
                 } catch { if (!quiet) this.requests = []; }
+                finally { if (loaded || !quiet) this.failed.requests = !loaded; }
             },
             async loadBalita(quiet = false) {
+                let loaded = false;
                 try {
                     const result = await $api.get('/announcements', { params: { per_page: 4 } });
                     this.balitaPreview = (result.data || []).map((post, i) => ({
@@ -58,18 +66,25 @@
                         liked: post.liked_by_me === true,
                         commentCount: post.comments_count || 0,
                     }));
+                    loaded = true;
                 } catch { if (!quiet) this.balitaPreview = []; }
+                finally { if (loaded || !quiet) this.failed.balita = !loaded; }
             },
             // Published emergency alerts (Sakuna), the public feed the backend
             // has always served and no citizen page ever asked for (web backlog
             // C8). The resident's own barangay plus municipality-wide ones.
             async loadAlerts(quiet = false) {
+                let loaded = false;
                 try {
                     const barangay = this.$store.citizenSession.account?.barangay;
                     const result = await $api.get('/alerts', { params: barangay ? { barangay } : {} });
                     this.alerts = result.data || [];
-                    this.$nextTick(() => window.renderIcons?.());
+                    loaded = true;
                 } catch { if (!quiet) this.alerts = []; }
+                finally {
+                    if (loaded || !quiet) this.failed.alerts = !loaded;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             },
             alertText(field) {
                 if (!field) return '';
@@ -77,6 +92,7 @@
                 return this.$store.lang.current === 'en' ? (field.en || field.fil || '') : (field.fil || field.en || '');
             },
             async loadEvents(quiet = false) {
+                let loaded = false;
                 try {
                     // What is still to come, from today in Esperanza (the month's
                     // first events showed even after they had passed, 2026-10-21),
@@ -92,7 +108,9 @@
                         venue: e.venue || '',
                         link: e.link || null,
                     }));
+                    loaded = true;
                 } catch { if (!quiet) this.events = []; }
+                finally { if (loaded || !quiet) this.failed.events = !loaded; }
             },
             // The birthday greeting comes from the server now, as an occasion
             // pop-up (x-citizen.greeting-popup), on the resident's birthday in
@@ -154,6 +172,11 @@
                     </div>
                 </div>
             </template>
+            <div x-show="failed.alerts" x-cloak role="alert" class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-card">
+                <i data-lucide="siren" class="w-5 h-5 text-amber-700 shrink-0"></i>
+                <p class="text-sm text-amber-900 flex-1 min-w-[12rem]"><x-ui.t fil="Hindi ma-load ang mga babala sa emergency. Maaaring may babalang hindi mo nakikita." en="Could not load the emergency alerts. There may be an alert you cannot see." /></p>
+                <button type="button" @click="loadAlerts()" class="tap text-[13px] font-bold text-amber-800 hover:text-amber-900 underline shrink-0"><x-ui.t fil="Subukang muli" en="Try again" /></button>
+            </div>
 
             <!-- Welcome hero -->
             <div class="hero-banner mb-5">
@@ -305,10 +328,10 @@
                     class="h-full"
                     :href="route('citizen.document-requests')"
                     label="Dokyu"
-                    valueBind="kpi.dokyu"
+                    valueBind="failed.requests ? '—' : kpi.dokyu"
                     icon="file-text"
                     color="brand"
-                    sublabelBind="kpi.dokyuReady + ($store.lang.current === 'en' ? ' ready for release' : ' handa nang kunin')"
+                    sublabelBind="failed.requests ? ($store.lang.current === 'en' ? 'Not loaded' : 'Hindi na-load') : kpi.dokyuReady + ($store.lang.current === 'en' ? ' ready for release' : ' handa nang kunin')"
                     :delay="0"
                 />
 
@@ -316,10 +339,10 @@
                     class="h-full"
                     :href="route('citizen.assistance-requests')"
                     label="Tulong"
-                    valueBind="kpi.tulong"
+                    valueBind="failed.requests ? '—' : kpi.tulong"
                     icon="hand-heart"
                     color="deep"
-                    sublabelBind="kpi.tulongApproved + ($store.lang.current === 'en' ? ' approved this month' : ' aprubado ngayong buwan')"
+                    sublabelBind="failed.requests ? ($store.lang.current === 'en' ? 'Not loaded' : 'Hindi na-load') : kpi.tulongApproved + ($store.lang.current === 'en' ? ' approved this month' : ' aprubado ngayong buwan')"
                     :delay="40"
                 />
 
@@ -354,7 +377,9 @@
 
                 <x-ui.card :padded="false" class="lg:col-span-2">
 
-                    <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
+                    {{-- Wraps on a phone (QA 2026-11-18): the two links, about 240px,
+                         pushed out of the card at 390px wide beside the title. --}}
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-5 pt-4 pb-2">
                         <h3 class="text-lg font-extrabold text-ink">
                             <x-ui.t fil="Mga Kamakailang Kahilingan" en="My Recent Requests" />
                         </h3>
@@ -397,9 +422,12 @@
                             </a>
                         </template>
 
-                        <x-ui.empty-state icon="file-text" x-show="!requests.length">
+                        <x-ui.empty-state icon="file-text" x-show="!requests.length && !failed.requests">
                             <x-slot:title><x-ui.t fil="Wala ka pang kahilingan." en="You have no requests yet." /></x-slot:title>
                         </x-ui.empty-state>
+                        <div x-show="failed.requests" x-cloak>
+                            <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'Your requests could not be loaded.' : 'Hindi ma-load ang iyong mga kahilingan.'" retryExpr="loadRequests()" class="!py-8" />
+                        </div>
 
                     </div>
 
@@ -513,9 +541,12 @@
 
                         </template>
 
-                        <x-ui.empty-state icon="megaphone" x-show="!balitaPreview.length">
+                        <x-ui.empty-state icon="megaphone" x-show="!balitaPreview.length && !failed.balita">
                             <x-slot:title><x-ui.t fil="Wala pang balita." en="No announcements yet." /></x-slot:title>
                         </x-ui.empty-state>
+                        <div x-show="failed.balita" x-cloak>
+                            <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'Balita could not be loaded.' : 'Hindi ma-load ang Balita.'" retryExpr="loadBalita()" class="!py-8" />
+                        </div>
 
                     </div>
 
@@ -558,9 +589,12 @@
                         </a>
                     </template>
 
-                    <x-ui.empty-state icon="calendar" class="col-span-3" x-show="!events.length">
+                    <x-ui.empty-state icon="calendar" class="col-span-3" x-show="!events.length && !failed.events">
                         <x-slot:title><x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." /></x-slot:title>
                     </x-ui.empty-state>
+                    <div x-show="failed.events" x-cloak class="sm:col-span-3">
+                        <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'The events could not be loaded.' : 'Hindi ma-load ang mga kaganapan.'" retryExpr="loadEvents()" class="!py-8" />
+                    </div>
 
                 </div>
 

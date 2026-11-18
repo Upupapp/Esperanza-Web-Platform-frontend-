@@ -190,8 +190,9 @@
                                 </div>
                                 <div class="shrink-0 text-right">
                                     <p class="font-mono text-xs font-bold text-ink tracking-wider" x-text="edShowCode(r.code)"></p>
-                                    <button type="button" x-show="r.certificate" @click="edCert(r)" class="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:underline"><i data-lucide="award" class="w-3 h-3"></i><span x-text="r.certificate?.control_number || 'Certificate'"></span></button>
-                                    <p x-show="!r.certificate" class="text-[10.5px]" :class="edStateTone(r)" x-text="edState(r)"></p>
+                                    <button type="button" x-show="edHasCert(r)" @click="edCert(r)" class="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:underline"><i data-lucide="award" class="w-3 h-3"></i><span x-text="r.certificate?.control_number || 'Certificate'"></span></button>
+                                    <p x-show="!edHasCert(r)" class="text-[10.5px]" :class="edStateTone(r)" x-text="edState(r)"></p>
+                                    <p x-show="edCertRevoked(r)" x-cloak class="text-[10.5px] text-rose-700" x-text="'Certificate ' + (r.certificate?.control_number || '') + ' revoked'"></p>
                                 </div>
                             </li>
                         </template>

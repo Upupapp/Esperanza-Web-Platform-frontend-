@@ -30,19 +30,21 @@
         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
         class="bg-white rounded-[28px] shadow-float w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
     >
-        {{-- Modal Header --}}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 flex-shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center text-brand-700">
+        {{-- Modal Header. It wraps (QA 2026-11-18): on a phone the pills, Print
+             report and the close button drop below the title, to the right,
+             instead of being cut off by the window's edge. --}}
+        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-6 py-4 border-b border-brand-600/10 flex-shrink-0">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center text-brand-700 shrink-0">
                     {{-- Rebuilt whole on each incident: Lucide swaps the <i> for an <svg>, so a bound <i> would pile up. --}}
                     <span class="contents" x-html="`<i data-lucide='${incidentTypeIcon(selectedIncident?.type || '')}' class='w-4.5 h-4.5'></i>`" x-effect="selectedIncident?.type; $nextTick(() => window.renderIcons?.())"></span>
                 </div>
-                <div>
+                <div class="min-w-0">
                     <h2 id="incident-detail-title" class="text-base font-semibold text-ink-body" x-text="selectedIncident?.ref ?? '—'"></h2>
                     <p class="text-xs text-ink-muted mt-0.5" x-text="[selectedIncident?.type, selectedIncident?.barangay, selectedIncident?.sitio, selectedIncident?.reported && isWaiting(selectedIncident) ? 'waiting ' + waitedLabel(selectedIncident.reported) : null].filter(Boolean).join(' · ')"></p>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center justify-end gap-2 ml-auto">
                 <span x-show="selectedIncident?.severity" :class="severityBadge(selectedIncident?.severity ?? '')" class="sk-pill" x-text="(selectedIncident?.severity ?? '') + ' severity'"></span>
                 <span :class="statusBadge(selectedIncident?.status ?? '')" x-text="incidentStatusLabel(selectedIncident?.status ?? '')" :title="'Status on record: ' + (selectedIncident?.status ?? '')"></span>
                 {{-- One incident's printed report (2026-11-05): _incident-report-print below. --}}

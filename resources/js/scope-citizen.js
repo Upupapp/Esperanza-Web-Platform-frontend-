@@ -1555,7 +1555,16 @@ function requestTimeline() {
             const you = this.t('You', 'Ikaw');
             const office = r.office || this.t('The office', 'Ang opisina');
             const list = [];
-            if (r.submitted_at) list.push({ key: 'filed', status: 'Submitted', at: r.submitted_at, by: you, mine: true, note: this.t('Request filed.', 'Naisumite ang kahilingan.') });
+            // A case the office filed for the resident (walk-in, phone, a
+            // record of assistance already given, or an import of its files)
+            // starts with an office trigger: it was not "You" who filed it.
+            const first = String((r.history || [])[0]?.trigger || '');
+            const byOffice = first.startsWith('office:') || first === 'import';
+            if (r.submitted_at) {
+                list.push(byOffice
+                    ? { key: 'filed', status: 'Submitted', at: r.submitted_at, by: office, mine: false, note: this.t('Filed for you at the office.', 'Inihain para sa iyo sa opisina.') }
+                    : { key: 'filed', status: 'Submitted', at: r.submitted_at, by: you, mine: true, note: this.t('Request filed.', 'Naisumite ang kahilingan.') });
+            }
             (r.history || []).forEach((h, i) => {
                 const trigger = String(h.trigger || '');
                 const mine = trigger.startsWith('citizen:');
@@ -1633,8 +1642,48 @@ const INCIDENT_STEPS = {
     reject: ['Not confirmed by the office', 'Hindi nakumpirma ng opisina'],
 };
 const MAX_INCIDENT_PHOTOS = 3;
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+// The server's image limit (esperanza.uploads.max_image_bytes, UploadService
+// guardSize): 5 MB. The form used to promise 10 MB and send the raw camera
+// file, which the server then refused (QA 2026-11-18 #241). A bigger photo is
+// now made smaller here first (shrinkPhoto); only one that cannot be brought
+// under the limit is refused, with the real limit in the message.
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+// Longest edge, then JPEG quality, tried in turn until the photo fits.
+const PHOTO_SHRINK_STEPS = [[2560, 0.85], [1920, 0.8], [1600, 0.72], [1280, 0.65]];
+
+/**
+ * A photo at most MAX_PHOTO_BYTES: the file itself when it already fits,
+ * otherwise a JPEG redrawn smaller (orientation kept). Null when this browser
+ * cannot redraw it or no step brings it under the limit.
+ */
+async function shrinkPhoto(file) {
+    if (file.size <= MAX_PHOTO_BYTES) return file;
+    let bitmap = null;
+    try {
+        bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch {
+        return null;
+    }
+    try {
+        const { width, height } = bitmap;
+        for (const [edge, quality] of PHOTO_SHRINK_STEPS) {
+            const scale = Math.min(1, edge / Math.max(width, height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(width * scale));
+            canvas.height = Math.max(1, Math.round(height * scale));
+            canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+            if (blob && blob.size <= MAX_PHOTO_BYTES) {
+                const name = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+                return new File([blob], name, { type: 'image/jpeg' });
+            }
+        }
+        return null;
+    } finally {
+        bitmap.close?.();
+    }
+}
 
 function newUuid() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
@@ -1857,23 +1906,29 @@ function citizenEmergency() {
             return { Critical: 'bg-rose-50 text-rose-700 ring-rose-200', High: 'bg-orange-50 text-orange-700 ring-orange-200', Medium: 'bg-amber-50 text-amber-700 ring-amber-200' }[kept] || 'bg-slate-100 text-slate-600 ring-slate-200';
         },
         async openIncident(row) {
+            const ref = row.ref;
             this.detail = { ...row, photos: [], timeline: [] };
             this.detailOpen = true;
             this.detailLoading = true;
             this.detailFailure = null;
+            // A late answer for a report the resident has since left (they
+            // opened another) is dropped, as supportDesk.openThread does.
+            const current = () => this.detail?.ref === ref;
             try {
                 const res = await api.get('/citizen/incidents/' + encodeURIComponent(row.ref));
+                if (!current()) return;
                 const d = res.data || {};
                 this.detail = {
                     ...d,
+                    ref: d.ref || ref,
                     photos: (d.photos || []).filter(Boolean).map((p) => ({ name: p.name || '', url: p.url || null, mime: p.mime || '', scan: p.scan_status || '', src: '', failed: false })),
                     timeline: d.timeline || [],
                 };
                 this.showPhotos(this.detail);
             } catch (err) {
-                this.detailFailure = err;
+                if (current()) this.detailFailure = err;
             } finally {
-                this.detailLoading = false;
+                if (current()) this.detailLoading = false;
                 icons();
             }
         },
@@ -1918,20 +1973,27 @@ function citizenEmergency() {
             this.reportOpen = true;
             icons();
         },
-        addPhotos(fileList) {
+        async addPhotos(fileList) {
             this.photoError = '';
-            for (const file of [...(fileList || [])]) {
+            for (const picked of [...(fileList || [])]) {
                 if (this.photos.length >= MAX_INCIDENT_PHOTOS) {
                     this.photoError = this.t('Up to 3 photos.', 'Hanggang 3 larawan lang.');
                     break;
                 }
-                if (!PHOTO_TYPES.includes(file.type)) {
+                if (!PHOTO_TYPES.includes(picked.type)) {
                     this.photoError = this.t('Choose a JPG, PNG or WebP photo.', 'Pumili ng larawang JPG, PNG o WebP.');
                     continue;
                 }
-                if (file.size > MAX_PHOTO_BYTES) {
-                    this.photoError = this.t('Each photo must be 10 MB or smaller.', 'Dapat 10 MB o mas maliit ang bawat larawan.');
+                // Made smaller here when it is over the server's 5 MB (#241).
+                const file = await shrinkPhoto(picked);
+                if (!file) {
+                    this.photoError = this.t('This photo is too large (over 5 MB) and could not be made smaller. Take another photo.', 'Masyadong malaki ang larawang ito (lampas 5 MB) at hindi ito napaliit. Kumuha ng ibang larawan.');
                     continue;
+                }
+                // Another pick may have filled the 3 while this one was being made smaller.
+                if (this.photos.length >= MAX_INCIDENT_PHOTOS) {
+                    this.photoError = this.t('Up to 3 photos.', 'Hanggang 3 larawan lang.');
+                    break;
                 }
                 this.photos.push({ file, preview: URL.createObjectURL(file) });
             }

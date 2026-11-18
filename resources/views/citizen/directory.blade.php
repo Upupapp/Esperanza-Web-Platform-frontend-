@@ -201,7 +201,10 @@
                             <p class="text-xs text-ink-muted mt-0.5 truncate"><x-ui.t fil="Kalihim:" en="Barangay Secretary:" /> <span class="font-medium text-slate-700" x-text="$store.barangay.mine?.officials?.barangay_secretary"></span></p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    {{-- Wraps on a phone (sweep 2026-11-18): the number, History & Officials
+                         and Request Documents need about 400px in one row, and at 390px
+                         they ran past the card and the page scrolled sideways. --}}
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
                         <a
                             :href="'tel:' + ($store.barangay.mine?.contact || '').replace(/[^0-9+]/g, '')"
                             x-show="$store.barangay.mine?.contact"

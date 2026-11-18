@@ -335,8 +335,13 @@
             </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-quantity">Quantity <span class="text-rose-500">*</span></label>
-                <input id="resource-quantity" type="number" min="0" x-model="resourceForm.quantity" placeholder="e.g. 2"
+                <input id="resource-quantity" type="number" :min="resourceFormMode === 'edit' ? (resourceForm.deployed || 0) : 0" x-model="resourceForm.quantity" placeholder="e.g. 2"
+                    :aria-invalid="resourceQuantityTooLow ? 'true' : 'false'" aria-describedby="resource-quantity-hint"
                     class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                {{-- Never below the units out in the field (QA 2026-11-18). --}}
+                <p id="resource-quantity-hint" x-show="resourceFormMode === 'edit' && resourceForm.deployed > 0" x-cloak class="mt-1 text-xs"
+                    :class="resourceQuantityTooLow ? 'text-rose-700 font-medium' : 'text-ink-muted'"
+                    x-text="resourceForm.deployed + ' deployed now: the quantity cannot be less until they are returned.'"></p>
             </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-unit">Unit</label>
@@ -364,7 +369,7 @@
                 class="sk-btn">
                 Cancel
             </button>
-            <button :disabled="resourceSaving || !resourceForm.name || !resourceForm.category || resourceForm.quantity === ''" @click="saveResource()"
+            <button :disabled="resourceSaving || !resourceForm.name || !resourceForm.category || resourceForm.quantity === '' || resourceQuantityTooLow" @click="saveResource()"
                 class="sk-btn sk-btn-p">
                 <span x-text="resourceSaving ? 'Saving…' : (resourceFormMode === 'create' ? 'Add resource' : 'Save changes')"></span>
             </button>

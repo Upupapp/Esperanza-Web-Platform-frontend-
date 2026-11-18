@@ -9,6 +9,29 @@
     // config('esperanza_rbac.roles') with a hand-maintained `users` count
     // baked in ("46 personnel") that could never match reality.
     $permissionModules = config('esperanza_rbac.permission_modules');
+    // The Dokyu & Tulong Matrix (sweep 2026-11-18): the submodules of the
+    // three modules it reads the roles' grants for, and where each built-in
+    // role's rows come from (the server's Scope.php: department and MDRRMO
+    // and MIO roles see their own office; the barangay secretary, their
+    // barangay). A role not named here is not office-restricted.
+    $matrixModules = collect($permissionModules)
+        ->whereIn('key', ['dokyu', 'tulong', 'reports'])
+        ->map(fn ($m) => ['key' => $m['key'], 'subs' => array_column($m['submodules'], 'key')])
+        ->values()
+        ->all();
+    $matrixScopes = [
+        'super_admin' => 'Municipality-wide',
+        'municipal_admin' => 'Municipality-wide',
+        'department_head' => 'Own office',
+        'department_staff' => 'Own office',
+        'front_desk' => 'Municipality-wide',
+        'records_officer' => 'Municipality-wide',
+        'info_officer' => 'Municipality-wide',
+        'mio_staff' => 'Own office',
+        'mdrrmo_head' => 'Own office',
+        'mdrrmo_staff' => 'Own office',
+        'barangay_secretary' => 'Own barangay',
+    ];
     $tab = $tab ?? 'personnel';
     // Classes the Departments tab partial shares with Settings' (scope round 2026-10-15).
     $ui = [
@@ -102,7 +125,22 @@
                 tempPassword: '',
                 resetting: false,
                 resetMessage: '',
+                // A Super Administrator's account is changed by a Super Administrator
+                // only (the API answers 403 SUPER_ADMIN_PROTECTED; QA 2026-11-18
+                // #14/#15/#225): Edit, Reset password and Archive are not offered
+                // on those rows to anyone else.
+                mayChangeAccount(u) {
+                    return u?.roleKey !== 'super_admin' || this.$store.session.account?.roleKey === 'super_admin';
+                },
+                // A Barangay Secretary serves one barangay, never the municipality
+                // (the API answers 422 BARANGAY_SCOPE_REQUIRED; #66).
+                get editScopeProblem() {
+                    return this.edit && this.edit.roleKey === 'barangay_secretary' && this.edit.scope === 'Municipal'
+                        ? 'A Barangay Secretary works for one barangay: choose the barangay, not Municipality-wide.'
+                        : '';
+                },
                 async openEdit(u) {
+                    if (!this.mayChangeAccount(u)) return;
                     this.edit = { id: u.id, name: u.name, email: u.email || '', roleKey: u.roleKey, dept: u.dept, scope: u.scope, status: u.status, original: { ...u } };
                     this.editError = ''; this.tempPassword = ''; this.resetMessage = '';
                     this.editOpen = true;
@@ -127,6 +165,7 @@
                 get editDeptOptions() { return [...new Set([this.edit?.dept, ...this.editDepartments].filter(Boolean))]; },
                 async saveEdit() {
                     if (this.editSaving || !this.edit) return;
+                    if (this.editScopeProblem) { this.editError = this.editScopeProblem; return; }
                     const was = this.edit.original;
                     const changes = {};
                     if (this.edit.name.trim() !== was.name) changes.name = this.edit.name.trim();
@@ -248,14 +287,19 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-left whitespace-nowrap">
+                                <span
+                                    x-show="!mayChangeAccount(u)" x-cloak
+                                    class="inline-flex text-ink-faint" title="Only a Super Administrator can change a Super Administrator's account"
+                                    aria-label="Only a Super Administrator can change this account"
+                                ><i data-lucide="lock" class="w-4 h-4"></i></span>
                                 <button
-                                    type="button"
+                                    type="button" x-show="mayChangeAccount(u)"
                                     @click="openEdit(u)"
                                     class="text-ink-muted hover:text-brand-600 transition-colors mr-2" title="Edit or reset password"
                                     :aria-label="'Edit ' + u.name"
                                 ><i data-lucide="pencil" class="w-4 h-4"></i></button>
                                 <button
-                                    x-show="u.status !== 'Archived'"
+                                    type="button" x-show="u.status !== 'Archived' && mayChangeAccount(u)"
                                     @click="if (confirm('Archive ' + u.name + '\'s account? They will be signed out everywhere and can no longer log in.')) { $api.post('/admin/users/' + u.id + '/archive').then(() => loadUsers()).catch((e) => $dispatch('toast', { message: e.localised ? e.localised('en') : 'Could not archive.', variant: 'error' })); }"
                                     class="text-ink-muted hover:text-rose-600 transition-colors" title="Archive"
                                 ><i data-lucide="user-x" class="w-4 h-4"></i></button>
@@ -300,9 +344,10 @@
                                 <div>
                                     <label for="edit_scope" class="block text-sm font-medium text-slate-700 mb-1.5">Scope</label>
                                     <select id="edit_scope" x-model="edit.scope" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                        <option value="Municipal">Municipality-wide</option>
+                                        <option value="Municipal" :disabled="edit.roleKey === 'barangay_secretary'">Municipality-wide</option>
                                         <template x-for="b in [...new Set([edit.original.scope, ...editBarangays])].filter((b) => b && b !== 'Municipal')" :key="'edit-scope-' + b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                                     </select>
+                                    <p x-show="editScopeProblem" x-cloak class="mt-1.5 text-xs text-amber-700" x-text="editScopeProblem"></p>
                                 </div>
                                 <div>
                                     <label for="edit_status" class="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
@@ -349,6 +394,16 @@
                     createError: null,
                     form: { firstName: '', lastName: '', email: '', password: '', dept: '', roleKey: 'department_staff', scope: 'municipal', barangay: '' },
                     get selectedRole() { return this.roles.find(r => r.key === this.form.roleKey); },
+                    // A Barangay Secretary serves one barangay (#66): picking the role
+                    // moves the scope to a barangay, and Municipal is not offered.
+                    get barangayOnlyRole() { return this.form.roleKey === 'barangay_secretary'; },
+                    pickRole(key) {
+                        this.form.roleKey = key;
+                        if (key === 'barangay_secretary') {
+                            this.form.scope = 'barangay';
+                            if (!this.form.barangay) this.form.barangay = this.barangays[0] || '';
+                        }
+                    },
                     grantedCount(role) { return Object.values(role.permissions || {}).reduce((n, arr) => n + arr.length, 0); },
                     accessedModules(role) {
                         return this.modules.filter(m => m.submodules.some(s => (role?.permissions?.[s.key] || []).length > 0));
@@ -383,6 +438,10 @@
                     },
                     async createPersonnel() {
                         if (this.submitting) return;
+                        if (this.barangayOnlyRole && this.form.scope !== 'barangay') {
+                            this.createError = 'A Barangay Secretary works for one barangay: choose the barangay, not Municipal.';
+                            return;
+                        }
                         this.submitting = true;
                         this.createError = null;
                         try {
@@ -450,7 +509,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto scrollbar-thin pr-1 -mr-1">
                                 <template x-for="role in roles" :key="role.key">
                                     <button
-                                        type="button" @click="form.roleKey = role.key"
+                                        type="button" @click="pickRole(role.key)"
                                         class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard"
                                         :class="form.roleKey === role.key ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                     >
@@ -471,8 +530,8 @@
                             <p class="text-xs text-ink-muted mb-1">Define the geographic boundary of this account's access — a Municipal account can act across the whole LGU, while a Barangay account only sees that barangay's data.</p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                 <button
-                                    type="button" @click="form.scope = 'municipal'"
-                                    class="text-left rounded-2xl border p-3.5 transition-all duration-[160ms] ease-standard"
+                                    type="button" @click="form.scope = 'municipal'" :disabled="barangayOnlyRole"
+                                    class="text-left rounded-2xl border p-3.5 transition-all duration-[160ms] ease-standard disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="form.scope === 'municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                 >
                                     <span class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-2"><i data-lucide="landmark" class="w-4.5 h-4.5"></i></span>
@@ -490,6 +549,7 @@
                                 </button>
                             </div>
 
+                            <p x-show="barangayOnlyRole" x-cloak class="text-xs text-ink-muted">A Barangay Secretary works for one barangay, so this account is barangay-restricted.</p>
                             <div x-show="form.scope === 'barangay'" x-cloak x-transition:enter="transition duration-[160ms] ease-standard" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5" for="barangay-8">Barangay</label>
                                 <select id="barangay-8" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
@@ -890,62 +950,93 @@
         </div>
 
         {{-- ============================= DOKYU & TULONG MATRIX ============================= --}}
-        <div x-show="tab === 'matrix'" x-cloak>
+        {{-- Read from each role's grants, GET /admin/roles (sweep 2026-11-18). The
+             table was typed by hand, said it was built from the configuration,
+             and had fallen behind it: Department Staff and the Barangay Secretary
+             open reports, the secretary rejects barangay certificates, and it
+             named 8 roles of 12. Only the Scope column is written here: where a
+             role's rows come from is a server rule (Scope.php), not a grant.
+             Loaded each time the tab opens, so a grant just saved on the
+             Permissions tab shows here too; the rows stay up while it reloads. --}}
+        <div
+            x-data="{
+                roles: [],
+                loading: true,
+                failed: false,
+                modules: @js($matrixModules),
+                scopes: @js($matrixScopes),
+                actions: ['assign', 'review', 'approve', 'reject', 'release'],
+                async load() {
+                    this.loading = !this.roles.length;
+                    this.failed = false;
+                    try {
+                        const result = await $api.get('/admin/roles');
+                        this.roles = (result.data || []).filter((r) => r.key !== 'citizen');
+                    } catch { this.failed = true; } finally { this.loading = false; this.$nextTick(() => window.renderIcons?.()); }
+                },
+                subs(keys) { return this.modules.filter((m) => keys.includes(m.key)).flatMap((m) => m.subs); },
+                // The Super Administrator passes every check (owner ruling), whatever its grants list.
+                holds(role, keys, action) {
+                    return role.key === 'super_admin' || this.subs(keys).some((s) => (role.permissions?.[s] || []).includes(action));
+                },
+                services(role, key) {
+                    const subs = this.subs([key]);
+                    const held = role.key === 'super_admin' ? subs.length : subs.filter((s) => (role.permissions?.[s] || []).includes('view')).length;
+                    return held + ' of ' + subs.length + (key === 'dokyu' ? ' Dokyu' : ' Tulong');
+                },
+            }"
+            x-init="$watch('tab', (t) => { if (t === 'matrix') load(); }); if (tab === 'matrix') load()"
+            x-show="tab === 'matrix'" x-cloak
+        >
             <div class="mb-4">
                 <p class="text-sm font-semibold text-ink">Role &times; Module &times; Scope &times; Permission</p>
-                <p class="text-xs text-ink-muted mt-0.5 max-w-2xl">Read-only reference showing how each of the 8 system roles is authorized across Dokyu and Tulong — the grant level, how row visibility is scoped, and which of the key routing actions each role can take. Built from the existing role/permission configuration; to change an actual grant, use the Permissions tab.</p>
+                <p class="text-xs text-ink-muted mt-0.5 max-w-2xl">Read-only reference showing how each staff role is authorized across Dokyu and Tulong: how many of their services it holds, how row visibility is scoped, and which of the key routing actions it can take. Read from each role's current grants; to change a grant, use the Permissions tab. Residents are not listed: each sees only their own requests.</p>
             </div>
 
-            <x-ui.table>
-                <thead>
-                    <tr class="bg-well/70">
-                        <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Role</th>
-                        <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Dokyu / Tulong Grant</th>
-                        <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Scope</th>
-                        <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Assign</th>
-                        <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Review</th>
-                        <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Approve</th>
-                        <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Reject</th>
-                        <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Release</th>
-                        <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Reports</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-brand-600/[.08]">
-                    @php
-                        $matrixRows = [
-                            ['role' => 'Super Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
-                            ['role' => 'Municipal Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
-                            ['role' => 'Department Head', 'grant' => 'View + Edit + Review/Approve/Reject/Release', 'scope' => 'Own office', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
-                            ['role' => 'Department Staff', 'grant' => 'View + Edit (process)', 'scope' => 'Own office', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
-                            ['role' => 'Front Desk Officer', 'grant' => 'View + Edit (intake only)', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
-                            ['role' => 'Records Officer', 'grant' => 'View + Edit, Civil Registry only', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => true],
-                            ['role' => 'Barangay Secretary', 'grant' => 'View + Edit + Review/Approve/Release, Barangay Certificates only', 'scope' => 'Own barangay', 'assign' => false, 'review' => true, 'approve' => true, 'reject' => false, 'release' => true, 'reports' => false],
-                            ['role' => 'Citizen', 'grant' => 'Own requests only', 'scope' => 'Own records only', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
-                        ];
-                    @endphp
-                    @foreach($matrixRows as $row)
-                        <tr class="hover:bg-white/60 transition-colors">
-                            <td class="px-4 py-3 font-medium text-ink whitespace-nowrap">{{ $row['role'] }}</td>
-                            <td class="px-4 py-3 text-ink-muted max-w-xs hidden 2xl:table-cell">{{ $row['grant'] }}</td>
-                            <td class="px-4 py-3 text-ink-muted whitespace-nowrap hidden 2xl:table-cell">{{ $row['scope'] }}</td>
-                            @foreach(['assign', 'review', 'approve', 'reject', 'release', 'reports'] as $action)
-                                <td class="px-4 py-3 text-center">
-                                    @if($row[$action])
-                                        <i data-lucide="check" class="w-4 h-4 text-emerald-500 inline-block"></i>
-                                    @else
-                                        <span class="text-ink-faint">&mdash;</span>
-                                    @endif
-                                </td>
-                            @endforeach
-                        </tr>
-                    @endforeach
-                </tbody>
-            </x-ui.table>
+            <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /><x-ui.skeleton class="h-12 opacity-60" /></div>
+            <div x-show="!loading && failed" x-cloak><x-ui.error-state messageExpr="'Could not load the roles.'" retryExpr="load()" :retryable="true" /></div>
 
-            <div class="mt-4 rounded-xl border-0 surface-pressed p-4">
-                <p class="text-xs text-ink-muted leading-relaxed">
-                    <strong class="text-slate-700">Reports:</strong> only the Municipal Administrator, the Records Officer and a Department Head (their own department) can download them. A dash means not allowed.
-                </p>
+            <div x-show="!loading && !failed" x-cloak>
+                <x-ui.table>
+                    <thead>
+                        <tr class="bg-well/70">
+                            <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Role</th>
+                            <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Dokyu / Tulong services</th>
+                            <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Scope</th>
+                            <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Assign</th>
+                            <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Review</th>
+                            <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Approve</th>
+                            <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Reject</th>
+                            <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Release</th>
+                            <th class="px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Reports</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-brand-600/[.08]">
+                        <template x-for="role in roles" :key="role.key">
+                            <tr class="hover:bg-white/60 transition-colors">
+                                <td class="px-4 py-3 font-medium text-ink whitespace-nowrap" x-text="role.name"></td>
+                                <td class="px-4 py-3 text-ink-muted max-w-xs hidden 2xl:table-cell" x-text="services(role, 'dokyu') + ' · ' + services(role, 'tulong')"></td>
+                                <td class="px-4 py-3 text-ink-muted whitespace-nowrap hidden 2xl:table-cell" x-text="scopes[role.key] || 'Every office'"></td>
+                                <template x-for="action in actions" :key="action">
+                                    <td class="px-4 py-3 text-center">
+                                        <span x-show="holds(role, ['dokyu', 'tulong'], action)" class="inline-block"><i data-lucide="check" class="w-4 h-4 text-emerald-500 inline-block"></i></span>
+                                        <span x-show="!holds(role, ['dokyu', 'tulong'], action)" class="text-ink-faint">&mdash;</span>
+                                    </td>
+                                </template>
+                                <td class="px-4 py-3 text-center">
+                                    <span x-show="holds(role, ['reports'], 'view')" class="inline-block"><i data-lucide="check" class="w-4 h-4 text-emerald-500 inline-block"></i></span>
+                                    <span x-show="!holds(role, ['reports'], 'view')" class="text-ink-faint">&mdash;</span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </x-ui.table>
+
+                <div class="mt-4 rounded-xl border-0 surface-pressed p-4">
+                    <p class="text-xs text-ink-muted leading-relaxed">
+                        A tick means the role holds that action on at least one Dokyu or Tulong service (the Permissions tab lists which). <strong class="text-slate-700">Reports:</strong> a tick means the role can open at least one report (the Permissions tab shows which, and whether it may print or export them). A dash means not allowed. The Super Administrator passes every check.
+                    </p>
+                </div>
             </div>
         </div>
 

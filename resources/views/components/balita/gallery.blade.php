@@ -1,13 +1,17 @@
 {{-- A Balita post's photos and videos in its card (2026-10-18): one alone at
      its own shape, two side by side, three with the first across, four or more
      as a 2x2 grid whose last tile says how many more. A tile opens the
-     full-screen viewer ($store.balitaViewer, x-balita.viewer). --}}
+     full-screen viewer ($store.balitaViewer, x-balita.viewer).
+     The viewer is handed only the items it can show (those with a url) and
+     the tapped one's place among them (sweep 2026-11-18): it drops the ones
+     still being checked, so the tile's place in the whole list opened the
+     next photo, and the one after an unchecked video could never be opened. --}}
 @props(['media', 'label' => "''", 'english' => false])
 @php $en = $english ? 'true' : 'false'; @endphp
 <div x-show="({{ $media }} || []).length" {{ $attributes->merge(['class' => 'grid gap-0.5 overflow-hidden']) }} :class="balitaGridClass(({{ $media }} || []).length)">
     <template x-for="tile in balitaTiles({{ $media }})" :key="tile.media.id">
         <button type="button"
-            @click="$store.balitaViewer.show({{ $media }}, tile.index, {{ $label }}, {{ $en }})"
+            @click="(shown => $store.balitaViewer.show(shown, shown.findIndex((m) => m.id === tile.media.id), {{ $label }}, {{ $en }}))(({{ $media }} || []).filter((m) => m && m.url))"
             :disabled="!tile.media.url"
             class="relative block w-full overflow-hidden bg-slate-900/5 focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-300"
             :class="(({{ $media }} || []).length === 1 && tile.media.kind === 'video') ? 'aspect-video bg-navy-950' : balitaTileClass(({{ $media }} || []).length, tile.index)"

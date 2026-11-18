@@ -954,15 +954,22 @@ const signatory = (s = {}) => ({ k: ++signatoryKey, name: s.name || '', position
 /**
  * The form's registration and certificate fields, empty or read from an
  * event row (registration {open, capacity, closes_at, count, full},
- * certificate {enabled, title, body, signatories}). A closing time equal to
- * the event's start is the default, shown empty: it follows the event if
- * the date or time is moved.
+ * certificate {enabled, title, body, signatories}). The closing time is the
+ * one the office set, the staff row's own registration_closes_at; none set
+ * is shown empty: it follows the event if the date or time is moved.
+ * registration.closes_at is when it closes in effect (the start, or 23:59
+ * of a whole-day event): read as the setting, it filled the field with a
+ * time no one set, which then refused moving the event earlier (sweep
+ * 2026-11-18). A row without the setting falls back to it, empty when it
+ * is only the start.
  */
 function eventExtras(e = null) {
     const reg = e?.registration || {};
     const cfg = e?.certificate || null;
-    const start = e?.date ? String(e.date).slice(0, 10) + 'T' + (toHm(e.time) || '00:00') : '';
-    const at = reg.closes_at ? manilaParts(reg.closes_at) : null;
+    const own = !!e && 'registration_closes_at' in e;
+    const start = e?.date ? String(e.date).slice(0, 10) + 'T' + (toHm(e.start_time) || toHm(e.time) || '23:59') : '';
+    const set = own ? e.registration_closes_at : reg.closes_at;
+    const at = set ? manilaParts(set) : null;
     const closes = at && at.date ? at.date + 'T' + at.time : '';
     const preset = CERT_PRESETS.find((p) => p.title === cfg?.title);
     const sigs = Array.isArray(cfg?.signatories) && cfg.signatories.length ? cfg.signatories : [{}];
@@ -972,7 +979,7 @@ function eventExtras(e = null) {
         // registration off (round 2 review, 2026-10-30).
         registration_open: !!(e?.registration_open ?? reg.enabled ?? reg.open),
         capacity: reg.capacity ?? '',
-        closes_at: closes && closes !== start ? closes : '',
+        closes_at: own || closes !== start ? closes : '',
         cert: {
             enabled: !!cfg?.enabled,
             had: !!cfg,
@@ -1237,7 +1244,9 @@ function adminEvents(barangays = []) {
 
         async saveEvent(submit) {
             const f = this.form;
-            if (this.processing || !f.name.trim() || !f.date) return;
+            if (this.processing) return;
+            // The buttons are not a form's submit: nothing else says what is missing.
+            if (!f.name.trim() || !f.date) { balitaToast(!f.name.trim() ? 'Give the event a title.' : 'Give the event a date.', 'error'); return; }
             if (this.mediaProblem) { balitaToast(this.mediaProblem, 'error'); return; }
             if (this.timeProblem()) { balitaToast(this.timeProblem(), 'error'); return; }
             const problem = this.extrasProblem();
@@ -1247,6 +1256,10 @@ function adminEvents(barangays = []) {
         async create(submit) {
             const f = this.form;
             this.processing = true;
+            // Once the event is made it is a Draft: a sending for review that
+            // fails after it must not leave the form open, or trying again
+            // makes a second event (sweep 2026-11-18).
+            let created = false;
             try {
                 const key = f.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) + '-' + Date.now().toString(36);
                 await api.post('/admin/events', {
@@ -1259,12 +1272,19 @@ function adminEvents(barangays = []) {
                     post_to_balita: !!f.post_to_balita, media_ids: this.media.ids,
                     ...extrasPayload(f),
                 });
+                created = true;
                 if (submit) await api.post('/admin/events/' + encodeURIComponent(key) + '/transition', { to: 'Pending Review' });
                 this.open = false;
                 balitaToast(submit ? 'Submitted for review.' : 'Saved as draft.');
                 await this.load();
             } catch (err) {
-                balitaToast(errText(err, 'Could not create the event.'), 'error');
+                if (created) {
+                    this.open = false;
+                    balitaToast('Saved as a draft, but not sent for review. Use Submit for review on its card.', 'error');
+                    await this.load();
+                } else {
+                    balitaToast(errText(err, 'Could not create the event.'), 'error');
+                }
             } finally {
                 this.processing = false;
             }
@@ -1362,8 +1382,12 @@ function adminEvents(barangays = []) {
             if (await this.transition(e, 'Released')) { balitaToast('Published. Residents were told.'); await this.load(); }
         },
         // Events are archived, never deleted (owner, 2026-11-14: "archives
-        // only no delete"); an archived event stays under Archived.
+        // only no delete"); an archived event stays under Archived. Archived
+        // is final (no edit, no publish), and the button sits beside Publish
+        // and Submit for review: asked first, as Balita's Archive is (sweep
+        // 2026-11-18).
         async archive(e) {
+            if (!window.confirm('Archive "' + (e.title || e.name || 'this event') + '"? An archived event cannot be edited or published again.')) return;
             if (await this.transition(e, 'Archived')) { balitaToast('Archived.'); await this.load(); }
         },
         openCancel(e) {
@@ -1918,6 +1942,9 @@ export function register(Alpine) {
         gdErrors: {},
         gdConfirmClear: false,
         gdSeq: 0,
+        // The guardian the form opened on ({ name, ref }), to tell a change of
+        // relationship from a different person.
+        gdWas: null,
 
         init() {
             // Another resident opened in the same window starts clean.
@@ -1925,6 +1952,10 @@ export function register(Alpine) {
         },
         get gdCurrent() { return this.selectedIndividual?.guardian || null; },
         get gdMayEdit() { return this.$store.session.canPerm('const_resident', 'edit'); },
+        // Without view_sensitive the server sends the guardian's contact and
+        // address as null: the form opens with them empty, though the record
+        // may hold them (sweep 2026-11-18).
+        get gdWithheld() { return !this.$store.session.canPerm('const_data_quality', 'view_sensitive'); },
         gdTel: telHref,
         get gdSourceLine() {
             const g = this.gdCurrent;
@@ -1948,6 +1979,7 @@ export function register(Alpine) {
             this.gdMode = g?.individual_ref ? 'linked' : 'typed';
             this.gdPicked = g?.individual_ref ? { ref: g.individual_ref, name: g.name } : null;
             this.gdForm = { name: g?.name || '', relationship: g?.relationship || '', contact: g?.contact || '', address: g?.address || '' };
+            this.gdWas = g ? { name: g.name || '', ref: g.individual_ref || null } : null;
             this.gdQuery = '';
             this.gdResults = [];
             this.gdSearched = false;
@@ -1994,14 +2026,23 @@ export function register(Alpine) {
             this.gdErrors = {};
             const f = this.gdForm;
             const body = { relationship: f.relationship.trim() };
-            if (this.gdMode === 'linked') {
-                body.individual_ref = this.gdPicked.ref;
-                // Left empty, the linked record's own number and address are used.
-                if (f.contact.trim()) body.contact = f.contact.trim();
-                if (f.address.trim()) body.address = f.address.trim();
-            } else {
-                Object.assign(body, { name: f.name.trim(), contact: f.contact.trim() || null, address: f.address.trim() || null });
-            }
+            if (this.gdMode === 'linked') body.individual_ref = this.gdPicked.ref;
+            else body.name = f.name.trim();
+            // Left empty, a number or address is none (typed) or the linked
+            // record's own (null). For a role the server hides them from, the
+            // same guardian's empty fields are left out instead, and the
+            // server keeps what the record holds for a field left out:
+            // changing only the relationship must not erase the number to
+            // call (sweep 2026-11-18).
+            const was = this.gdWas;
+            const norm = (s) => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+            const same = !!was && (this.gdMode === 'linked' ? was.ref === this.gdPicked.ref : !was.ref && norm(was.name) === norm(body.name));
+            const keep = same && this.gdWithheld;
+            ['contact', 'address'].forEach((k) => {
+                const v = String(f[k] || '').trim();
+                if (v) body[k] = v;
+                else if (!keep) body[k] = null;
+            });
             try {
                 const res = await api.put('/admin/residents/' + encodeURIComponent(ref) + '/guardian', body);
                 this.gdApply(res.data);
@@ -2204,8 +2245,10 @@ export function register(Alpine) {
             // Live updates (2026-11-15): tickets count as other changes on the
             // server, ratings as Balita. The queue reloads quietly once open
             // (the tab's count otherwise), not while a reply or a routing is
-            // being sent.
-            this.$store.live.on(null, ['other', 'balita'], () => (this.started ? this.load(true) : this.loadCounts()), { busy: () => this.sending || this.assigning || this.routing });
+            // being sent, nor while a new filter's queue is coming: a quiet
+            // reload then would replace that load and merge the new filter's
+            // tickets with the old one's (sweep 2026-11-18).
+            this.$store.live.on(null, ['other', 'balita'], () => (this.started ? this.load(true) : this.loadCounts()), { busy: () => this.sending || this.assigning || this.routing || this.loading });
         },
 
         // The first time the tab is shown: the queue, the offices, the help
@@ -2270,6 +2313,8 @@ export function register(Alpine) {
             if (!quiet) {
                 this.loading = true;
                 this.failed = false;
+                // The pages Load more added were the old filter's.
+                this.page = 1;
             }
             try {
                 const res = await api.get('/admin/support/tickets', { params: this.params(1) });

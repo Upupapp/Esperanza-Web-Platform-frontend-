@@ -42,13 +42,6 @@ return [
         ]],
     ],
 
-    'pickupDirectory' => [
-        'MSWDO' => ['contact' => '(056) 333-1044', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'OSCA' => ['contact' => '(056) 333-1088', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        "Mayor's Office" => ['contact' => '(056) 333-1021', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'MDRRMO' => ['contact' => '(056) 333-1090', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-    ],
-
     'submittedDocs' => [
         ['name' => 'PhilSys National ID.jpg', 'category' => 'IMG'],
         ['name' => 'Barangay Certificate of Indigency.pdf', 'category' => 'PDF'],

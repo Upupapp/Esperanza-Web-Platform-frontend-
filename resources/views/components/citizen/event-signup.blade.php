@@ -12,7 +12,21 @@
      - missed / unrecorded: after the day, if the office marked them absent
        or has not marked them yet.
      Logic: eventSignup() in resources/js/citizen-events.js. --}}
-<div x-data="eventSignup(event)" x-effect="suMakeQr()" x-show="suState() !== 'none'" x-cloak class="mt-3 pt-3 border-t border-brand-600/10">
+<div x-data="eventSignup(event)" x-effect="suMakeQr()" x-show="suState() !== 'none' || suFailed()" x-cloak class="mt-3 pt-3 border-t border-brand-600/10">
+    {{-- The resident's registrations could not be read (QA 2026-11-18 #117):
+         said so, with Try again, rather than nothing, or Puno na / Sarado na in
+         place of their code. The store also tries again by itself. --}}
+    <div x-show="suFailed()" role="status" class="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        <div class="min-w-0 flex items-start gap-2.5">
+            <i data-lucide="wifi-off" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5"></i>
+            <div class="min-w-0">
+                <p class="text-xs font-semibold text-amber-900"><x-ui.t fil="Hindi pa makita ang iyong pagpaparehistro" en="Your registration could not be loaded yet" /></p>
+                <p class="text-[11px] text-amber-800 mt-0.5"><x-ui.t fil="Kung nakarehistro ka na, narito ang iyong code kapag nabasa na. Subukan muli." en="If you registered already, your code shows here once it loads. Try again." /></p>
+            </div>
+        </div>
+        <x-ui.button size="sm" variant="secondary" icon="refresh-cw" loading="suRetrying()" @click="suRetry()" class="w-full sm:w-auto"><x-ui.t fil="Subukan Muli" en="Try Again" /></x-ui.button>
+    </div>
+
     {{-- Open --}}
     <div x-show="suState() === 'open'" class="flex flex-wrap items-center justify-between gap-3">
         <div class="min-w-0">

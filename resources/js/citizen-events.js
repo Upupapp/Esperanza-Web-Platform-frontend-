@@ -102,9 +102,13 @@ function signupError(err, en, fil) {
  */
 const eventRegs = {
     byKey: {},
-    // Read once (or failed): until then a card offers nothing, rather than
-    // Register to a resident who registered already.
+    // Read once: until then a card offers nothing, rather than Register to a
+    // resident who registered already, or "full" / "closed" in place of
+    // their code and QR. A failed read does not count as read: it is tried
+    // again a little later, and `failed` says so (2026-11-18).
     ready: false,
+    failed: false,
+    tries: 0,
     certs: [],
     certsLoaded: false,
     loading: null,
@@ -119,10 +123,23 @@ const eventRegs = {
                 const by = {};
                 (Array.isArray(res?.data) ? res.data : []).forEach((r) => { if (r && r.event_key) by[r.event_key] = r; });
                 this.byKey = by;
+                this.failed = false;
+                this.tries = 0;
+                this.ready = true;
             })
-            .catch(() => { this.loading = null; })
-            .finally(() => { this.ready = true; });
+            .catch(() => {
+                this.loading = null;
+                this.failed = true;
+                this.tries += 1;
+                if (this.tries < 4) setTimeout(() => { if (!this.ready) this.load(); }, 5000 * this.tries);
+            });
         return this.loading;
+    },
+    /** Read again now (a Try again button). */
+    retry() {
+        this.loading = null;
+        this.tries = 0;
+        return this.load();
     },
     loadCerts() {
         if (!signedIn()) return Promise.resolve();
@@ -175,6 +192,16 @@ export function eventSignup(ev) {
             regs().load();
         },
         suShowCode: showCode,
+        /** The resident's registrations could not be read (yet): say so, with Try again. */
+        // Only on a card that takes registrations: elsewhere there is nothing
+        // the read would change. Shown by event-signup.blade.php (#117).
+        suFailed() {
+            const info = this.suInfo();
+            return signedIn() && !!(info.enabled ?? info.open) && this.$store.eventRegs.failed && !this.$store.eventRegs.ready;
+        },
+        /** A read is under way (the automatic retry, or Try again). */
+        suRetrying() { return !!this.$store.eventRegs.loading && !this.$store.eventRegs.ready; },
+        suRetry() { return regs().retry(); },
         suReg() { return this.$store.eventRegs.byKey[ev.ref] || null; },
         suActive() {
             const r = this.suReg();

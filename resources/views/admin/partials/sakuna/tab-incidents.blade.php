@@ -130,6 +130,8 @@
         <option value="Processing">Dispatched</option>
         <option value="Completed">Resolved</option>
         <option value="Archived">Closed</option>
+        {{-- Reports marked Not valid can be listed too (QA 2026-11-18); the Active tile leaves them out. --}}
+        <option value="Rejected">Not valid</option>
     </select>
     <select aria-label="Assigned to filter" x-model="incidentAssignedFilter" class="sk-sel">
         <option value="">Anyone or nobody</option>

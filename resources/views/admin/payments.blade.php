@@ -54,6 +54,16 @@
             // (the server does it); a paid one on such a request is a refund for a
             // person to decide. Neither counts as owed.
             refundToDecide(p) { return p.status === 'Approved' && ['Rejected', 'Cancelled'].includes(p.request_status); },
+            // What a receipt can be issued on (PaymentService::RECEIPTABLE): a payment
+            // awaiting the cashier, or one refused as not verified that the resident
+            // has since paid properly. The fee is still owed after a refusal, and the
+            // document cannot be released until it is receipted (QA 2026-11-18, #19).
+            // A refused one whose request ended Rejected or Cancelled is not owed.
+            canReceipt(p) {
+                if (!p) return false;
+                if (p.status === 'Pending Review') return true;
+                return p.status === 'Rejected' && !['Rejected', 'Cancelled'].includes(p.request_status);
+            },
             get totalInvoiced() { return this.payments.filter(p => p.status !== 'Cancelled').reduce((sum, p) => sum + Number(p.amount || 0), 0); },
             get totalCollected() { return this.payments.filter(p => p.status === 'Approved').reduce((sum, p) => sum + Number(p.amount || 0), 0); },
             async issueReceipt() {
@@ -288,10 +298,12 @@
                         </div>
                     </div>
 
-                    <!-- Admin: issue the official receipt (Pending Review rows) -->
-                    <div x-show="payments[selected].status === 'Pending Review'" x-cloak>
+                    <!-- Admin: issue the official receipt (Pending Review rows, and refused
+                         rows the resident has since paid properly: canReceipt) -->
+                    <div x-show="canReceipt(payments[selected])" x-cloak>
                         <p class="text-sm font-semibold text-ink mb-3 mt-4">Issue Receipt</p>
-                        <p class="text-xs text-ink-muted mb-3">Select how the citizen paid, then issue the official receipt.</p>
+                        <p x-show="payments[selected].status === 'Rejected'" x-cloak class="text-xs text-rose-800 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 mb-3">This payment was rejected, so the fee is still owed and the document cannot be released yet. When the citizen has paid properly, select how they paid and issue the official receipt.</p>
+                        <p x-show="payments[selected].status !== 'Rejected'" class="text-xs text-ink-muted mb-3">Select how the citizen paid, then issue the official receipt.</p>
                         {{-- The server refuses a receipt for a provisional fee (FEE_SCHEDULE_PENDING);
                              the cashier learned that only after trying (live check, 2026-10-06). --}}
                         <p x-show="payments[selected].provisional" x-cloak class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">No official receipt can be issued yet: the LGU has not set the official fee schedule for this service, so this amount is provisional. It does not hold the document's release.</p>
@@ -310,7 +322,7 @@
 
                         <div x-show="showRejectReason" x-cloak x-transition class="rounded-xl border border-rose-200 bg-rose-50/60 p-3 mb-1">
                             <label class="block text-[11px] font-medium text-rose-700 uppercase tracking-wide mb-1.5">Reason for Rejection</label>
-                            <textarea aria-label="Reason for Rejection" x-model="rejectReason" rows="2" placeholder="Explain why this payment could not be verified (min. 5 characters)..." class="w-full text-xs rounded-xl border border-rose-200 bg-white px-3 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <textarea aria-label="Reason for Rejection" x-model="rejectReason" rows="2" placeholder="Why the payment could not be verified, e.g. the slip is blurred or the amount is wrong. The citizen sees this reason. At least 5 characters." class="w-full text-xs rounded-xl border border-rose-200 bg-white px-3 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                             <div class="flex items-center justify-end gap-2 mt-2">
                                 <button type="button" @click="showRejectReason = false; rejectReason = ''" class="text-[11px] text-ink-muted hover:text-slate-600">Cancel</button>
                                 <button type="button" :disabled="rejectReason.trim().length < 5 || processing" @click="rejectPayment()" class="text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:pointer-events-none rounded-xl px-3 py-1.5">Confirm rejection</button>
@@ -321,19 +333,23 @@
             </template>
 
             <x-slot:footer>
-                <template x-if="selected !== null && payments[selected].status === 'Pending Review' && !showRejectReason">
+                <template x-if="selected !== null && canReceipt(payments[selected]) && !showRejectReason">
                     <div class="flex items-center gap-2.5 w-full">
-                        <x-ui.button variant="danger" size="sm" @click="showRejectReason = true">Reject</x-ui.button>
+                        {{-- Only a payment awaiting review can be refused; a refused one
+                             can still be receipted once paid properly (canReceipt). --}}
+                        <template x-if="payments[selected].status === 'Pending Review'">
+                            <x-ui.button variant="danger" size="sm" @click="showRejectReason = true">Reject</x-ui.button>
+                        </template>
                         <x-ui.button size="sm" x-bind:disabled="!method || processing || payments[selected].provisional" @click="issueReceipt()" class="flex-1">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="check" class="w-3.5 h-3.5" x-show="!processing"></i>
-                                <span x-text="processing ? 'Issuing…' : 'Issue receipt'"></span>
+                                <span x-text="processing ? 'Issuing…' : 'Issue Receipt'"></span>
                             </span>
                         </x-ui.button>
                     </div>
                 </template>
-                <template x-if="selected !== null && !(payments[selected].status === 'Pending Review' && !showRejectReason)">
+                <template x-if="selected !== null && !(canReceipt(payments[selected]) && !showRejectReason)">
                     <x-ui.button size="sm" @click="open = false; showRejectReason = false">Close</x-ui.button>
                 </template>
             </x-slot:footer>

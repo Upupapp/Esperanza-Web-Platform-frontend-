@@ -81,13 +81,16 @@ export function sakunaReport() {
         rangeOpen: false,
         rangeSnap: null,
         rangePos: '',
+        // The days the server counts: without a From date that is the 30 days
+        // to To, or to today (SakunaReport::period()), never "All dates" or
+        // "Until" (QA 2026-11-18).
         get rangeLabel() {
             const fmt = (d, year) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', year ? { month: 'short', day: 'numeric', year: 'numeric' } : { month: 'short', day: 'numeric' });
             const { from, to } = this.f;
             if (from && to) return fmt(from, from.slice(0, 4) !== to.slice(0, 4)) + ' – ' + fmt(to, true);
             if (from) return 'From ' + fmt(from, true);
-            if (to) return 'Until ' + fmt(to, true);
-            return 'All dates';
+            if (to) return '30 days to ' + fmt(to, true);
+            return 'Last 30 days';
         },
         openRange(btn) {
             if (this.rangeOpen) return this.cancelRange();
@@ -114,13 +117,22 @@ export function sakunaReport() {
                 week: [back(6), iso(today)],
                 month30: [back(29), iso(today)],
                 thisMonth: [iso(new Date(today.getFullYear(), today.getMonth(), 1)), iso(today)],
-                all: ['', ''],
             };
+            if (!ranges[kind]) return;
             [this.f.from, this.f.to] = ranges[kind];
             this.applyRange();
         },
         // A group change keeps the item only if it belongs to the group.
-        groupChanged() { if (this.f.livelihood_code && !this.f.livelihood_code.startsWith(this.f.livelihood_group)) this.f.livelihood_code = ''; this.load(1); },
+        // The occupation goes with its group: 'All livelihoods' (group '') or a
+        // group the code is not in clears it. It used to stay, since every code
+        // starts with '', and every figure stayed narrowed to it while the
+        // select read 'All occupations' (QA 2026-11-18 #38).
+        groupChanged() {
+            const group = this.f.livelihood_group;
+            const code = this.f.livelihood_code;
+            if (code && (!group || !(this.$store.livelihood?.items(group) || []).some((i) => i.code === code))) this.f.livelihood_code = '';
+            this.load(1);
+        },
 
         // Charts, in the site's one look (clay-donut, clay-trend), from the
         // server's figures: nothing is counted in the browser.
@@ -131,7 +143,13 @@ export function sakunaReport() {
                 'Structural Damage': '#78716C', 'Agricultural Damage': '#15803D' })[type] || '#64748B';
         },
         reportTypeBreakdown() { return Object.entries(this.summary?.incidents.by_type || {}); },
-        reportTrendLabels() { return (this.summary?.incidents.trend || []).map((t) => new Date(t.label + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); },
+        // Over 62 days the server's buckets are weeks, each labelled with its
+        // Monday (SakunaReport::trend): a bar says so (as sakuna-insights.js).
+        reportTrendLabels() {
+            const trend = this.summary?.incidents.trend || [];
+            const weekly = trend.length > 1 && Date.parse(trend[1].label) - Date.parse(trend[0].label) > 864e5;
+            return trend.map((t) => (weekly ? 'Wk of ' : '') + new Date(t.label + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        },
         reportTrendData() { return (this.summary?.incidents.trend || []).map((t) => t.count); },
         // The chart names each status as the Incidents tab does (critique 2026-11-03).
         statusRows() {

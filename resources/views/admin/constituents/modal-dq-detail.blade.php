@@ -7,7 +7,10 @@
     assignEncoderId: '',
     resolutionNote: '',
 }" x-init="$watch('showDQDetail', v => { if (v) { assignEncoderId = ''; resolutionNote = ''; } })">
-    <x-ui.modal maxWidth="xl">
+    {{-- Bare, as the account review is: the window draws its own header,
+         close button and footer (QA sweep 2026-11-18: the modal added an
+         empty title bar, a second X, and scrolled the footer away). --}}
+    <x-ui.modal maxWidth="xl" :bare="true">
 
         {{-- ── MODAL HEADER ────────────────────────────────────────────────── --}}
         <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-brand-600/10">

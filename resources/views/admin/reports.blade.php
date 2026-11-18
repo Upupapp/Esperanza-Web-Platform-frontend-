@@ -54,19 +54,32 @@
                 this.$watch('tab', (t) => { if (t === 'analytics' && !this.analyticsLoaded) this.loadAnalytics(); });
             },
             analyticsLoaded: false,
+            analyticsLoading: false,
+            analyticsFailed: false,
             async loadAnalytics() {
                 this.analyticsLoaded = true;
+                this.analyticsLoading = true;
+                // A read that is not this account's, or that failed (the report
+                // rate limit, the network), is null: its figures read '—', never
+                // 0, and a failure offers Try Again (2026-11-18).
+                let failed = this.failed;
+                const miss = () => { failed = true; return null; };
                 // GET /admin/reports lists only the reports this account may view.
-                const get = (key) => (this.reports.some((r) => r.key === key) ? $api.get('/admin/reports/' + key).then(r => r.data).catch(() => null) : Promise.resolve(null));
+                const get = (key) => (this.reports.some((r) => r.key === key) ? $api.get('/admin/reports/' + key).then(r => r.data).catch(miss) : Promise.resolve(null));
                 const [dash, doc, assist, sat, forms, sakuna, brgy, rev] = await Promise.all([
-                    $api.get('/admin/dashboard').then(r => r.data).catch(() => null),
+                    $api.get('/admin/dashboard').then(r => r.data).catch(miss),
                     get('document_requests_summary'), get('assistance_programs'), get('citizen_satisfaction'),
                     get('internal_forms_submissions'), get('sakuna_incident_reports'), get('barangay_activity'),
                     get('revenue_and_fees'),
                 ]);
                 this.dash = dash; this.docSummary = doc; this.assistSummary = assist; this.satisfaction = sat;
                 this.internalForms = forms; this.sakunaIncidents = sakuna; this.barangayActivity = brgy; this.revenue = rev;
+                this.analyticsFailed = failed;
+                this.analyticsLoading = false;
             },
+            // The note under a figure whose report is not loaded.
+            naNote(src) { return src ? '' : (this.analyticsLoading || !this.analyticsLoaded ? 'Loading…' : 'Not available'); },
+            peso(v) { return '₱' + Number(v || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 }); },
             async generate(key, format = 'CSV') {
                 if (this.generating) return;
                 this.generating = key;
@@ -101,11 +114,21 @@
                     summary: Array.isArray(data?.summary) ? data.summary : [],
                 });
             },
+            // One plain cell a value (QA 2026-11-18 #238): a list is joined with
+            // '; ' and an object gives its label, not JSON with escaped quotes;
+            // a text cell that starts like a formula (= + - @, tab, CR) gets a
+            // leading apostrophe so the spreadsheet opens it as text, never runs
+            // it (as constituents' exportCSV and csvCell in event-desk.js). A
+            // real number (a negative change) is left alone.
             saveCsv(data) {
                 const rows = Array.isArray(data?.rows) ? data.rows : [];
-                const flat = (v) => (v !== null && typeof v === 'object') ? JSON.stringify(v) : (v ?? '');
+                const flat = (v) => v === null || v === undefined ? ''
+                    : Array.isArray(v) ? v.map(flat).filter((x) => x !== '').join('; ')
+                    : typeof v === 'object' ? (v.full_label ?? v.label ?? v.name ?? v.en ?? v.ref ?? Object.entries(v).map(([k, x]) => k.replace(/_/g, ' ') + ': ' + flat(x)).join('; '))
+                    : v;
+                const guard = (v, t) => typeof v !== 'number' && /^[=+\-@\t\r]/.test(t) ? "'" + t : t;
                 const q = String.fromCharCode(34);
-                const cell = (v) => { const t = String(flat(v)); return [',', q, String.fromCharCode(10), String.fromCharCode(13)].some((c) => t.includes(c)) ? q + t.split(q).join(q + q) + q : t; };
+                const cell = (v) => { const t = guard(v, String(flat(v))); return [',', q, String.fromCharCode(10), String.fromCharCode(13)].some((c) => t.includes(c)) ? q + t.split(q).join(q + q) + q : t; };
                 const columns = [...new Set(rows.flatMap((r) => Object.keys(r || {})))];
                 const lines = [columns.map(cell).join(',')].concat(rows.map((r) => columns.map((c) => cell(r?.[c])).join(',')));
                 if (data?.totals && typeof data.totals === 'object') {
@@ -119,9 +142,18 @@
                 document.body.appendChild(a); a.click(); a.remove();
                 setTimeout(() => URL.revokeObjectURL(a.href), 4000);
             },
+            // Both request reports this account may read are in: with one
+            // missing (a failed read) a sum or an average of the other alone
+            // is not the figure the tile names, so it reads '—' (2026-11-18).
+            get requestReportsIn() {
+                const got = { document_requests_summary: this.docSummary, assistance_programs: this.assistSummary };
+                const want = Object.keys(got).filter((k) => this.reports.some((r) => r.key === k));
+                return want.length > 0 && want.every((k) => got[k]);
+            },
             // Weighted by how many each kind released (2026-11-03: the plain mean
             // of the two means overweighted the smaller one).
             get avgResolutionDays() {
+                if (!this.requestReportsIn) return null;
                 const parts = [this.docSummary?.totals, this.assistSummary?.totals]
                     .filter((t) => t && t.avg_days_to_release !== null && t.avg_days_to_release !== undefined && t.released > 0);
                 const released = parts.reduce((n, t) => n + t.released, 0);
@@ -361,11 +393,16 @@
 
         <!-- Analytics -->
         <div x-show="tab === 'analytics'" x-cloak>
+            <div x-show="analyticsFailed && !analyticsLoading" x-cloak role="alert" class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 rounded-xl bg-amber-50 border border-amber-100 px-3.5 py-2.5 mb-4" data-testid="analytics-failed">
+                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-600 shrink-0"></i>
+                <p class="text-xs text-amber-800 flex-1 min-w-0">Some figures could not be loaded, so they show —. They are not zero.</p>
+                <button type="button" @click="failed ? init() : loadAnalytics()" class="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 hover:underline"><i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>Try Again</button>
+            </div>
             <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
-                <x-ui.stat-card layout="compact" class="h-full" label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="brand" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction?.totals?.note || '')" :delay="0" />
-                <x-ui.stat-card layout="compact" class="h-full" label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="light" sublabel="Dokyu + Tulong, all time" :delay="40" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="brand" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction ? (satisfaction.totals?.note || '') : naNote(satisfaction))" :delay="0" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Total Requests" valueBind="requestReportsIn ? totalRequests.toLocaleString() : '—'" icon="inbox" color="light" sublabel="Dokyu + Tulong, all time" :delay="40" />
                 <x-ui.stat-card layout="compact" class="h-full" label="Avg. Resolution Time" valueBind="avgResolutionText" icon="timer" color="deep" sublabel="Working days, filing to release" :delay="80" />
-                <x-ui.stat-card layout="compact" class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="120" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Incidents Logged" valueBind="sakunaIncidents ? incidentTotal : '—'" icon="triangle-alert" color="orange" sublabelBind="naNote(sakunaIncidents)" :delay="120" />
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start mb-5">
@@ -378,27 +415,29 @@
                             <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gold-600"></span>Tulong</span>
                         </p>
                     </div>
-                    <x-ui.clay-trend data="trendData" label="Dokyu and Tulong requests filed in each of the last six months" />
+                    <div x-show="dash"><x-ui.clay-trend data="trendData" label="Dokyu and Tulong requests filed in each of the last six months" /></div>
+                    <p x-show="!dash" x-cloak class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink-muted" x-text="naNote(dash)"></p>
                 </x-ui.card>
 
                 <x-ui.card>
                     <h3 class="text-lg font-extrabold text-ink mb-4">Revenue &amp; Fees</h3>
+                    <p x-show="!revenue" x-cloak class="text-xs text-ink-muted mb-3" x-text="naNote(revenue)"></p>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-ink-muted">Assessed</span>
-                            <span class="font-semibold text-ink tabular-nums" x-text="'₱' + Number(revenue?.totals?.assessed || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></span>
+                            <span class="font-semibold text-ink tabular-nums" x-text="revenue ? peso(revenue.totals?.assessed) : '—'"></span>
                         </div>
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-ink-muted">Collected</span>
-                            <span class="font-semibold text-emerald-600 tabular-nums" x-text="'₱' + Number(revenue?.totals?.collected || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></span>
+                            <span class="font-semibold text-emerald-600 tabular-nums" x-text="revenue ? peso(revenue.totals?.collected) : '—'"></span>
                         </div>
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-ink-muted">Outstanding</span>
-                            <span class="font-semibold text-orange-600 tabular-nums" x-text="'₱' + Number(revenue?.totals?.outstanding || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></span>
+                            <span class="font-semibold text-orange-600 tabular-nums" x-text="revenue ? peso(revenue.totals?.outstanding) : '—'"></span>
                         </div>
                         <div class="flex items-center justify-between text-sm pt-3 border-t border-brand-600/10">
                             <span class="text-ink-muted">Receipts Issued</span>
-                            <span class="font-semibold text-ink tabular-nums" x-text="revenue?.totals?.receipts || 0"></span>
+                            <span class="font-semibold text-ink tabular-nums" x-text="revenue ? (revenue.totals?.receipts || 0) : '—'"></span>
                         </div>
                     </div>
                 </x-ui.card>
@@ -418,7 +457,8 @@
                             </div>
                         </div>
                     </template>
-                    <div x-show="!barangayRequestRows.length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No requests on file yet.</div>
+                    <div x-show="barangayActivity && !barangayRequestRows.length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No requests on file yet.</div>
+                    <div x-show="!barangayActivity" x-cloak class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink-muted" x-text="naNote(barangayActivity)"></div>
                     <p x-show="barangaysWithout" x-cloak class="text-[12.5px] text-ink-muted" x-text="barangaysWithout + (barangaysWithout === 1 ? ' barangay has' : ' barangays have') + ' no requests on file.'"></p>
                 </div>
             </x-ui.card>
@@ -426,21 +466,23 @@
         {{-- Analytics only (2026-11-03): it showed under the Reports tab too. --}}
         <h3 class="text-base font-extrabold text-ink mb-3 mt-6">Internal Forms &amp; Incident Reports</h3>
         <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
-            <x-ui.stat-card layout="compact" class="h-full" label="Internal Forms Submitted" valueBind="internalForms?.totals?.submissions ?? 0" icon="clipboard-list" color="light" :delay="0" />
-            <x-ui.stat-card layout="compact" class="h-full" label="Offices Covered" valueBind="officesCovered" icon="building-2" color="slate" :delay="40" />
-            <x-ui.stat-card layout="compact" class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="80" />
-            <x-ui.stat-card layout="compact" class="h-full" label="Critical / High Severity" valueBind="criticalHighCount" icon="siren" color="red" :delay="120" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Internal Forms Submitted" valueBind="internalForms ? (internalForms.totals?.submissions ?? 0) : '—'" icon="clipboard-list" color="light" sublabelBind="naNote(internalForms)" :delay="0" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Offices Covered" valueBind="internalForms ? officesCovered : '—'" icon="building-2" color="slate" sublabelBind="naNote(internalForms)" :delay="40" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Incidents Logged" valueBind="sakunaIncidents ? incidentTotal : '—'" icon="triangle-alert" color="orange" sublabelBind="naNote(sakunaIncidents)" :delay="80" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Critical / High Severity" valueBind="sakunaIncidents ? criticalHighCount : '—'" icon="siren" color="red" sublabelBind="naNote(sakunaIncidents)" :delay="120" />
         </div>
 
         <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start mb-5">
             <x-ui.card>
                 <h3 class="text-lg font-extrabold text-ink mb-4">Internal Forms by Office</h3>
-                <x-ui.clay-donut rows="internalOfficeSplit" total-label="Submissions" empty="No submissions yet." />
+                <div x-show="internalForms"><x-ui.clay-donut rows="internalOfficeSplit" total-label="Submissions" empty="No submissions yet." /></div>
+                <p x-show="!internalForms" x-cloak class="text-sm text-ink-muted text-center py-2" x-text="naNote(internalForms)"></p>
             </x-ui.card>
 
             <x-ui.card>
                 <h3 class="text-lg font-extrabold text-ink mb-4">Incident Reports by Severity</h3>
-                <x-ui.clay-donut rows="incidentSeveritySplit" total-label="Incidents" empty="No incidents logged yet." :keep-colors="true" />
+                <div x-show="sakunaIncidents"><x-ui.clay-donut rows="incidentSeveritySplit" total-label="Incidents" empty="No incidents logged yet." :keep-colors="true" /></div>
+                <p x-show="!sakunaIncidents" x-cloak class="text-sm text-ink-muted text-center py-2" x-text="naNote(sakunaIncidents)"></p>
             </x-ui.card>
         </div>
         </div>

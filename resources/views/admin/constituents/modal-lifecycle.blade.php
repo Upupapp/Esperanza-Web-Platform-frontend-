@@ -34,8 +34,14 @@
             if (this.submitting || !selectedIndividual) return;
             this.submitting = true;
             const action = { Transfer: 'transfer', Deceased: 'deceased', Archive: 'archive' }[lifecycleAction];
+            // Only the chosen action's own fields go out (and into the audit log).
+            const fields = {
+                transfer: ['target_barangay', 'transfer_reason', 'effective_date', 'certifying_officer'],
+                deceased: ['date_of_passing', 'cause_of_death', 'informant_name', 'death_cert_ref'],
+                archive: ['archive_reason'],
+            }[action] || [];
             try {
-                await $api.post('/admin/residents/' + selectedIndividual.ref + '/lifecycle', { action, ...this.form });
+                await $api.post('/admin/residents/' + selectedIndividual.ref + '/lifecycle', { action, ...Object.fromEntries(fields.map(k => [k, this.form[k]])) });
                 if (action === 'transfer') {
                     const idx = this.individuals.findIndex(x => x.ref === selectedIndividual.ref);
                     if (idx !== -1) this.individuals[idx].barangay = this.form.target_barangay;
@@ -81,8 +87,14 @@
             return cfg[lifecycleAction] || cfg['Archive'];
         },
     }"
+    {{-- A fresh form each time the window opens (QA sweep 2026-11-18): closed
+         with Escape or the backdrop, it kept the last resident's death or
+         transfer details for the next one. --}}
+    x-init="$watch('open', v => { if (v) resetLifecycleForm(); })"
 >
-    <x-ui.modal maxWidth="sm">
+    {{-- Bare: the window draws its own header and close button (QA sweep
+         2026-11-18: the modal's empty title bar and second X sat above them). --}}
+    <x-ui.modal maxWidth="sm" :bare="true">
 
         {{-- ════════════════════════════════════════════════════════
              DYNAMIC HEADER — color and icon change per action

@@ -50,7 +50,8 @@
             try {
                 await $api.post('/admin/settings/site-content/' + docKey, {
                     title: doc.title, effective_date: doc.effective_date, intro: doc.intro,
-                    sections: doc.sections, channels: doc.channels || [],
+                    // Support Info has no sections: an empty list is still sent.
+                    sections: doc.sections || [], channels: doc.channels || [],
                     office_hours: doc.office_hours, office_hours_fil: doc.office_hours_fil,
                 });
                 this.$dispatch('toast', { message: 'Published a new version.', variant: 'success' });
@@ -215,12 +216,19 @@
                             </template>
                         </div>
                     </div>
-                    <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {{-- Residents read the Filipino label first (the Help page and
+                         the app show label_fil, else label), so it is edited
+                         beside the English one (sweep 2026-11-18). --}}
+                    <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                         <div>
                             <label class="block text-[10px] font-medium text-ink-muted mb-1">Label</label>
                             <input aria-label="Label" type="text" x-model="ch.label" placeholder="e.g. Call the ICT Office" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-xs text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                         </div>
                         <div>
+                            <label class="block text-[10px] font-medium text-ink-muted mb-1">Label (Filipino)</label>
+                            <input aria-label="Label (Filipino)" type="text" x-model="ch.label_fil" placeholder="e.g. Tawagan ang ICT Office" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-xs text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                        </div>
+                        <div class="sm:col-span-2 lg:col-span-1">
                             <label class="block text-[10px] font-medium text-ink-muted mb-1">Value</label>
                             <input aria-label="Value" type="text" x-model="ch.value" placeholder="e.g. (056) 333-1099" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-xs text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                         </div>

@@ -12,6 +12,9 @@
             // The event a notification opened (?event=KEY, 2026-10-21).
             focusKey: null,
             open: {},
+            // Only the latest month asked for is shown (QA 2026-11-18): two
+            // quick Next clicks let December's late answer land under January.
+            seq: 0,
             categoryColor: {
                 'Civic': 'bg-brand-400', 'Festival': 'bg-gold-400', 'Health': 'bg-emerald-400',
                 'Sports': 'bg-purple-400', 'Government': 'bg-navy-400', 'Community': 'bg-sky-400',
@@ -38,6 +41,7 @@
                 for (let i = 0; i < cells.length; i += 7) this.weeks.push(cells.slice(i, i + 7));
             },
             async load() {
+                const mine = ++this.seq;
                 this.loading = true;
                 this.failed = false;
                 this.selectedDate = null;
@@ -47,6 +51,7 @@
                     // A signed-in resident gets their own barangay's events and
                     // the municipal-wide ones (the server decides, 2026-10-21).
                     const result = await $api.getAll('/events', { params: { month: monthParam } });
+                    if (mine !== this.seq) return;
                     this.events = (result.data || []).map((e, i) => {
                         const d = new Date(e.date + 'T00:00:00');
                         return {
@@ -65,10 +70,11 @@
                         };
                     });
                 } catch {
+                    if (mine !== this.seq) return;
                     this.events = [];
                     this.failed = true;
                 } finally {
-                    this.loading = false;
+                    if (mine === this.seq) this.loading = false;
                 }
             },
             async init() {
@@ -286,10 +292,15 @@
                             </div>
                             <x-citizen.event-signup />
                             {{-- What it is about, as the office wrote it (2026-10-21). --}}
-                            <div x-show="event.description || event.balita_post_id" class="mt-3 pt-3 border-t border-brand-600/10 space-y-2">
-                                <p x-show="event.description" class="text-xs text-slate-600 whitespace-pre-line" :class="open[event.ref] ? '' : 'line-clamp-3'" x-text="event.description"></p>
+                            {{-- Read more shows whenever the text is cut at three lines (QA
+                                 2026-11-18): measured, not by length, so a short agenda on
+                                 five lines, or 150 characters on a phone, can be read in full. --}}
+                            <div x-show="event.description || event.balita_post_id" class="mt-3 pt-3 border-t border-brand-600/10 space-y-2" x-data="{ clamped: false }">
+                                <p x-show="event.description" class="text-xs text-slate-600 whitespace-pre-line" :class="open[event.ref] ? '' : 'line-clamp-3'" x-text="event.description"
+                                   x-effect="if (!open[event.ref]) $nextTick(() => { clamped = $el.scrollHeight > $el.clientHeight + 1 })"
+                                   @resize.window.debounce.200ms="if (!open[event.ref]) clamped = $el.scrollHeight > $el.clientHeight + 1"></p>
                                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                    <button type="button" x-show="event.description && event.description.length > 160" @click="open = { ...open, [event.ref]: !open[event.ref] }" class="text-[11px] font-medium text-brand-600 hover:underline" x-text="open[event.ref] ? ($store.lang.current === 'en' ? 'Show less' : 'Paikliin') : ($store.lang.current === 'en' ? 'Read more' : 'Basahin pa')"></button>
+                                    <button type="button" x-show="event.description && (open[event.ref] || clamped || event.description.split(String.fromCharCode(10)).length > 3)" @click="open = { ...open, [event.ref]: !open[event.ref] }" class="text-[11px] font-medium text-brand-600 hover:underline" x-text="open[event.ref] ? ($store.lang.current === 'en' ? 'Show less' : 'Paikliin') : ($store.lang.current === 'en' ? 'Read more' : 'Basahin pa')"></button>
                                     <a x-show="event.balita_post_id" :href="'{{ route('citizen.announcements') }}?post=' + event.balita_post_id" class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"><i data-lucide="newspaper" class="w-3 h-3"></i><x-ui.t fil="Tingnan sa Balita" en="See it in Balita" /></a>
                                 </div>
                             </div>
@@ -298,7 +309,13 @@
 
                     <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-brand-600/10" x-show="selectedEvents.length === 0">
                         <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="calendar-x" class="w-7 h-7"></i></span>
-                        <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kaganapan sa buwang ito." en="No events this month." /></p>
+                        {{-- Why it is empty (QA 2026-11-18): a day tapped, or Barangay Only on, is not an empty month. --}}
+                        <p class="text-sm font-medium text-slate-600">
+                            <span x-show="selectedDate && !(myBarangayOnly && eventsOn(selectedDate).length)"><x-ui.t fil="Walang kaganapan sa araw na ito." en="No events on this day." /></span>
+                            <span x-show="selectedDate && myBarangayOnly && eventsOn(selectedDate).length"><x-ui.t fil="Walang kaganapan sa iyong barangay sa araw na ito." en="No events in your barangay on this day." /></span>
+                            <span x-show="!selectedDate && myBarangayOnly && events.length"><x-ui.t fil="Walang kaganapan sa iyong barangay ngayong buwan." en="No events in your barangay this month." /></span>
+                            <span x-show="!selectedDate && !(myBarangayOnly && events.length)"><x-ui.t fil="Walang kaganapan sa buwang ito." en="No events this month." /></span>
+                        </p>
                     </div>
                 </div>
             </template>

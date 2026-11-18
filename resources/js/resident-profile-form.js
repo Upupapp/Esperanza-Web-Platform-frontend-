@@ -113,7 +113,14 @@ export function residentProfileForm() {
                 occupation: m.occupation || '',
                 ...livelihoodOf(m),
                 education: m.education || '',
-                contact: mobileOrEmpty(m.contact),
+                // The member's contact as the record holds it (an email or a
+                // landline too), and that value again to tell a change: the form
+                // has no box for it, and resending mobileOrEmpty() of it wiped an
+                // email or landline and moved the member back to For Validation
+                // on every save (QA 2026-11-18 #20). payload() sends it only when
+                // it changed.
+                contact: m.contact || '',
+                _contact: m.contact || '',
             }));
             this.section = 'personal';
             this.error = '';
@@ -158,6 +165,14 @@ export function residentProfileForm() {
             });
             // A changed choice is sent as the code; otherwise the words, which
             // the server leaves alone when they are the same.
+            // A member already on record keeps the contact it has unless it was
+            // changed here (#20): the key is left out, and the server keeps the
+            // stored value (it writes only the keys it is sent).
+            const withoutUnchangedContact = (m, fields) => {
+                if (!m.ref || (m.contact || '') !== (m._contact || '')) return fields;
+                const { contact, ...rest } = fields;
+                return rest;
+            };
             const occupation = (x) => ((x.livelihood_code || '') !== x._lv.code || (x.livelihood_other || '') !== x._lv.other)
                 ? { livelihood_code: x.livelihood_code || null, livelihood_other: text(x.livelihood_other), ...(x.livelihood_code ? {} : { occupation: text(x.occupation) }) }
                 : { occupation: text(x.occupation) };
@@ -174,7 +189,7 @@ export function residentProfileForm() {
                     members: this.members.filter((m) => text(m.name)).map((m) => ({
                         ...(m.ref ? { ref: m.ref } : {}),
                         name: m.name.trim(),
-                        ...person(m),
+                        ...withoutUnchangedContact(m, person(m)),
                         relation: text(m.relation),
                     })),
                 },

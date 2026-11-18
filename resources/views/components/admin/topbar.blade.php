@@ -78,7 +78,11 @@
             <i data-lucide="scan-qr-code" class="w-5 h-5"></i>
         </button>
 
-        <div class="relative" x-data="dropdown" @click.outside="close">
+        {{-- Below sm the panel hangs from the header's right edge, not the
+             bell's (sweep 2026-11-18): the profile chip sits right of the bell,
+             so a 22rem panel ended about 44px past a 390px phone's left edge and
+             the shell cut off its icons. The width never passes the header's. --}}
+        <div class="sm:relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" aria-label="Notifications" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
                 <i data-lucide="bell" class="w-5 h-5"></i>
                 <span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-gold-400 ring-2 ring-white" x-show="$store.adminNotifications.unreadCount"></span>
@@ -90,7 +94,7 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-[22rem] surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
+                class="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
             >
                 <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
                     <p class="text-sm font-bold text-ink">Notifications</p>

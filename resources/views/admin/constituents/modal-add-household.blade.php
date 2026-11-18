@@ -27,11 +27,26 @@
         }
         return true
     },
+    heads: [],
+    head: null,
+    headSeq: 0,
+    async lookHead() {
+        const seq = ++this.headSeq;
+        const rows = await headMatches(this.form.head_name, this.form.barangay);
+        if (seq === this.headSeq) this.heads = rows;
+    },
+    pickHead(r) { this.head = { ref: r.ref, name: r.name }; this.form.head_name = r.name; this.heads = []; },
+    get headPicked() { return !!this.head && this.head.name === this.form.head_name.trim(); },
     async saveHousehold() {
         if (this.submitting) return;
         this.submitting = true;
+        // The amenities are words on the server, never true/false (QA sweep
+        // 2026-11-18: every new household was refused). A head picked from
+        // the registry goes by their ref; only a name not picked is a new resident.
+        const body = { ...this.form, electricity: this.form.electricity ? 'Yes' : 'No', water: this.form.water ? 'Yes' : 'No', toilet: this.form.toilet ? 'Yes' : 'No' };
+        if (this.headPicked) { body.head_ref = this.head.ref; delete body.head_name; }
         try {
-            const res = await $api.post('/admin/households', this.form);
+            const res = await $api.post('/admin/households', body);
             this.households.push(res.data);
             this.$dispatch('toast', { message: 'Household record saved successfully.', variant: 'success' });
             showAddHousehold = false;
@@ -41,6 +56,8 @@
                 dwelling_type: '', housing_tenure: '', flood_risk: '',
                 electricity: false, water: false, toilet: false,
             };
+            this.head = null;
+            this.heads = [];
         } catch (err) {
             this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not create this household.', variant: 'error' });
         } finally { this.submitting = false; }
@@ -158,10 +175,24 @@
                     <input id="household-head-name"
                         type="text"
                         x-model="form.head_name"
+                        @input.debounce.300ms="lookHead()"
+                        autocomplete="off"
                         placeholder="Full name of household head"
                         class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     />
-                    <p class="text-xs text-ink-muted mt-1.5">This person will be listed as the primary occupant of this household. If they aren't already a resident on file, a new resident record is created for them.</p>
+                    {{-- Residents already on file by that name (QA sweep 2026-11-18:
+                         a typed name always made a second record of the same person). --}}
+                    <div x-show="heads.length && !headPicked" x-cloak class="mt-1.5 rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                        <p class="px-3 pt-2 pb-1 text-[10.5px] font-semibold text-ink-muted">Already on file — pick to link them</p>
+                        <template x-for="r in heads" :key="r.ref">
+                            <button type="button" @click="pickHead(r)" class="w-full text-left px-3 py-2 hover:bg-indigo-50 transition-colors">
+                                <span class="block text-xs font-semibold text-ink truncate" x-text="r.name"></span>
+                                <span class="block text-[10.5px] text-ink-muted font-mono truncate" x-text="r.ref + ' · Brgy. ' + (r.barangay || '—') + (r.age != null ? ' · ' + r.age + ' yrs' : '')"></span>
+                            </button>
+                        </template>
+                    </div>
+                    <p class="text-xs mt-1.5" :class="headPicked ? 'text-emerald-700' : 'text-ink-muted'"
+                       x-text="headPicked ? ('Linked to ' + head.ref + ', already a resident on file. They will be listed as the primary occupant of this household.') : 'This person will be listed as the primary occupant of this household. Pick them from the list if they are already a resident on file; a name not picked is added as a new resident.'"></p>
                 </div>
             </div>
 

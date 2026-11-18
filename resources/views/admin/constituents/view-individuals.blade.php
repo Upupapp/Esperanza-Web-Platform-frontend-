@@ -102,7 +102,7 @@
                                     </p>
                                     {{-- Tag chips --}}
                                     <div class="flex flex-wrap gap-1 mt-1.5">
-                                        <template x-for="tag in (r.tags || [])" :key="tag">
+                                        <template x-for="tag in registryTags(r.tags)" :key="tag">
                                             <span
                                                 class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase"
                                                 :class="{

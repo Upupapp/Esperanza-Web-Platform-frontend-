@@ -60,7 +60,7 @@
      click (see document-watermark.blade.php's comment for the full
      "two divergent render branches" story this closes). --}}
 <div
-    class="doc-paper border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10"
+    class="doc-paper @container border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10"
     :style="window.DokyuEditor.paperStyle({!! $background !!})"
     :class="({!! $background !!}).decorative ? 'doc-paper--tpl-' + ({!! $background !!}).decorative : ''"
 >
@@ -158,7 +158,7 @@
             <div class="space-y-2.5">
                 <p>This is to certify that <x-citizen.doc-field :bind="$bind" field="subject_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, is a bonafide resident of this barangay.</p>
                 <p>This further certifies for the other information of this person to wit:</p>
-                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
+                <div class="grid grid-cols-1 @md:grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Father:</span><x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden Name):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Date of Death:</span><x-citizen.doc-field :bind="$bind" field="date_of_death" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
@@ -177,7 +177,7 @@
             <div class="space-y-2.5">
                 <p>This is to certify that <x-citizen.doc-field :bind="$bind" field="subject_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, is a bonafide resident of this barangay.</p>
                 <p>This further certifies for the other information of this person to wit:</p>
-                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
+                <div class="grid grid-cols-1 @md:grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Father:</span><x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden Name):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Date of Birth:</span><x-citizen.doc-field :bind="$bind" field="date_of_birth" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
@@ -186,7 +186,7 @@
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Citizenship:</span><x-citizen.doc-field :bind="$bind" field="citizenship" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Civil Status:</span><x-citizen.doc-field :bind="$bind" field="civil_status" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Occupation:</span><x-citizen.doc-field :bind="$bind" field="occupation" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
-                    <p class="col-span-2 flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Husband/Wife (if married):</span><x-citizen.doc-field :bind="$bind" field="spouse_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
+                    <p class="@md:col-span-2 flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Husband/Wife (if married):</span><x-citizen.doc-field :bind="$bind" field="spouse_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                 </div>
                 <p>Issued this <span x-text="issuanceDate"></span> upon request of the herein interested party for the <span class="font-semibold">LATE REGISTRATION of his/her birth</span> at the Municipal Registry Office of Esperanza, Masbate.</p>
             </div>
@@ -300,7 +300,7 @@
             <div class="space-y-2.5">
                 <p>This is to certify that <x-citizen.doc-field :bind="$bind" field="subject_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, is a bonafide resident of this Barangay.</p>
                 <p>This further certifies for the other information of the above-named person, to wit:</p>
-                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
+                <div class="grid grid-cols-1 @md:grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Father:</span><x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden Name):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Date of Birth:</span><x-citizen.doc-field :bind="$bind" field="date_of_birth" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
@@ -309,7 +309,7 @@
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Citizenship:</span><x-citizen.doc-field :bind="$bind" field="citizenship" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Civil Status:</span><x-citizen.doc-field :bind="$bind" field="civil_status" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Occupation:</span><x-citizen.doc-field :bind="$bind" field="occupation" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
-                    <p class="col-span-2 flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Husband/Wife:</span><x-citizen.doc-field :bind="$bind" field="spouse_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
+                    <p class="@md:col-span-2 flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Husband/Wife:</span><x-citizen.doc-field :bind="$bind" field="spouse_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                 </div>
                 <p>Issued upon request of the herein interested party for the <span class="font-semibold">Registration of NATIONAL ID</span> and for whatever legal purposes this will serve him/her best.</p>
             </div>
@@ -347,7 +347,7 @@
         <template x-if="{{ $docKey }} === 'brgy_business_permit'">
             <div class="space-y-2.5">
                 <p class="font-semibold uppercase text-center tracking-wide">Barangay Business Permit</p>
-                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
+                <div class="grid grid-cols-1 @md:grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Proprietor:</span><x-citizen.doc-field :bind="$bind" field="proprietor_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Nature of Business:</span><x-citizen.doc-field :bind="$bind" field="business_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Business Location:</span><x-citizen.doc-field :bind="$bind" field="business_location" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
@@ -392,18 +392,22 @@
          "Certified by:", "Released by" and the validity line. -->
     <div class="relative mt-auto pt-6 text-[12px] text-slate-800">
         {{-- Late Registration: thumbmarks and picture, taken at the barangay hall --}}
-        <div x-show="{{ $docKey }} === 'brgy_cert_late_registration'" class="flex items-end gap-4 mb-4 text-[10px] text-slate-500">
+        <div x-show="{{ $docKey }} === 'brgy_cert_late_registration'" class="flex flex-wrap items-end gap-4 mb-4 text-[10px] text-slate-500">
             <div class="border border-slate-500 w-[37mm] h-[26mm] flex items-end justify-center pb-1">Right Thumbmark</div>
             <div class="border border-slate-500 w-[39mm] h-[26mm] flex items-end justify-center pb-1">Left Thumbmark</div>
             <div class="border border-slate-500 w-[30mm] h-[26mm] flex items-end justify-center pb-1">Picture</div>
         </div>
 
-        <div class="flex items-end justify-between gap-6">
+        {{-- The rows wrap on a paper narrower than the page (a phone): the
+             Punong Barangay's block went past the edge and was cut off
+             (sweep 2026-11-18). The sizes stay the paper's own, and a printed
+             or downloaded 210mm page has room for every row as it is. --}}
+        <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
             {{-- The requester's line, as each paper words it --}}
-            <div class="text-center" x-show="!['brgy_residency', 'brgy_indigency', 'brgy_first_time_jobseeker'].includes({{ $docKey }})">
-                <div class="flex items-end gap-3">
-                    <div>
-                        <div class="w-44 border-b border-slate-500 mb-1"></div>
+            <div class="text-center min-w-0 max-w-full" x-show="!['brgy_residency', 'brgy_indigency', 'brgy_first_time_jobseeker'].includes({{ $docKey }})">
+                <div class="flex flex-wrap items-end gap-3">
+                    <div class="max-w-full">
+                        <div class="w-44 max-w-full border-b border-slate-500 mb-1"></div>
                         <p class="text-[10px] text-slate-500" x-text="['brgy_clearance', 'brgy_business_clearance'].includes({{ $docKey }}) ? 'Resident Signature' : 'Signature over Printed Name of the requester'"></p>
                     </div>
                     <div x-show="['brgy_clearance', 'brgy_business_clearance'].includes({{ $docKey }})" class="border border-slate-500 w-[40mm] h-[22mm] flex items-end justify-center pb-1 text-[10px] text-slate-500">Right Thumbmark</div>

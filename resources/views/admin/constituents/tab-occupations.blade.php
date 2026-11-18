@@ -38,7 +38,15 @@
                 const body = { value: this.open.value, status: this.open.status, livelihood_code: this.choice.livelihood_code, livelihood_other: this.choice.livelihood_other || null, import: this.importRef || undefined };
                 if (this.picked.length) body.refs = this.picked;
                 const res = await $api.post('/admin/livelihood/review/classify', body);
-                this.$dispatch('toast', { message: res.data.classified + (res.data.classified === 1 ? ' record' : ' records') + ' classified as ' + this.$store.livelihood.label(res.data.code) + '.', variant: 'success' });
+                // classified counts only what settled; a record whose resident chose
+                // a different occupation on their account keeps the choice but stays
+                // in conflict, and is counted in still_conflict (QA 2026-11-18 #58).
+                const n = Number(res.data?.classified || 0);
+                const left = Number(res.data?.still_conflict || 0);
+                const parts = [];
+                if (n || !left) parts.push(n + (n === 1 ? ' record' : ' records') + ' classified as ' + this.$store.livelihood.label(res.data.code) + '.');
+                if (left) parts.push(left + (left === 1 ? ' record is' : ' records are') + ' still in conflict: the resident chose a different occupation on their account. Pick the one they chose, or ask them to change theirs.');
+                this.$dispatch('toast', { message: parts.join(' '), variant: left ? 'warning' : 'success' });
                 this.open = null;
                 await this.load();
             } catch (err) {
@@ -95,8 +103,8 @@
                         <td class="px-4 py-2.5 text-right tabular-nums" x-text="row.residents"></td>
                         <td class="px-4 py-2.5 text-right tabular-nums" x-text="row.accounts"></td>
                         <td class="px-4 py-2.5 text-right">
-                            <button type="button" x-show="row.residents > 0" @click="review(row)" class="text-xs font-medium text-brand-600 hover:text-brand-700">Review</button>
-                            <span x-show="row.residents === 0" class="text-[11px] text-ink-muted">Follows the registry</span>
+                            <button type="button" x-show="row.residents > 0 || row.accounts > 0" @click="review(row)" class="text-xs font-medium text-brand-600 hover:text-brand-700">Review</button>
+                            <span x-show="row.residents === 0 && !(row.accounts > 0)" class="text-[11px] text-ink-muted">Follows the registry</span>
                         </td>
                     </tr>
                 </template>
@@ -111,7 +119,7 @@
                 <p class="text-xs text-ink-muted">Typed as</p>
                 <p class="text-base font-bold text-ink" x-text="open ? open.value : ''"></p>
                 <p class="text-xs text-amber-700 mt-1" x-show="open && open.status === 'likely_test'">These look like test entries. Fix or remove the test records in the registry rather than classifying them as real work.</p>
-                <p class="text-xs text-rose-700 mt-1" x-show="open && open.status === 'conflict'">The registry record and the resident's app account say different things. Both are shown below; your choice applies to the registry record and the account follows it.</p>
+                <p class="text-xs text-rose-700 mt-1" x-show="open && open.status === 'conflict'">The registry record and the resident's app account say different things. Both are shown below. It is settled only when you pick the occupation the resident chose on their account; any other choice is kept on the record, but it stays in conflict until the resident changes theirs.</p>
             </div>
             <button type="button" @click="open = null" class="text-xs text-ink-muted hover:text-ink">Close</button>
         </div>
@@ -138,6 +146,9 @@
                 </tbody>
             </table>
             <p x-show="recordsLoading" class="text-xs text-ink-muted p-3">Loading records…</p>
+            {{-- Held only by app accounts with no registry record (QA 2026-11-18 #58):
+                 the server now classifies those accounts directly by the typed words. --}}
+            <p x-show="!recordsLoading && open && records.length === 0" x-cloak class="text-xs text-ink-muted p-3">No registry record says this, only residents' app accounts that are not linked to a registry record. Your choice classifies those accounts. An account linked to a registry record follows its record.</p>
         </div>
 
         <div x-show="$store.session.canPerm('const_resident', 'edit')" class="space-y-3">

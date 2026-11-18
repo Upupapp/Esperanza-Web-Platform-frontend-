@@ -975,9 +975,14 @@
 
         <x-documents.verify-strip :doc="$verify" :doc-key="$docKey" />
 
-        <div class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5 mt-5">
+        {{-- Not on the Certificate of Indigency: it is the office's own paper,
+             issued as it stands, not a request for one (as the Request Slip
+             badge above). It printed "not the final certificate" on the issued
+             certificate (sweep 2026-11-18). Only the MCRO papers are checked
+             against the civil registry. --}}
+        <div x-show="{{ $docKey }} !== 'dokyu_indigency'" class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5 mt-5">
             <i data-lucide="info" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
-            <p class="text-[11px] text-slate-500">This is a summary of your request, not the final certificate. The <span x-text="{{ $office }}"></span> will prepare and release the official document upon verification against the civil registry.</p>
+            <p class="text-[11px] text-slate-500">This is a summary of your request, not the final certificate. The <span x-text="{{ $office }}"></span> will prepare and release the official document upon verification<span x-show="String(({{ $docKey }}) || '').startsWith('mcro_')"> against the civil registry</span>.</p>
         </div>
     </div>
     </div>

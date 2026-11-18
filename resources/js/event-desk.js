@@ -94,6 +94,11 @@ function downloadCsv(filename, rows) {
 
 const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'event';
 const cancelled = (r) => !!r.cancelled_at;
+// A certificate still in force. A revoked one (POST /documents/{cn}/revoke,
+// which the desk tells the officer to do before unmarking) counts as none, as
+// the server's EventRegistrations::holdsCertificate: the row can be unmarked
+// and issued again (QA 2026-11-18 #157).
+const liveCert = (r) => !!(r && r.certificate && !r.certificate.revoked);
 
 export function eventDesk() {
     return {
@@ -168,7 +173,7 @@ export function eventDesk() {
                 if (seq !== this.edSeq) return;
                 // A tick not saved yet survives the reload (a walk-in added meanwhile).
                 const unsaved = new Map(this.edDirty().map((r) => [r.id, r._attended]));
-                this.edRows = (res.data || []).map((r) => ({ ...r, _attended: unsaved.has(r.id) && !r.certificate ? unsaved.get(r.id) : r.attended === true }));
+                this.edRows = (res.data || []).map((r) => ({ ...r, _attended: unsaved.has(r.id) && !liveCert(r) ? unsaved.get(r.id) : r.attended === true }));
             } catch {
                 if (seq === this.edSeq) this.edFailed = true;
             } finally {
@@ -186,7 +191,7 @@ export function eventDesk() {
                 attended: here,
                 waiting: live.length - here,
                 cancelled: this.edRows.length - live.length,
-                certificates: live.filter((r) => r.certificate).length,
+                certificates: live.filter((r) => liveCert(r)).length,
             };
         },
         edCapacityText() {
@@ -234,7 +239,10 @@ export function eventDesk() {
             return r.attended === false ? 'text-rose-700' : 'text-ink-muted';
         },
         /** Attendance is marked on the day and after; a certificate already issued keeps it. */
-        edCanMark(r) { return this.edCanEdit() && this.edDayCome() && !cancelled(r) && !r.certificate; },
+        edCanMark(r) { return this.edCanEdit() && this.edDayCome() && !cancelled(r) && !liveCert(r); },
+        /** The row holds a certificate in force (a revoked one is shown as revoked). */
+        edHasCert(r) { return liveCert(r); },
+        edCertRevoked(r) { return !!(r && r.certificate && r.certificate.revoked); },
         edDirty() { return this.edRows.filter((r) => !cancelled(r) && r._attended !== (r.attended === true)); },
 
         async edSaveAttendance(quiet = false) {
@@ -378,14 +386,23 @@ export function eventDesk() {
             const body = this.edMode === 'new'
                 ? { name: this.edNew.name.trim(), barangay: this.edNew.barangay, contact: this.edNew.contact.trim() || null }
                 : (p.account_no ? { account_no: p.account_no } : { individual_ref: p.individual_ref });
-            const mark = this.edMark && this.edDayCome();
+            const onDay = this.edDayCome();
+            const mark = this.edMark && onDay;
+            // From the day of the event the server counts someone added as
+            // attended unless told otherwise, so the box is sent either way:
+            // unticked was saved as Attended, and earned a certificate
+            // (2026-11-18).
+            if (onDay) body.attended = mark;
             this.edBusy = true;
             this.edError = '';
             try {
                 const res = await api.post('/admin/events/' + encodeURIComponent(this.edEvent.key) + '/registrations', body);
                 const row = res?.data || {};
-                if (mark && row.id !== undefined && row.attended !== true) {
-                    await api.post('/admin/events/' + encodeURIComponent(this.edEvent.key) + '/attendance', { registrations: [{ id: row.id, attended: true }] });
+                if (onDay && !mark && row.id !== undefined && row.attended === false) {
+                    // Unticked is "not here yet", like anyone registered, not
+                    // "did not attend". They are added either way; should
+                    // this fail, the list shows what was saved.
+                    await api.post('/admin/events/' + encodeURIComponent(this.edEvent.key) + '/attendance', { registrations: [{ id: row.id, attended: null }] }).catch(() => null);
                 }
                 const who = row.name || body.name || p?.name || 'The person';
                 toast(who + (mark ? ' is added and checked in.' : ' is added to the list.') + (row.code ? ' Code ' + showCode(row.code) + '.' : ''));
@@ -418,7 +435,7 @@ export function eventDesk() {
 
         // ---- Certificates
         edCertOn() { return !!this.edEvent?.certificate?.enabled; },
-        edIssueCount() { return this.edRows.filter((r) => !cancelled(r) && r._attended && !r.certificate).length; },
+        edIssueCount() { return this.edRows.filter((r) => !cancelled(r) && r._attended && !liveCert(r)).length; },
         /** '' when certificates can be issued now, else why not. */
         edIssueBlock() {
             const e = this.edEvent;
