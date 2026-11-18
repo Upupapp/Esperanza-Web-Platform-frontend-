@@ -100,7 +100,7 @@
             // The server shows a Department Head their office's forms and those
             // of their own staff that wait on them, not every office's.
             get isOfficeHead() { return this.$store.session.account?.roleKey === 'department_head'; },
-            // Barangay staff act on internal forms "only in their brgy" (owner,
+            // Barangay staff act on internal forms 'only in their brgy' (owner,
             // 2026-11-18; backend InternalFormController::scopeToBarangay and
             // SubmissionEngine::inBarangayOf): an account held to one barangay
             // decides that barangay's forms only and does not list another
