@@ -35,6 +35,33 @@ class InternalFormsVisibilityTest extends TestCase
         $this->assertStringContainsString("Other offices' forms are hidden.", $page);
     }
 
+    /**
+     * Owner, 2026-11-18: barangay staff approve internal-form steps "only in
+     * their brgy". The server lists a barangay account no other barangay's
+     * forms, and lets it decide its own barangay's only (backend
+     * InternalFormController::scopeToBarangay, SubmissionEngine::inBarangayOf);
+     * the page shows Approve and Reject only where can_decide says so and the
+     * form is in the officer's barangay ($store.session.inScope), and says why.
+     */
+    public function test_barangay_staff_decide_their_own_barangays_forms_only(): void
+    {
+        $page = $this->page();
+
+        $this->assertStringContainsString('return !!s?.can_decide && !!this.$store.session.inScope?.(s.barangay ?? null);', $page);
+        $this->assertSame(2, substr_count($page, 'x-show="mayDecide(s)"'), 'the row separator and the row buttons');
+        $this->assertSame(2, substr_count($page, 'x-show="mayDecide(viewing)"'), 'Reject and Approve on the opened form');
+        $this->assertStringNotContainsString('x-show="s.can_decide"', $page, 'no button on can_decide alone');
+        $this->assertStringNotContainsString('x-show="viewing?.can_decide"', $page);
+        $this->assertStringContainsString('x-show="!mayDecide(s) && s.step"', $page);
+
+        // Municipal accounts and the Super Administrator are not held to one.
+        $this->assertStringContainsString("if (!a || a.roleKey === 'super_admin' || a.scope === 'Municipal') return null;", $page);
+        $this->assertStringContainsString('x-show="ownBarangay !== null"', $page);
+        $this->assertStringContainsString("Municipal forms show here, but their steps are decided by municipal staff. Other barangays' forms are hidden.", $page);
+        $this->assertStringContainsString('x-show="isAuthority && !isOfficeHead && ownBarangay === null"', $page, 'no "Full visibility" for a barangay account');
+        $this->assertStringContainsString('x-text="\'Brgy. \' + s.barangay"', $page, 'a row names its barangay');
+    }
+
     public function test_the_office_tabs_scroll_inside_their_card(): void
     {
         $this->assertStringContainsString('surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto', $this->page());

@@ -133,7 +133,7 @@ class FullQaRunFixesTest extends TestCase
         $view = $this->source('resources/views/admin/internal-forms.blade.php');
 
         $this->assertStringContainsString("/decide', {", $view);
-        $this->assertStringContainsString('x-show="s.can_decide"', $view, 'only on the officer whose step it is');
+        $this->assertStringContainsString('x-show="mayDecide(s)"', $view, 'only on the officer whose step it is (can_decide, in their barangay)');
         $this->assertStringContainsString("decision?.kind === 'reject' && !decisionRemarks.trim()", $view, 'a rejection needs a reason');
     }
 

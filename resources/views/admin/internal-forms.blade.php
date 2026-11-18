@@ -100,6 +100,24 @@
             // The server shows a Department Head their office's forms and those
             // of their own staff that wait on them, not every office's.
             get isOfficeHead() { return this.$store.session.account?.roleKey === 'department_head'; },
+            // Barangay staff act on internal forms "only in their brgy" (owner,
+            // 2026-11-18; backend InternalFormController::scopeToBarangay and
+            // SubmissionEngine::inBarangayOf): an account held to one barangay
+            // decides that barangay's forms only and does not list another
+            // barangay's; it still lists the municipal ones (barangay null)
+            // and its own.
+            // Null here for a municipal account and the Super Administrator,
+            // as $store.session.inScope reads them. This drives the copy.
+            get ownBarangay() {
+                const a = this.$store.session.account;
+                if (!a || a.roleKey === 'super_admin' || a.scope === 'Municipal') return null;
+                return a.scope || '';
+            },
+            // Approve and Reject show where the server says it is this
+            // officer's turn (can_decide) and the form is in their barangay.
+            mayDecide(s) {
+                return !!s?.can_decide && !!this.$store.session.inScope?.(s.barangay ?? null);
+            },
             get filteredForms() {
                 const q = this.search.trim().toLowerCase();
                 return (this.currentOffice?.forms || []).filter(f => !q || f.form.toLowerCase().includes(q));
@@ -357,7 +375,11 @@
 
         <div x-show="!loading && !failed">
         <!-- Visibility banner: cross-office roles see every submission, an office's officers their office's -->
-        <div x-show="isAuthority && !isOfficeHead" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
+        <div x-show="ownBarangay !== null" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4" data-barangay-view>
+            <i data-lucide="map-pin" class="w-4 h-4 text-purple-500 shrink-0"></i>
+            <p class="text-xs text-purple-700"><strong x-text="ownBarangay ? 'Brgy. ' + ownBarangay : 'Your barangay'"></strong> only — you approve or reject steps on your barangay's forms only (those that name it, or that its staff filed). Municipal forms show here, but their steps are decided by municipal staff. Other barangays' forms are hidden.</p>
+        </div>
+        <div x-show="isAuthority && !isOfficeHead && ownBarangay === null" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="shield-check" class="w-4 h-4 text-brand-500 shrink-0"></i>
             <p class="text-xs text-brand-700">Full visibility — as <strong x-text="$store.session.account?.role || 'an administrator'"></strong>, you can see every staff member's submissions across all offices.</p>
         </div>
@@ -544,7 +566,10 @@
                 <template x-for="s in filteredSubmitted" :key="s.ref">
                     <tr class="hover:bg-white/60 transition-colors">
                         <td class="px-4 py-3 font-mono text-xs text-ink-muted" x-text="s.ref"></td>
-                        <td class="px-4 py-3 text-slate-700 font-medium" x-text="s.form"></td>
+                        <td class="px-4 py-3 text-slate-700 font-medium">
+                            <span x-text="s.form"></span>
+                            <span x-show="s.barangay" class="block text-[11px] font-normal text-ink-muted" x-text="'Brgy. ' + s.barangay"></span>
+                        </td>
                         <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-text="s.office"></td>
                         <td class="px-4 py-3 text-ink-muted hidden lg:table-cell" x-text="s.submitted_by"></td>
                         <td class="px-4 py-3 text-ink-muted hidden sm:table-cell" x-text="s.submitted ? new Date(s.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'"></td>
@@ -553,13 +578,13 @@
                         </td>
                         <td class="px-4 py-3 text-left whitespace-nowrap">
                             <button type="button" @click="openView(s)" class="text-xs font-semibold text-brand-600 hover:underline mr-1.5" :aria-label="'View ' + s.ref">View</button>
-                            <span x-show="s.can_decide" class="text-slate-200" aria-hidden="true">·</span>
-                            <div x-show="s.can_decide" class="inline-flex items-center gap-1.5">
+                            <span x-show="mayDecide(s)" class="text-slate-200" aria-hidden="true">·</span>
+                            <div x-show="mayDecide(s)" class="inline-flex items-center gap-1.5">
                                 <button type="button" @click="startDecision(s, 'approve')" class="text-xs font-semibold text-emerald-700 hover:underline">Approve</button>
                                 <span class="text-slate-200" aria-hidden="true">·</span>
                                 <button type="button" @click="startDecision(s, 'reject')" class="text-xs font-semibold text-rose-600 hover:underline">Reject</button>
                             </div>
-                            <span x-show="!s.can_decide && s.step" class="text-[11px] text-ink-muted" x-text="'Waiting on ' + (s.step?.office || s.step?.label || 'the next step')"></span>
+                            <span x-show="!mayDecide(s) && s.step" class="text-[11px] text-ink-muted" x-text="'Waiting on ' + (s.step?.office || s.step?.label || 'the next step')"></span>
                         </td>
                     </tr>
                 </template>
@@ -625,8 +650,8 @@
                     </template>
                 </div>
                 <div class="flex flex-wrap items-center justify-end gap-2 px-5 py-3 border-t border-brand-600/10">
-                    <button type="button" x-show="viewing?.can_decide" @click="startDecision(viewing, 'reject')" class="px-4 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-2xl">Reject</button>
-                    <button type="button" x-show="viewing?.can_decide" @click="startDecision(viewing, 'approve')" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-2xl">Approve</button>
+                    <button type="button" x-show="mayDecide(viewing)" @click="startDecision(viewing, 'reject')" class="px-4 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-2xl">Reject</button>
+                    <button type="button" x-show="mayDecide(viewing)" @click="startDecision(viewing, 'approve')" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-2xl">Approve</button>
                     <button type="button" @click="printPaper()" :disabled="!viewing || viewing.loading" class="px-4 py-2 text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-2xl inline-flex items-center gap-1.5 disabled:opacity-40"><i data-lucide="printer" class="w-3.5 h-3.5"></i>Print</button>
                 </div>
             </div>

@@ -107,7 +107,7 @@ class OfficePapersTest extends TestCase
         $this->assertStringContainsString('data: Object.keys(filled).length ? filled : undefined', $page, "a step's own part goes with the decision");
         $this->assertStringContainsString('Other entries (earlier version of this form)', $page);
         // A Department Head is told what the server shows them: their office's view.
-        $this->assertStringContainsString('x-show="isAuthority && !isOfficeHead"', $page);
+        $this->assertStringContainsString('x-show="isAuthority && !isOfficeHead && ownBarangay === null"', $page);
         // A wide field spans the row without adding columns to a one-column grid (the approval dialog).
         $this->assertStringContainsString("? 'col-span-full' : ''", $this->source('resources/views/components/admin/internal-forms/field-input.blade.php'));
         $this->assertStringContainsString('paperSignatures(viewing)', $this->source('resources/views/components/admin/internal-forms/paper.blade.php'));
