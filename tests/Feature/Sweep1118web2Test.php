@@ -177,9 +177,9 @@ class Sweep1118web2Test extends TestCase
         $page = $this->page();
         $tab = $this->tab('tab-resources');
 
-        $this->assertStringContainsString("deployed: r.deployed || 0 };", $page);
-        $this->assertStringContainsString("Number(this.resourceForm.quantity) < (this.resourceForm.deployed || 0)", $page);
-        $this->assertStringContainsString("|| this.resourceQuantityTooLow) return;", $page);
+        $this->assertStringContainsString('deployed: r.deployed || 0 };', $page);
+        $this->assertStringContainsString('Number(this.resourceForm.quantity) < (this.resourceForm.deployed || 0)', $page);
+        $this->assertStringContainsString('|| this.resourceQuantityTooLow) return;', $page);
         // deployed is shown, never sent.
         $this->assertDoesNotMatchRegularExpression('/const payload = \{ name: this\.resourceForm\.name[^\n]*deployed/', $page);
 

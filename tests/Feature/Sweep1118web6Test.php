@@ -101,7 +101,7 @@ class Sweep1118web6Test extends TestCase
         $this->assertStringContainsString('if (onDay) body.attended = mark;', $save);
         $this->assertLessThan(strpos($save, "'/registrations', body)"), strpos($save, 'if (onDay) body.attended = mark;'));
         // Unticked reads "Not here yet", not "Did not attend".
-        $this->assertStringContainsString("{ registrations: [{ id: row.id, attended: null }] }", $save);
+        $this->assertStringContainsString('{ registrations: [{ id: row.id, attended: null }] }', $save);
         $this->assertStringNotContainsString('row.attended !== true', $save);
     }
 

@@ -52,7 +52,7 @@ class Sweep1118web1Test extends TestCase
         $this->assertStringContainsString("if (!head || head === (selectedFamily.head_name || '').trim()) delete payload.head_name;", $detail);
         $this->assertStringContainsString('else { payload.head_name = head; payload.barangay = selectedFamily.barangay; }', $detail);
         $this->assertStringContainsString("await \$api.put('/admin/families/' + selectedFamily.ref, payload);", $detail);
-        $this->assertStringNotContainsString("selectedFamily.ref, this.edit)", $detail);
+        $this->assertStringNotContainsString('selectedFamily.ref, this.edit)', $detail);
     }
 
     /** The list rows carry no tags, so both tag filters emptied their lists. */

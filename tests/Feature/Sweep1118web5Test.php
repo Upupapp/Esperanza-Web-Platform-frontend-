@@ -173,7 +173,7 @@ class Sweep1118web5Test extends TestCase
         $page = $this->source('resources/views/citizen/document-requests.blade.php');
         $this->assertStringContainsString(".filter((f) => f.type === 'tel' && !this.isLandline(f))", $page);
         $this->assertStringContainsString(":maxlength=\"f.type === 'tel' ? (isLandline(f) ? 60 : 11) : null\"", $page);
-        $this->assertStringContainsString("formData[f.key] = isLandline(f) ? \$event.target.value.replace(", $page);
+        $this->assertStringContainsString('formData[f.key] = isLandline(f) ? $event.target.value.replace(', $page);
 
         // The page's own test, run on the real forms' telephone fields.
         $this->assertSame(1, preg_match("/isLandline\\(f\\) \\{\\s*return f\\?\\.type === 'tel' && (\\/.+?\\/i)\\.test\\(/", $page, $m));

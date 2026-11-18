@@ -26,8 +26,8 @@ class Sweep1118webLeftoversTest extends TestCase
         $this->assertStringContainsString("if (p.status === 'Pending Review') return true;", $page);
         $this->assertStringContainsString("return p.status === 'Rejected' && !['Rejected', 'Cancelled'].includes(p.request_status);", $page);
         $this->assertStringContainsString('<div x-show="canReceipt(payments[selected])" x-cloak>', $page);
-        $this->assertStringContainsString("<template x-if=\"selected !== null && canReceipt(payments[selected]) && !showRejectReason\">", $page);
-        $this->assertStringContainsString("<template x-if=\"selected !== null && !(canReceipt(payments[selected]) && !showRejectReason)\">", $page);
+        $this->assertStringContainsString('<template x-if="selected !== null && canReceipt(payments[selected]) && !showRejectReason">', $page);
+        $this->assertStringContainsString('<template x-if="selected !== null && !(canReceipt(payments[selected]) && !showRejectReason)">', $page);
         // Only a payment awaiting review can be refused.
         $this->assertStringContainsString("<template x-if=\"payments[selected].status === 'Pending Review'\">\n                            <x-ui.button variant=\"danger\"", $page);
         $this->assertStringNotContainsString("<div x-show=\"payments[selected].status === 'Pending Review'\" x-cloak>", $page);
@@ -39,7 +39,7 @@ class Sweep1118webLeftoversTest extends TestCase
     /** #238: Sakuna's and Reports' CSVs opened a cell typed as =HYPERLINK(...) as a formula. */
     public function test_sakuna_and_reports_csv_cells_are_guarded_against_formulas(): void
     {
-        $guard = "const guard = (v, t) => typeof v !== 'number' && /^[=+\\-@\\t\\r]/.test(t) ? \"'\" + t : t;";
+        $guard = "const guard = (v, t) => typeof v !== 'number' && /^[=+\\-@\\t\\r]/.test(t) ? String.fromCharCode(39) + t : t;";
         foreach (['resources/views/admin/sakuna.blade.php', 'resources/views/admin/reports.blade.php'] as $path) {
             $src = $this->source($path);
             $this->assertStringContainsString($guard, $src, $path);
@@ -160,7 +160,7 @@ class Sweep1118webLeftoversTest extends TestCase
 
         $this->assertStringContainsString('const liveCert = (r) => !!(r && r.certificate && !r.certificate.revoked);', $js);
         $this->assertStringContainsString('edCanMark(r) { return this.edCanEdit() && this.edDayCome() && !cancelled(r) && !liveCert(r); },', $js);
-        $this->assertStringContainsString("r._attended && !liveCert(r)).length; },", $js);
+        $this->assertStringContainsString('r._attended && !liveCert(r)).length; },', $js);
         $this->assertStringNotContainsString('&& !r.certificate;', $js);
         $this->assertStringNotContainsString('&& !r.certificate)', $js);
         $this->assertStringContainsString('x-show="edHasCert(r)" @click="edCert(r)"', $view);
@@ -241,7 +241,7 @@ class Sweep1118webLeftoversTest extends TestCase
     {
         $page = $this->source('resources/views/citizen/document-requests.blade.php');
 
-        $this->assertStringContainsString("aboutAnotherByKey: @js(\$aboutAnotherByKey),", $page);
+        $this->assertStringContainsString('aboutAnotherByKey: @js($aboutAnotherByKey),', $page);
         $this->assertStringContainsString("->filter(fn (\$d) => collect(\$d['fields'] ?? [])->contains(fn (\$f) => (\$f['prefill'] ?? true) === false))", $page);
         $this->assertStringContainsString('if (formKeys && (personKeys.includes(key) || formKeys.includes(key))) continue;', $page);
 

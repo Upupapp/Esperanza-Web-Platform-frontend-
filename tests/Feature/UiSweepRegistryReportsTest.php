@@ -26,7 +26,7 @@ class UiSweepRegistryReportsTest extends TestCase
 
         $this->assertStringContainsString('this.loadTileCounts(may);', $page);
         $this->assertStringContainsString("meta('const_resident', '/admin/residents', { counts: 1 }),", $page);
-        $this->assertStringContainsString("if (!this.loading && !this.failed) return listed;", $page);
+        $this->assertStringContainsString('if (!this.loading && !this.failed) return listed;', $page);
         $this->assertStringContainsString("return Object.fromEntries(Object.keys(listed).map(k => [k, c[k] ?? '—']));", $page);
         // The Data Quality tab's count is the tile's, not the still-empty list's.
         $this->assertStringContainsString('bg-rose-100 text-rose-600" x-text="activeStats.issues"', $page);

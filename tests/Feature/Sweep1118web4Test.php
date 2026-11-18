@@ -111,7 +111,7 @@ class Sweep1118web4Test extends TestCase
     public function test_the_pdf_viewer_never_draws_an_earlier_file(): void
     {
         $app = $this->app();
-        $this->assertStringContainsString("isCurrent = () => true } = {}) => {", $app);
+        $this->assertStringContainsString('isCurrent = () => true } = {}) => {', $app);
         // Checked before the container is cleared and around every page.
         $this->assertSame(3, substr_count($app, 'if (stale()) return null;'));
         $this->assertStringContainsString("if (isCurrent()) return false;\n        doc.destroy();", $app);

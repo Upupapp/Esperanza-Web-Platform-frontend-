@@ -49,7 +49,7 @@ class Sweep1118web3Test extends TestCase
         // An empty field of the same guardian is left out, never sent as null.
         $this->assertStringContainsString('if (v) body[k] = v;', $save);
         $this->assertStringContainsString('else if (!keep) body[k] = null;', $save);
-        $this->assertStringNotContainsString("contact: f.contact.trim() || null, address: f.address.trim() || null", $save);
+        $this->assertStringNotContainsString('contact: f.contact.trim() || null, address: f.address.trim() || null', $save);
     }
 
     /** A failed Submit for review after the create left the form open, and a retry made a second event. */
@@ -101,7 +101,7 @@ class Sweep1118web3Test extends TestCase
     public function test_the_feedback_queue_never_mixes_two_filters(): void
     {
         $js = $this->records();
-        $this->assertStringContainsString("{ busy: () => this.sending || this.assigning || this.routing || this.loading });", $js);
+        $this->assertStringContainsString('{ busy: () => this.sending || this.assigning || this.routing || this.loading });', $js);
 
         $load = $this->method($js, "async load(quiet = false) {\n            const seq = ++this.seq;");
         $this->assertStringContainsString("if (!quiet) {\n                this.loading = true;\n                this.failed = false;\n                // The pages Load more added were the old filter's.\n                this.page = 1;\n            }", $load);
@@ -154,7 +154,7 @@ class Sweep1118web3Test extends TestCase
         $view = $this->source('resources/views/admin/settings/site-content.blade.php');
         $this->assertStringContainsString('<input aria-label="Label (Filipino)" type="text" x-model="ch.label_fil"', $view);
         $this->assertStringContainsString('>Label (Filipino)</label>', $view);
-        $this->assertStringContainsString("sections: doc.sections || [], channels: doc.channels || [],", $view);
+        $this->assertStringContainsString('sections: doc.sections || [], channels: doc.channels || [],', $view);
         $this->assertStringNotContainsString('@error=', $view);
         $this->assertStringNotContainsString('<script', $view);
     }
