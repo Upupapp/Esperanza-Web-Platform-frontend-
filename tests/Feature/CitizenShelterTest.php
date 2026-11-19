@@ -63,7 +63,10 @@ class CitizenShelterTest extends TestCase
         $relief = $this->source('resources/views/admin/partials/sakuna/tab-relief.blade.php');
         $evacuees = $this->source('resources/views/admin/partials/sakuna/tab-evacuees.blade.php');
 
-        $this->assertStringContainsString("'Resident confirmed in app' : 'Resident says not received'", $relief);
+        // The resident answers on the website too, so neither line says "in the app" (19 Nov).
+        $this->assertStringContainsString("'Resident confirmed received' : 'Resident says not received'", $relief);
+        $this->assertStringContainsString("? 'Confirmed received' + (reliefViewing", $relief);
+        $this->assertStringNotContainsString('in the app', $relief);
         $this->assertStringContainsString("x-show=\"f.source === 'kept_by_resident'\"", $evacuees);
         $this->assertStringContainsString("'Filled from the list the resident keeps: '", $evacuees);
     }

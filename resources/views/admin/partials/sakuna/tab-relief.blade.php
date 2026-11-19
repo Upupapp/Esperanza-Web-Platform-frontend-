@@ -306,7 +306,7 @@
             <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Recorded</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.created_at ? new Date(reliefViewing.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></dd></div>
             <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Released</dt><dd class="font-medium text-ink-body mt-0.5" x-text="reliefViewing?.distributed_at ? new Date(reliefViewing.distributed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not yet'"></dd></div>
             <div class="bg-slate-50 rounded-xl p-3"><dt class="text-xs text-ink-muted">Resident's answer</dt><dd class="font-medium mt-0.5" :class="reliefViewing?.acknowledgement === 'received' ? 'text-emerald-700' : (reliefViewing?.acknowledgement ? 'text-amber-800' : 'text-ink-body')"
-                x-text="reliefViewing?.acknowledgement === 'received' ? 'Confirmed in the app' + (reliefViewing.acknowledged_at ? ', ' + new Date(reliefViewing.acknowledged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '') : (reliefViewing?.acknowledgement ? 'Says not received' : 'No answer yet')"></dd></div>
+                x-text="reliefViewing?.acknowledgement === 'received' ? 'Confirmed received' + (reliefViewing.acknowledged_at ? ', ' + new Date(reliefViewing.acknowledged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '') : (reliefViewing?.acknowledgement ? 'Says not received' : 'No answer yet')"></dd></div>
         </dl>
     </div>
 </div>
