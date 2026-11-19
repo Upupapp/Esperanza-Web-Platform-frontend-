@@ -33,7 +33,7 @@ class PastOfficeRecordsTest extends TestCase
         // Everyday Taglish, as the app says it (owner, 19 Nov; guide review 20 Nov).
         $this->assertStringContainsString('fil="Mga dating record mula sa office"', $card);
         $this->assertStringContainsString("t('Recorded by the office', 'Naitala ng office')", $js);
-        $this->assertStringNotContainsString('Itinala ng opisina', $card . $js);
+        $this->assertStringNotContainsString('Itinala ng opisina', $card.$js);
         $this->assertStringNotContainsString('Para makita lamang', $card);
         // A profile's "Widowed" fills the PRPWD's "Widow/er" (20 Nov MSWDO guide).
         $app = $this->source('resources/js/app.js');
