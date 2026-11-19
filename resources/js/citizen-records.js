@@ -6,7 +6,9 @@ import api from './api/client';
 // shows them all ("Dokyu & Tulong Received", the staff profile's card); the
 // Dokyu and Tulong pages show that type's office records under "Past records
 // from the office". Read only: an office's record has no actions, and while
-// the barangay has not yet confirmed the record is theirs nothing of it shows.
+// the barangay has not yet confirmed the record is theirs nothing of it shows;
+// nor do the offices' records before the account is verified (2026-11-19:
+// `pending` then says some wait, and what they filed themselves still shows).
 export function citizenRecords(type = null, pages = {}) {
     return {
         type,

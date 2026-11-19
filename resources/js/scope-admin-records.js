@@ -15,6 +15,7 @@ import api from './api/client';
 import { registerBalitaMedia } from './balita-media';
 import { registerOccasions } from './admin-occasions';
 import { telHref, GUARDIAN_SOURCES } from './guardian-scan';
+import { reasonText } from './resident-import-ui';
 
 const OPEN = ['Submitted', 'Under Review'];
 
@@ -1923,6 +1924,65 @@ export function register(Alpine) {
         },
         rhField(field) { return HISTORY_FIELDS[field] || humanize(field); },
         rhValue: shown,
+    }));
+
+    // ---------------------------------------------------------------------
+    // "Office records that may be this resident's" (2026-11-19), under the
+    // profile's Dokyu & Tulong Received: an office's past records kept by
+    // name only (nobody in the registry was surely them at import), that the
+    // registry's matcher says may be this resident, among the services this
+    // officer may record. "Add to This Resident" asks here first, then links
+    // it and reloads the card above (the page's loadResidentRequests).
+    Alpine.data('officeRecordMatches', () => ({
+        omFor: null,
+        omRows: [],
+        omAsk: null,
+        omBusy: false,
+
+        init() {
+            this.$watch('selectedIndividual?.ref', (ref) => this.omLoad(ref));
+            this.omLoad(this.selectedIndividual?.ref);
+        },
+
+        async omLoad(ref) {
+            if ((ref || null) === this.omFor) return;
+            this.omFor = ref || null;
+            this.omRows = [];
+            this.omAsk = null;
+            if (!ref) return;
+            try {
+                const res = await api.get('/admin/residents/' + encodeURIComponent(ref) + '/office-records/possible', { silent: true });
+                if (this.omFor === ref) this.omRows = res.data || [];
+            } catch {
+                // Nothing to offer: the card above still says what is linked.
+            }
+        },
+        omLine(m) {
+            const day = m.date ? new Date(m.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+            const amount = m.amount ? '₱' + Number(m.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : null;
+            return [m.type === 'tulong' ? 'Tulong' : 'Dokyu', day, amount, m.ref].filter(Boolean).join(' · ');
+        },
+        omWhy(m) {
+            return 'Name in the file: ' + (m.name_in_file || '—') + ' · ' + (m.strength === 'strong' ? 'Strong match' : 'Possible match') + ': ' + reasonText(m.reasons);
+        },
+        async omLink(m) {
+            const ref = this.omFor;
+            if (!ref || this.omBusy) return;
+            this.omBusy = true;
+            try {
+                await api.post('/admin/residents/' + encodeURIComponent(ref) + '/office-records/' + encodeURIComponent(m.ref) + '/link');
+                this.omRows = this.omRows.filter((x) => x.ref !== m.ref);
+                this.omAsk = null;
+                toast(m.ref + ' added to this resident.');
+                if (this.residentRequests?.ref === ref) this.loadResidentRequests(ref);
+            } catch (err) {
+                fail(err, 'Could not add the record.');
+                // Linked by someone else meanwhile, or no longer theirs to add.
+                if (err?.status === 409 || err?.status === 404) this.omRows = this.omRows.filter((x) => x.ref !== m.ref);
+            } finally {
+                this.omBusy = false;
+            }
+        },
     }));
 
     // ---------------------------------------------------------------------

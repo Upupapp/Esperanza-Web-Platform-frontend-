@@ -30,7 +30,7 @@
     <p x-show="loading" class="text-xs text-ink-muted flex items-center gap-1.5"><span><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i></span><x-ui.t fil="Naglo-load…" en="Loading…" /></p>
     <p x-show="!loading && failed" x-cloak class="text-xs text-rose-700"><x-ui.t fil="Hindi ma-load." en="Could not load them." /> <button type="button" class="underline" @click="load()"><x-ui.t fil="Subukang muli" en="Try again" /></button></p>
     @unless($type)
-        <p x-show="!loading && !failed && pending" x-cloak class="text-xs text-ink-muted"><x-ui.t fil="Makikita mo rito ang iyong mga dokyu at tulong kapag nakumpirma ng barangay na iyo ang tala." en="They appear here once your barangay confirms the record is yours." /></p>
+        <p x-show="!loading && !failed && pending" x-cloak class="text-xs text-ink-muted"><x-ui.t fil="Lalabas dito ang mga Dokyu at Tulong mo kapag na-verify na ng barangay ang account mo at na-confirm na sa iyo ang record." en="They appear here once your barangay verifies your account and confirms the record is yours." /></p>
         <p x-show="!loading && !failed && !pending && !list.length" x-cloak class="text-xs text-ink-muted"><x-ui.t fil="Wala pang dokumento o tulong sa iyong tala." en="No documents or assistance on your record yet." /></p>
     @endunless
 
