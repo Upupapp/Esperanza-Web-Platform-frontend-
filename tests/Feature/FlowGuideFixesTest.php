@@ -75,7 +75,7 @@ class FlowGuideFixesTest extends TestCase
 
     public function test_small_wording_fixes(): void
     {
-        $this->assertStringContainsString('Verify your identity above first.', $this->source('resources/views/auth/citizen-register.blade.php'));
+        $this->assertStringContainsString('with the ID check above, or by LGU staff using your valid ID.', $this->source('resources/views/auth/citizen-register.blade.php'));
     }
 
     public function test_an_incident_report_can_be_marked_not_valid_with_a_reason(): void
