@@ -85,7 +85,7 @@ function citizenShelter() {
             if (!received) {
                 note = window.prompt(this.t(
                     'Tell the office what happened (optional). They will check the release.',
-                    'Sabihin sa opisina ang nangyari (opsyonal). Susuriin nila ang paglabas nito.',
+                    'Sabihin sa office kung ano ang nangyari (optional). Iche-check nila ito.',
                 ));
                 if (note === null) return;
             }
