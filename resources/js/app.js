@@ -440,13 +440,34 @@ function profileDefaults(fields, account) {
         const value = byKey[field.key];
         if (value === undefined || value === null || value === '') continue;
         if (!['text', 'number', 'date', 'select', 'tel'].includes(field.type)) continue;
-        if (field.type === 'select' && !(field.options || []).includes(value)) continue;
+        if (field.type === 'select') {
+            const option = matchOption(field.options, value);
+            if (option !== null) out[field.key] = option;
+            continue;
+        }
         out[field.key] = field.type === 'date' ? String(value).slice(0, 10) : value;
     }
     return out;
 }
 
+// The profile's word and the paper's can differ: the profile says
+// "Widowed", the PRPWD form "Widow/er", and the box was left empty
+// (20 Nov MSWDO guide). The same word ignoring case and marks, else the one
+// option that starts the same way; none when it is not clear.
+function matchOption(options, value) {
+    const list = (options || []).filter((o) => typeof o === 'string');
+    if (list.includes(value)) return value;
+    const norm = (s) => String(s ?? '').toLowerCase().replace(/[^a-z]/g, '');
+    const v = norm(value);
+    if (v.length < 4) return null;
+    const same = list.find((o) => norm(o) === v);
+    if (same !== undefined) return same;
+    const near = list.filter((o) => norm(o).length >= 4 && (norm(o).startsWith(v.slice(0, 5)) || v.startsWith(norm(o).slice(0, 5))));
+    return near.length === 1 ? near[0] : null;
+}
+
 window.profileDefaults = profileDefaults;
+window.matchOption = matchOption;
 
 // The family a resident listed in their Resident Profile (GET
 // /citizen/resident-profile, family.members), as rows of a form's family

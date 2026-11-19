@@ -12,7 +12,7 @@
         <h3 class="text-sm font-semibold text-ink flex items-center gap-2">
             <i data-lucide="{{ $type ? 'history' : 'hand-coins' }}" class="w-4 h-4 text-ink-muted"></i>
             @if($type)
-                <x-ui.t fil="Mga nakaraang tala mula sa opisina" en="Past records from the office" />
+                <x-ui.t fil="Mga dating record mula sa office" en="Past records from the office" />
             @else
                 <x-ui.t fil="Mga Natanggap na Dokyu at Tulong" en="Dokyu & Tulong Received" />
             @endif
@@ -21,9 +21,9 @@
     </div>
     <p class="text-xs text-ink-muted mb-3 leading-relaxed">
         @if($type)
-            <x-ui.t fil="Itinala ng opisina para sa iyo bago ka nagkaroon ng account, o sa kanilang counter. Para makita lamang." en="What the office recorded for you before you had an account, or at its counter. For viewing only." />
+            <x-ui.t fil="Naitala ng office para sa iyo bago ka nagka-account, o sa counter nila. Pang-view lang." en="What the office recorded for you before you had an account, or at its counter. For viewing only." />
         @else
-            <x-ui.t fil="Ang mga dokumento at tulong sa iyong tala: ang itinala ng mga opisina, at ang inihain mo rito." en="The documents and assistance on your record: what the offices recorded, and what you filed here." />
+            <x-ui.t fil="Ang mga dokumento at tulong sa record mo: ang naitala ng mga office, at ang mga in-file mo rito." en="The documents and assistance on your record: what the offices recorded, and what you filed here." />
         @endif
     </p>
 
@@ -31,7 +31,7 @@
     <p x-show="!loading && failed" x-cloak class="text-xs text-rose-700"><x-ui.t fil="Hindi ma-load." en="Could not load them." /> <button type="button" class="underline" @click="load()"><x-ui.t fil="Subukang muli" en="Try again" /></button></p>
     @unless($type)
         <p x-show="!loading && !failed && pending" x-cloak class="text-xs text-ink-muted"><x-ui.t fil="Lalabas dito ang mga Dokyu at Tulong mo kapag na-verify na ng barangay ang account mo at na-confirm na sa iyo ang record." en="They appear here once your barangay verifies your account and confirms the record is yours." /></p>
-        <p x-show="!loading && !failed && !pending && !list.length" x-cloak class="text-xs text-ink-muted"><x-ui.t fil="Wala pang dokumento o tulong sa iyong tala." en="No documents or assistance on your record yet." /></p>
+        <p x-show="!loading && !failed && !pending && !list.length" x-cloak class="text-xs text-ink-muted"><x-ui.t fil="Wala pang dokumento o tulong sa record mo." en="No documents or assistance on your record yet." /></p>
     @endunless
 
     <ul x-show="list.length" x-cloak class="divide-y divide-brand-600/[.08] -mx-1">

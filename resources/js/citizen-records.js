@@ -55,8 +55,8 @@ export function citizenRecords(type = null, pages = {}) {
             return [q.type === 'tulong' ? 'Tulong' : 'Dokyu', this.day(q), q.amount ? this.peso(q.amount) : null, q.ref].filter(Boolean).join(' · ');
         },
         source(q) {
-            if (!q.from_office) return this.t('Filed here on the portal', 'Inihain dito sa portal');
-            return q.office ? this.t('Recorded by ' + q.office, 'Itinala ng ' + q.office) : this.t('Recorded by the office', 'Itinala ng opisina');
+            if (!q.from_office) return this.t('Filed here on the portal', 'In-file mo rito sa portal');
+            return q.office ? this.t('Recorded by ' + q.office, 'Itinala ng ' + q.office) : this.t('Recorded by the office', 'Naitala ng office');
         },
         // A request filed here opens on its page; an office's record is all here.
         link(q) {

@@ -30,6 +30,15 @@ class PastOfficeRecordsTest extends TestCase
         $this->assertStringContainsString('x-show="!loading && !failed && pending"', $card);
         $this->assertStringContainsString('<ul x-show="list.length" x-cloak', $card);
         $this->assertStringContainsString('this.pending = !!res.meta?.pending;', $js);
+        // Everyday Taglish, as the app says it (owner, 19 Nov; guide review 20 Nov).
+        $this->assertStringContainsString('fil="Mga dating record mula sa office"', $card);
+        $this->assertStringContainsString("t('Recorded by the office', 'Naitala ng office')", $js);
+        $this->assertStringNotContainsString('Itinala ng opisina', $card . $js);
+        $this->assertStringNotContainsString('Para makita lamang', $card);
+        // A profile's "Widowed" fills the PRPWD's "Widow/er" (20 Nov MSWDO guide).
+        $app = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('const option = matchOption(field.options, value);', $app);
+        $this->assertStringContainsString('return near.length === 1 ? near[0] : null;', $app);
     }
 
     public function test_an_officer_adds_an_office_record_that_may_be_the_residents(): void
