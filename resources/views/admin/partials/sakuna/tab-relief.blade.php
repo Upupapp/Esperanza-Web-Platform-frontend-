@@ -141,7 +141,7 @@
                         </td>
                         <td class="whitespace-nowrap"><span :class="statusBadge(d.status)" class="sk-pill" x-text="d.status"></span>
                             <div x-show="d.acknowledgement" class="text-xs font-medium mt-0.5" :class="d.acknowledgement === 'received' ? 'text-emerald-700' : 'text-rose-700'" data-relief-answer
-                                x-text="d.acknowledgement === 'received' ? 'Resident confirmed in app' : 'Resident says not received'"></div>
+                                x-text="d.acknowledgement === 'received' ? 'Resident confirmed received' : 'Resident says not received'"></div>
                             <div class="sk-sub" x-show="d.distributed_at" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''"></div></td>
                         <td class="whitespace-nowrap">
                             <div class="inline-flex items-center gap-1">

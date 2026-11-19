@@ -255,7 +255,7 @@
             </div>
         </div>
         <p class="text-sm text-slate-600 mb-5">
-            Confirm that <strong x-text="checkoutEvacuee ? checkoutEvacuee.head_name : ''"></strong>'s household (<span x-text="checkoutEvacuee?.member_count"></span> members) has left the center.
+            Confirm that <strong x-text="checkoutEvacuee ? checkoutEvacuee.head_name : ''"></strong>'s household (<span x-text="(checkoutEvacuee?.member_count ?? 0) + ((checkoutEvacuee?.member_count ?? 0) === 1 ? ' member' : ' members')"></span>) has left the center.
         </p>
         <div class="flex gap-3">
             <button @click="showCheckoutConfirm = false; checkoutEvacuee = null"

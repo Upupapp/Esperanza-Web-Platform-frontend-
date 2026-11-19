@@ -212,7 +212,7 @@ export function sakunaReport() {
                 ['Evacuation', 'Families checked in', e.period.families_checked_in],
                 ['Evacuation', 'Individuals evacuated', s.evacuated.individuals],
                 ['Evacuation', 'Families checked out', e.period.families_checked_out],
-                ...(hasPersons(s) ? [['Missing persons', 'Still missing', p.missing], ['Missing persons', 'Found', p.found], ['Missing persons', 'Deceased', p.deceased], ['Missing persons', 'Unidentified', p.unidentified], ['Missing persons', 'Injured', p.injured ?? 0]] : []),
+                ...(hasPersons(s) ? [['Casualties', 'Still missing', p.missing], ['Casualties', 'Injured', p.injured], ['Casualties', 'Found', p.found], ['Casualties', 'Deceased', p.deceased], ['Casualties', 'Unidentified', p.unidentified], ['Missing persons', 'Injured', p.injured ?? 0]] : []),
                 ['Relief', 'Families served', r.families],
                 ['Relief', 'Items released', r.released],
                 ['Relief', 'Awaiting release', r.awaiting],
@@ -274,10 +274,10 @@ export function sakunaReport() {
             return tables;
         },
         section: 'overview',
-        sectionTabs: [['overview', 'Overview'], ['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Missing persons'], ['alerts', 'Alerts']],
+        sectionTabs: [['overview', 'Overview'], ['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Casualties'], ['alerts', 'Alerts']],
         tablesFor(group) { return this.summary ? this.reportTables({ summary: this.summary, rows: this.rows }).filter((x) => x.group === group) : []; },
         hasPersons() { return hasPersons(this.summary); },
-        // The section tabs; Missing persons only with its figures.
+        // The section tabs; Casualties only with its figures.
         shownSectionTabs() { return this.sectionTabs.filter((tab) => tab[0] !== 'missing' || this.hasPersons()); },
         // The figure tiles; the person ones only with their figures.
         figureCards() {
@@ -289,7 +289,7 @@ export function sakunaReport() {
                 ['Evacuated individuals', s.evacuated.individuals, ''],
                 ['Evacuated families', s.evacuated.families, ''],
                 ['Inside centers now', s.evacuation.now.persons_inside, ''],
-                ...(p ? [['Still missing', p.missing, 'sk-t-amber'], ['Found', p.found, ''], ['Deceased', p.deceased, ''], ['Unidentified', p.unidentified, 'sk-t-amber']] : []),
+                ...(p ? [['Still missing', p.missing, 'sk-t-amber'], ['Injured', p.injured, ''], ['Found', p.found, ''], ['Deceased', p.deceased, ''], ['Unidentified', p.unidentified, 'sk-t-amber']] : []),
                 ['Relief released', s.relief.totals.released, ''],
                 ['Resources deployed now', s.resources.now.deployed, ''],
                 ['Damage reports', s.damage.reports, ''],
@@ -392,7 +392,7 @@ export function sakunaReport() {
             const tables = this.reportTables(d, true);
             const block = (tbl) => [[{ v: tbl.heading, s: S.section }], ...(tbl.note ? [[{ v: tbl.note, s: S.note }]] : []), head(tbl.columns.map((c) => c.label)),
                 ...(tbl.rows.length ? tbl.rows.map((r) => tbl.columns.map((c) => val(c, r[c.key]))) : [[{ v: 'None recorded.', s: S.note }]]), []];
-            const sectionSheets = [['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Missing persons'], ['alerts', 'Alerts']]
+            const sectionSheets = [['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Casualties'], ['alerts', 'Alerts']]
                 .filter(([group]) => group !== 'missing' || hasPersons(d.summary))
                 .map(([group, name]) => { const rows = tables.filter((x) => x.group === group).flatMap(block); return { name, rows, cols: width(rows) }; });
             const livRows = block(this.livelihoodTable(d.summary));

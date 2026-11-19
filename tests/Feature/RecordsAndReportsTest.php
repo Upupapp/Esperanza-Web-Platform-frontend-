@@ -141,12 +141,12 @@ class RecordsAndReportsTest extends TestCase
         // On screen: the tiles, the section tab and the incident table's Missing column.
         $this->assertStringContainsString('<template x-for="card in figureCards()" :key="card[0]">', $tab);
         $this->assertStringNotContainsString('summary.persons.', $tab);
-        $this->assertStringContainsString("...(p ? [['Still missing', p.missing, 'sk-t-amber']", $js);
+        $this->assertStringContainsString("...(p ? [['Still missing', p.missing, 'sk-t-amber'], ['Injured', p.injured, '']", $js);
         $this->assertStringContainsString('<template x-for="tab in shownSectionTabs()" :key="tab[0]">', $tab);
         $this->assertStringContainsString('<th scope="col" class="sk-r" x-show="hasPersons()">Missing</th>', $tab);
         $this->assertStringContainsString('<td class="sk-r tabular-nums" x-show="hasPersons()" x-text="cell(r.missing)"></td>', $tab);
         // In the exports: key figures, the tables, the incident columns, the workbook's sheet and contents.
-        $this->assertStringContainsString("...(hasPersons(s) ? [['Missing persons', 'Still missing', p.missing]", $js);
+        $this->assertStringContainsString("...(hasPersons(s) ? [['Casualties', 'Still missing', p.missing], ['Casualties', 'Injured', p.injured]", $js);
         $this->assertStringContainsString("...(hasPersons(s) ? [{ group: 'missing', heading: 'Casualties: missing, found, injured, deceased and unidentified persons'", $js);
         $this->assertStringContainsString('if (all && hasPersons(s)) {', $js);
         $this->assertStringContainsString("...(hasPersons(s) ? [{ key: 'missing', label: 'Missing' }", $js);
