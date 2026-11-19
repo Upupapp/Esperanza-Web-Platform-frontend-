@@ -316,7 +316,7 @@
                 <div class="rounded-2xl bg-slate-50 px-3 py-2.5"><dt class="text-[11px] font-semibold text-slate-600">Left out</dt><dd class="text-xl font-extrabold text-ink tabular-nums" x-text="(summary?.skipped ?? 0).toLocaleString()"></dd></div>
                 <div class="rounded-2xl bg-rose-50 px-3 py-2.5"><dt class="text-[11px] font-semibold text-rose-700">Not imported</dt><dd class="text-xl font-extrabold text-ink tabular-nums" x-text="(summary?.failed ?? 0).toLocaleString()"></dd></div>
             </dl>
-            <p x-show="summary?.unlinked" class="text-xs text-ink-muted mb-4" x-text="summary?.unlinked + (summary?.unlinked === 1 ? ' record is' : ' records are') + ' kept by name only: no resident of the barangay matched.'"></p>
+            <p x-show="summary?.unlinked" class="text-xs text-ink-muted mb-4" x-text="summary?.unlinked + (summary?.unlinked === 1 ? ' record is' : ' records are') + ' kept by name only: no resident was matched or chosen.'"></p>
             <p x-show="summary?.stopped" class="text-xs text-ink-muted mb-4">The rest of the file was not sent. To add it, import the same file again: the records already in are recognised and left out.</p>
             <p x-show="summary?.undone" class="text-xs text-amber-700 mb-4">This import was undone.</p>
             <div class="flex flex-wrap gap-2">
