@@ -177,6 +177,14 @@ class Sweep1118web6Test extends TestCase
 
         $this->assertStringContainsString("if (this.stoppedAt === null) {\n                    this.closeFailed = true;\n                    this.stoppedAt = 0;\n                }", $finish);
         $this->assertStringContainsString('stopped: this.stoppedAt !== null && !this.closeFailed,', $finish);
+        // Rows the review never sent are counted by the server too, so Past
+        // imports says what the summary said (19 Nov Residents guide).
+        $this->assertStringContainsString("'/finish', { left_out: leftOut, not_imported: this.leftovers }", $finish);
+        $this->assertStringContainsString('skipped: d.skipped,', $finish);
+        $this->assertStringContainsString('failed: d.failed,', $finish);
+        // An account rejected for its ID lets go of its record without ruling it out.
+        $modal = file_get_contents(resource_path('views/admin/constituents/modal-citizen-account.blade.php'));
+        $this->assertStringContainsString("registryMatch?.status === 'released'", $modal);
 
         // Try again with every row in closes it, instead of returning.
         $run = substr($js, strpos($js, 'async runImport() {'), 900);

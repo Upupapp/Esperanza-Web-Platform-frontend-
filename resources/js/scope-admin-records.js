@@ -127,6 +127,7 @@ const HISTORY_ACTIONS = {
     'constituent.registry_match.confirmed': 'Confirmed as the resident’s record',
     'constituent.registry_match.linked': 'Linked to the resident’s account',
     'constituent.registry_match.rejected': 'Found to be someone else',
+    'constituent.registry_match.released': 'Let go when the account was rejected',
     'resident_profile.created': 'Profile sent by the resident',
     'resident_profile.matched': 'Matched to the resident’s profile',
 };

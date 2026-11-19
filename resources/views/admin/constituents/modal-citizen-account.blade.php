@@ -168,6 +168,7 @@
                     </div>
                 </template>
                 <p x-show="registryMatch?.status === 'confirmed'" class="text-xs text-ink-muted" x-text="(registryMatch?.linked_by_officer ? 'Linked' : 'Confirmed') + (registryMatch?.decided_by ? ' by ' + registryMatch.decided_by : '') + (registryMatch?.decided_at ? ', ' + new Date(registryMatch.decided_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '') + '.'"></p>
+                <p x-show="registryMatch?.status === 'released'" class="text-xs text-ink-muted" x-text="'Let go of ' + (registryMatch?.released_ref || 'the matched record') + ' when the account was rejected, so it is not held. If it is them, use it below once their ID is right.'"></p>
                 <p x-show="registryMatch?.status === 'rejected'" class="text-xs text-ink-muted" x-text="'Not ' + (registryMatch?.rejected_ref || 'the matched record') + (registryMatch?.decided_by ? ' (decided by ' + registryMatch.decided_by + ')' : '') + '. The account has a record of its own.'"></p>
                 <template x-if="registryMatch?.claimed?.length">
                     <div class="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 space-y-1">

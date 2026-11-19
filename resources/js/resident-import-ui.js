@@ -594,16 +594,18 @@ export function residentImport() {
 
         async finish() {
             try {
-                const res = await api.post('/admin/resident-imports/' + encodeURIComponent(this.importRef) + '/finish');
+                // Rows the review never sent: left out, or still to fix. The
+                // server counts them too, so Past imports says the same
+                // (19 Nov); rows not sent after a stop are neither.
+                const leftOut = this.pending.filter((r) => r.status !== 'error' && !this.sendable(r)).length;
+                const res = await api.post('/admin/resident-imports/' + encodeURIComponent(this.importRef) + '/finish', { left_out: leftOut, not_imported: this.leftovers });
                 const d = res.data;
                 this.summary = {
                     ref: d.ref,
                     created: d.created,
                     filled: d.filled,
-                    // Rows left out in the review; rows not sent are not "left
-                    // as they were" (live test 2026-10-12).
-                    skipped: d.skipped + this.pending.filter((r) => r.status !== 'error' && !this.sendable(r)).length,
-                    failed: this.leftovers,
+                    skipped: d.skipped,
+                    failed: d.failed,
                     households: d.households_created,
                     occupations: d.occupations || {},
                     // Stopped, or finished with what is in after a drop (not
