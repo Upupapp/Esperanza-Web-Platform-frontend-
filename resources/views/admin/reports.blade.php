@@ -295,7 +295,11 @@
                                             <option value="">Any sector</option>
                                             <template x-for="o in sectorOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === sector"></option></template>
                                         </x-ui.compact-select>
-                                        <button type="button" x-show="anyFilter()" x-cloak @click="service = ''; sex = ''; age = ''; sector = ''" class="justify-self-start inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear</button>
+                                        <x-ui.compact-select id="pr-source" label="Source" model="source" shown="source ? (sourceOptions.find((o) => o.value === source)?.label || source) : 'All records'">
+                                            <option value="">All records</option>
+                                            <template x-for="o in sourceOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === source"></option></template>
+                                        </x-ui.compact-select>
+                                        <button type="button" x-show="anyFilter()" x-cloak @click="service = ''; sex = ''; age = ''; sector = ''; source = ''" class="justify-self-start inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear</button>
                                     </div>
                                 </div>
                                 </template>

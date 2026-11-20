@@ -7,7 +7,7 @@ import { residentImport, reasonText } from './resident-import-ui';
 import { requestImport } from './request-import-ui';
 import { citizenRecords } from './citizen-records';
 import { docTemplatesStore, verifyStrip, qrSvg } from './shared-docs';
-import { dashboardHost, deptDashboard, brgyDashboard, areaDashboard, printableReports, reportSheet } from './dashboards';
+import { dashboardHost, deptDashboard, brgyDashboard, areaDashboard, printableReports, reportSheet, tulongReport } from './dashboards';
 import { sakunaReport, incidentReportPrint } from './sakuna-report';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
@@ -793,6 +793,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('incidentReportPrint', incidentReportPrint);
     Alpine.data('printableReports', printableReports);
     Alpine.data('reportSheet', reportSheet);
+    Alpine.data('tulongReport', tulongReport);
     // Why a record matched, for the account review's Registry record panel.
     window.registryReasonText = reasonText;
 

@@ -295,7 +295,9 @@
                 return w ? w[this.$store.lang.current === 'en' ? 1 : 0] : step;
             },
             stepIndex(status) {
-                const side = { 'Needs Requirements': 'Initial Screening', 'Returned for Reassessment': 'For Approval' };
+                // Returned for Reassessment goes back to Assessment (TulongStatus::
+                // TRANSITIONS): the case is with the assessor again (2026-11-20).
+                const side = { 'Needs Requirements': 'Initial Screening', 'Returned for Reassessment': 'Assessment' };
                 // An unknown status sits on no step (it is flagged below the steps).
                 return this.stepOrder.indexOf(side[status] || status);
             },

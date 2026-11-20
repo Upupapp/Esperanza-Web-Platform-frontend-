@@ -26,6 +26,8 @@ export const PERIODS = [
     { key: 'this_quarter', label: 'This quarter' },
     { key: 'last_quarter', label: 'Last quarter' },
     { key: 'this_year', label: 'This year' },
+    // Imported past records are mostly last year's (2026-11-20).
+    { key: 'last_year', label: 'Last year' },
     { key: 'custom', label: 'Custom' },
 ];
 
@@ -48,6 +50,7 @@ export function periodRange(key) {
         return { from: ymd(y, q * 3 + 1, 1), to: ymd(y, q * 3 + 3, lastDay(y, q * 3 + 3)) };
     }
     if (key === 'this_year') return { from: ymd(t.y, 1, 1), to: t.iso };
+    if (key === 'last_year') return { from: ymd(t.y - 1, 1, 1), to: ymd(t.y - 1, 12, 31) };
 
     return { from: ymd(t.y, t.m, 1), to: t.iso };
 }
@@ -89,6 +92,10 @@ const info = (key) => REPORT_INFO[key] || { icon: 'file-text', desc: '' };
 const AGE_LABELS = { child: 'Children (0-17)', adult: 'Adults (18-59)', senior: 'Seniors (60+)' };
 const SECTOR_LABELS = { senior: 'Senior citizens (60+)', pwd: 'Persons with disability', solo_parent: 'Solo parents', '4ps': '4Ps beneficiaries', ip: 'Indigenous peoples' };
 const SEX_LABELS = { female: 'Female', male: 'Male' };
+// Where a record came from (flows review, 2026-11-20): records imported from
+// the office's own past files count everywhere, by their real date, unless
+// one kind is chosen here (the backend's ReportFilters::SOURCES).
+const SOURCE_LABELS = { filed: 'Filed in Esperanza', imported: 'Imported past records' };
 const asOptions = (labels) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 
 /**
@@ -103,23 +110,26 @@ function reportFilters() {
         sex: '',
         age: '',
         sector: '',
+        source: '',
         sexOptions: asOptions(SEX_LABELS),
+        sourceOptions: asOptions(SOURCE_LABELS),
         ageOptions: asOptions(AGE_LABELS),
         sectorOptions: asOptions(SECTOR_LABELS),
         /** The chosen ones, as the API takes them; nothing for "everyone". */
         filterParams() {
             const out = {};
-            ['service', 'sex', 'age', 'sector'].forEach((k) => { if (this[k]) out[k] = this[k]; });
+            ['service', 'sex', 'age', 'sector', 'source'].forEach((k) => { if (this[k]) out[k] = this[k]; });
             return out;
         },
         // Methods, not getters: a getter spread into the component is read once.
-        anyFilter() { return !!(this.service || this.sex || this.age || this.sector); },
+        anyFilter() { return !!(this.service || this.sex || this.age || this.sector || this.source); },
         personFilter() { return !!(this.sex || this.age || this.sector); },
         /** Picks up a choice from the address, if it is one of the choices. */
         readFilters(q) {
             if (SEX_LABELS[q.get('sex')]) this.sex = q.get('sex');
             if (AGE_LABELS[q.get('age')]) this.age = q.get('age');
             if (SECTOR_LABELS[q.get('sector')]) this.sector = q.get('sector');
+            if (SOURCE_LABELS[q.get('source')]) this.source = q.get('source');
             this.service = q.get('service') || '';
         },
         clearFilters() {
@@ -127,6 +137,7 @@ function reportFilters() {
             this.sex = '';
             this.age = '';
             this.sector = '';
+            this.source = '';
             this.changed();
         },
     };
@@ -154,6 +165,8 @@ const CHANNELS = {
     walk_in: { label: 'Walk-in', color: '#e8c200' },
     referral: { label: 'Referral', color: '#a855f7' },
     record: { label: 'Recorded after the fact', color: '#94a3b8' },
+    // Brought in from the office's own past files (2026-11-20), never "Online".
+    import: { label: 'Imported past records', color: '#64748b' },
 };
 const channelRows = (rows) => (rows || []).filter((r) => r.count > 0).map((r) => ({ label: CHANNELS[r.channel]?.label || r.channel, value: r.count, color: CHANNELS[r.channel]?.color || '#14b8a6' }));
 
@@ -391,7 +404,7 @@ export function deptDashboard() {
                 this.failed = false;
                 if (quiet) return;
                 const entry = (this.subjects?.offices || []).find((o) => o.name === this.office);
-                remember({ view: 'department', office: entry?.short || this.office, service: this.service, sex: this.sex, age: this.age, sector: this.sector });
+                remember({ view: 'department', office: entry?.short || this.office, service: this.service, sex: this.sex, age: this.age, sector: this.sector, source: this.source });
             } catch (e) {
                 if (mine !== this.seq || quiet) return;
                 this.failed = true;
@@ -488,6 +501,70 @@ export function deptDashboard() {
         },
         requestsUrl(r) {
             return (r.type === 'tulong' ? '/admin/assistance-requests' : '/admin/document-requests') + '?ref=' + encodeURIComponent(r.ref);
+        },
+    };
+}
+
+// --------------------------------------------------- The Tulong page's report
+
+/**
+ * Download Report on the Tulong page (owner, 2026-11-20: "sa tulong tab pde i
+ * export ung report, un na ung standard template"): the office's Summary
+ * Report (dept_summary, with its graphs and executive summary), narrowed to
+ * Tulong, for a period, one program and the records' source. Imported past
+ * records count by the day the office gave the assistance unless Source
+ * leaves them out. Opens in the page's <x-admin.report-sheet>, where it is
+ * previewed, then saved as PDF or Excel, or printed.
+ */
+export function tulongReport() {
+    return {
+        ...periodPicker(),
+        open: false,
+        catalog: null,
+        failed: false,
+        office: '',
+        service: '',
+        source: '',
+        sourceOptions: asOptions(SOURCE_LABELS),
+        init() {
+            this.period = 'this_year';
+            Object.assign(this, periodRange(this.period));
+            this.load();
+        },
+        changed() {},
+        async load() {
+            // Only for an account with Reports, as the dashboards ask.
+            if (!this.$store.session?.can?.('reports')) return;
+            try {
+                const res = await api.get('/admin/reports');
+                this.catalog = res.meta?.printable || { reports: [], offices: [] };
+                this.failed = false;
+                if (!this.offices.some((o) => o.name === this.office)) {
+                    this.office = (this.offices.find((o) => o.short === 'MSWDO') || this.offices[0])?.name || '';
+                }
+            } catch (e) {
+                this.failed = true;
+            }
+        },
+        /** Offices with Tulong programs whose reports this account may open. */
+        get offices() {
+            return (this.catalog?.offices || []).filter((o) => o.can_view && (o.types || []).includes('tulong'));
+        },
+        get services() {
+            return ((this.offices.find((o) => o.name === this.office) || {}).services || []).filter((s) => s.type === 'tulong');
+        },
+        get allowed() {
+            return (this.catalog?.reports || []).some((r) => r.key === 'dept_summary') && this.offices.length > 0;
+        },
+        officeChanged() { this.service = ''; },
+        start() {
+            this.open = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        preview() {
+            if (!this.office || !this.from || !this.to) return;
+            this.open = false;
+            openReport({ key: 'dept_summary', office: this.office, from: this.from, to: this.to, type: 'tulong', service: this.service || '', source: this.source || '' });
         },
     };
 }
@@ -879,7 +956,7 @@ export function reportSheet() {
         query() {
             const p = this.params || {};
             const out = { from: p.from, to: p.to };
-            ['office', 'barangay', 'service', 'sex', 'age', 'sector'].forEach((k) => { if (p[k]) out[k] = p[k]; });
+            ['office', 'barangay', 'service', 'type', 'sex', 'age', 'sector', 'source'].forEach((k) => { if (p[k]) out[k] = p[k]; });
             return out;
         },
         /** "Medical Assistance (AICS) · Female", when an office report is narrowed. */

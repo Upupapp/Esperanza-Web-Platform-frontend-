@@ -1135,6 +1135,8 @@
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
                 </button>
                 @include('admin.partials.modal-request-import', ['importType' => 'tulong'])
+                {{-- The office's standard Summary Report for Tulong (2026-11-20). --}}
+                @include('admin.partials.modal-tulong-report')
                 {{-- File for a person at the office (welfare round, 2026-10-29); the
                      window (admin/tulong/apply) sits after the session window. --}}
                 <button type="button" x-show="canApplyAny()" x-cloak @click="$dispatch('tulong-apply', {})"
@@ -1996,6 +1998,8 @@
              certificate. --}}
         @include('admin.tulong.session-desk')
         @include('admin.tulong.apply')
+        {{-- Download Report's preview, PDF, Excel and print (2026-11-20). --}}
+        <x-admin.report-sheet />
         <x-welfare.certificate />
 
         </div>

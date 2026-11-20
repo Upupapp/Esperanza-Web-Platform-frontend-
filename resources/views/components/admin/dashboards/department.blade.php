@@ -73,6 +73,15 @@
                     <option :value="o.value" x-text="o.label" :selected="o.value === sector"></option>
                 </template>
             </select>
+            {{-- Where the records came from (2026-11-20): imported past records
+                 count by their real date unless one kind is chosen. --}}
+            <label class="sr-only" for="dept-source">Source</label>
+            <select id="dept-source" x-model="source" @change="changed()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                <option value="">All records</option>
+                <template x-for="o in sourceOptions" :key="o.value">
+                    <option :value="o.value" x-text="o.label" :selected="o.value === source"></option>
+                </template>
+            </select>
             <button type="button" x-show="anyFilter()" x-cloak @click="clearFilters()" class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear filters</button>
             <p x-show="personFilter()" x-cloak class="basis-full text-[12px] text-ink-muted">Counting only cases linked to a resident record, with each person's age as it was on the day counted.</p>
         </div>
