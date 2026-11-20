@@ -114,7 +114,7 @@ class Sweep1118webLeftoversTest extends TestCase
         $this->assertStringContainsString("const words = { 'senior citizen': 'senior',", $page);
         $this->assertStringContainsString('!this.registryTags(r.tags).includes(this.tagFilter)', $page);
         $this->assertStringContainsString('<template x-for="tag in registryTags(r.tags)" :key="tag">', $this->source('resources/views/admin/constituents/view-individuals.blade.php'));
-        $this->assertStringContainsString("[h.sitio ? ('Sitio ' + h.sitio) : '', h.address || ''].filter(Boolean).join(' · ') || '—'", $this->source('resources/views/admin/constituents/view-households.blade.php'));
+        $this->assertStringContainsString("[h.sitio ? sitioLabel(h.sitio) : '', h.address || ''].filter(Boolean).join(' · ') || '—'", $this->source('resources/views/admin/constituents/view-households.blade.php'));
     }
 
     /** #237: the Dokyu list's Needs Action disagreed with the dashboard's. */
