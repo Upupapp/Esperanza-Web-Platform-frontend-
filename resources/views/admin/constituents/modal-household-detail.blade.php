@@ -125,7 +125,7 @@
                         <div class="flex flex-wrap gap-1.5 mt-2">
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-xs font-medium text-white/80">
                                 <i data-lucide="map-pin" class="w-3 h-3"></i>
-                                <span x-text="'Brgy. ' + (selectedHousehold?.barangay || '—') + (selectedHousehold?.sitio ? ' · Sitio ' + selectedHousehold.sitio : '')"></span>
+                                <span x-text="'Brgy. ' + (selectedHousehold?.barangay || '—') + (selectedHousehold?.sitio ? ' · ' + sitioLabel(selectedHousehold.sitio) : '')"></span>
                             </span>
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-xs font-medium text-white/80">
                                 <i data-lucide="user" class="w-3 h-3"></i>

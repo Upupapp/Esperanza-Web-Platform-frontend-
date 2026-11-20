@@ -83,7 +83,7 @@
                     {{-- Barangay --}}
                     <td class="px-4 py-3 hidden xl:table-cell">
                         <p class="text-sm text-ink font-medium" x-text="f.barangay"></p>
-                        <p class="text-xs text-ink-muted" x-text="f.sitio ? ('Sitio ' + f.sitio) : '—'"></p>
+                        <p class="text-xs text-ink-muted" x-text="f.sitio ? sitioLabel(f.sitio) : '—'"></p>
                     </td>
 
                     {{-- Household link --}}

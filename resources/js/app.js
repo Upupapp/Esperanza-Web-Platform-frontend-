@@ -191,6 +191,14 @@ window.modalLayer = (layer, open) => {
     document.body.classList.toggle('overflow-hidden', openLayers.length > 0);
     document.querySelector('main')?.classList.toggle('overflow-hidden', openLayers.length > 0);
 };
+// A sitio as a list line: "Sitio Ilaya" for "Ilaya", but a value that already
+// says Sitio or Purok as it is (an imported file wrote "Sitio Ilaya", and the
+// list read "Sitio Sitio Ilaya": flows review, 2026-11-20).
+window.sitioLabel = (sitio) => {
+    const v = String(sitio ?? '').trim();
+    if (!v) return '';
+    return /^(sitio|purok|zone|prk)\b/i.test(v) ? v : 'Sitio ' + v;
+};
 window.closesOnEscape = (layer) => openLayers[openLayers.length - 1] === layer
     && ![...document.querySelectorAll('[data-modal-overlay]')].some((o) => o.getClientRects().length > 0);
 

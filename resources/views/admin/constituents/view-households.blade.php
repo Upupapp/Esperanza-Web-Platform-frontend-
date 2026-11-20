@@ -89,7 +89,7 @@
                     <td class="px-4 py-3 hidden xl:table-cell">
                         <p class="text-sm text-ink font-medium" x-text="h.barangay"></p>
                         {{-- The street address too, when the row carries it (#35). --}}
-                        <p class="text-xs text-ink-muted truncate max-w-[16rem]" :title="h.address || ''" x-text="[h.sitio ? ('Sitio ' + h.sitio) : '', h.address || ''].filter(Boolean).join(' · ') || '—'"></p>
+                        <p class="text-xs text-ink-muted truncate max-w-[16rem]" :title="h.address || ''" x-text="[h.sitio ? sitioLabel(h.sitio) : '', h.address || ''].filter(Boolean).join(' · ') || '—'"></p>
                     </td>
 
                     {{-- Head --}}

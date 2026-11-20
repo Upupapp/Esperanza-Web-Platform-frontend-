@@ -129,7 +129,7 @@
                         <td class="px-4 py-3 hidden xl:table-cell">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium text-ink-body truncate" x-text="'Brgy. ' + r.barangay"></p>
-                                <p class="text-xs text-ink-muted mt-0.5 truncate" x-text="r.sitio ? 'Sitio ' + r.sitio : '—'"></p>
+                                <p class="text-xs text-ink-muted mt-0.5 truncate" x-text="r.sitio ? sitioLabel(r.sitio) : '—'"></p>
                             </div>
                         </td>
 
