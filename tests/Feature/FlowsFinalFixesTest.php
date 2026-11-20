@@ -28,12 +28,26 @@ class FlowsFinalFixesTest extends TestCase
         $this->assertStringContainsString(".rep-tile .rep-tile-value {\n    white-space: nowrap;", $css);
         $this->assertStringContainsString('.rep-tiles-7 .rep-tile-value-long,', $css);
 
-        // PDF: html2canvas's copy keeps images inline-block, so text sits mid-cell.
-        $this->assertStringContainsString("st.textContent = 'img { display: inline-block; }';", $js);
+        // PDF (2026-11-21): html2canvas measures its text baseline with a probe
+        // image in the LIVE page, so the probe is kept inline there while it
+        // draws (a style in its copy never reached it); a table that runs on
+        // repeats its header row; the report code loads with the PDF only.
+        $pdf = $this->source('resources/js/report-pdf.js');
+        $this->assertStringContainsString('img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]', $pdf);
+        $this->assertStringContainsString("style.textContent = PROBE + ' { display: inline !important; }';", $pdf);
+        $this->assertStringContainsString('document.head.appendChild(style);', $pdf);
+        $this->assertStringContainsString('if (thead) next.appendChild(thead.cloneNode(true));', $pdf);
+        $this->assertStringContainsString("import('./report-pdf')", $js);
+        $this->assertStringNotContainsString("from './report-pdf'", $this->source('resources/js/app.js').$js);
+        $this->assertStringContainsString('paginate(this.prop.container, this.prop.pageSize.inner.px.height);', $js);
+        $this->assertStringNotContainsString('img { display: inline-block; }', $js);
 
-        // Excel: each summary paragraph one merged wrapped cell; amounts in pesos.
+        // Excel: each summary paragraph and each part's note one merged wrapped
+        // cell; amounts in pesos, the at-a-glance amount a number too.
         $this->assertStringContainsString('aoa.push([{ v: String(p), s: S.para }]);', $js);
-        $this->assertStringContainsString("const merges = paras.map((row) => 'A' + (row + 1) + ':' + colName(widest - 1) + (row + 1));", $js);
+        $this->assertStringContainsString('aoa.push([{ v: String(s.note), s: S.note }]);', $js);
+        $this->assertStringContainsString("const merges = paras.map(([row]) => 'A' + (row + 1) + ':' + colName(widest - 1) + (row + 1));", $js);
+        $this->assertStringContainsString('s: m[1] ? S.peso : S.num }', $js);
         $this->assertStringContainsString('aoa[row][col] = { v: Number(v), s: S.peso };', $js);
         $this->assertStringNotContainsString('(line + \' \' + word).length > 110', $js);
         $this->assertStringContainsString('peso: 12 };', $xlsx);

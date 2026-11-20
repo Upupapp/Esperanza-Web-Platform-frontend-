@@ -1024,7 +1024,7 @@ export function reportSheet() {
             let restoreColors = () => {};
             try {
                 await api.post('/admin/reports/' + this.report.key + '/print', this.query());
-                const html2pdf = await window.loadHtml2Pdf();
+                const [html2pdf, { withTrueBaseline, paginate }] = await Promise.all([window.loadHtml2Pdf(), import('./report-pdf')]);
                 const paper = document.querySelector('#dp-print-area .rep-paper') || document.querySelector('.rep-paper');
                 if (!paper) throw new Error('no report on screen');
                 if (editor.waitForImages) await editor.waitForImages(paper);
@@ -1035,17 +1035,18 @@ export function reportSheet() {
                 // The paper keeps its side padding; each page is numbered.
                 const copy = editor.exportClone ? editor.exportClone(paper) : paper.cloneNode(true);
                 Object.assign(copy.style, { paddingTop: '0', paddingBottom: '0', boxShadow: 'none', borderRadius: '0' });
-                await html2pdf().set({
+                // Text on the line, and tables that carry their header row onto
+                // the next page (resources/js/report-pdf.js, 2026-11-21).
+                await withTrueBaseline(() => html2pdf().set({
                     margin: this.landscape ? [10, 0, 12, 0] : [12, 0, 14, 0],
                     filename: (this.report.key || 'report') + '-' + new Date().toISOString().slice(0, 10) + '.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
-                    // Text sat on each cell's bottom border (2026-11-20): html2canvas
-                    // places text too low while images are display:block (Tailwind's
-                    // preflight); inline-block in its copy puts it where the browser does.
-                    html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff', onclone: (doc) => { const st = doc.createElement('style'); st.textContent = 'img { display: inline-block; }'; doc.head.appendChild(st); } },
+                    html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: this.landscape ? 'landscape' : 'portrait', compress: true },
-                    pagebreak: { mode: ['css', 'legacy'] },
-                }).from(copy).toPdf().get('pdf').then((doc) => {
+                    pagebreak: { mode: [] },
+                }).from(copy).toContainer().then(function () {
+                    paginate(this.prop.container, this.prop.pageSize.inner.px.height);
+                }).toPdf().get('pdf').then((doc) => {
                     const pages = doc.internal.getNumberOfPages();
                     const w = doc.internal.pageSize.getWidth();
                     const h = doc.internal.pageSize.getHeight();
@@ -1056,7 +1057,7 @@ export function reportSheet() {
                         doc.setPage(i);
                         doc.text('Page ' + i + ' of ' + pages, w - 14, h - 6, { align: 'right' });
                     }
-                }).save();
+                }).save());
             } catch (e) {
                 this.$dispatch('toast', { message: e?.localised ? e.localised('en') : 'Could not make the PDF. Use Print and choose Save as PDF.', variant: 'error' });
             } finally {
@@ -1090,7 +1091,7 @@ export function reportSheet() {
                 if ((r.summary || []).length) {
                     aoa.push(['Executive Summary']);
                     r.summary.forEach((p) => {
-                        paras.push(aoa.length);
+                        paras.push([aoa.length, 15, 1]);
                         aoa.push([{ v: String(p), s: S.para }]);
                         aoa.push([]);
                     });
@@ -1100,13 +1101,20 @@ export function reportSheet() {
                     aoa.push(s.columns.map((c) => c.label));
                     (s.rows || []).forEach((row) => {
                         s.columns.forEach((c, ci) => { if (c.format === 'money') money.push([aoa.length, ci]); });
-                        aoa.push(s.columns.map((c) => (c.format === 'date' ? row[c.key] || '' : row[c.key] ?? '')));
+                        aoa.push(s.columns.map((c) => {
+                            const v = c.format === 'date' ? row[c.key] || '' : row[c.key] ?? '';
+                            // An at-a-glance figure comes written out ("₱3,000.00", "1,204"):
+                            // a number in the workbook, so it adds up (2026-11-21).
+                            const m = s.display === 'tiles' && /^(₱)?(\d{1,3}(,\d{3})*|\d+)(\.\d+)?$/.exec(String(v));
+                            return m && (m[1] || !m[4]) ? { v: Number(String(v).replace(/[₱,]/g, '')), s: m[1] ? S.peso : S.num } : v;
+                        }));
                     });
                     if (s.totals) {
                         s.columns.forEach((c, ci) => { if (c.format === 'money') money.push([aoa.length, ci]); });
                         aoa.push(s.columns.map((c) => s.totals[c.key] ?? ''));
                     }
-                    if (s.note) aoa.push([s.note]);
+                    // A part's note wraps across the table, as the summary does (2026-11-21).
+                    if (s.note) { paras.push([aoa.length, 12, 1.1]); aoa.push([{ v: String(s.note), s: S.note }]); }
                     aoa.push([]);
                 });
                 aoa.push([]);
@@ -1123,8 +1131,9 @@ export function reportSheet() {
                 const cols = Array.from({ length: widest }, (_, i) => (i === 0 ? 34 : 18));
                 const across = cols.reduce((a, b) => a + b, 0) - 4;
                 const heights = {};
-                paras.forEach((row) => { heights[row] = Math.max(18, Math.ceil(aoa[row][0].v.length / across) * 15 + 6); });
-                const merges = paras.map((row) => 'A' + (row + 1) + ':' + colName(widest - 1) + (row + 1));
+                // [row, line height, characters per width unit]: the notes are smaller type.
+                paras.forEach(([row, line, per]) => { heights[row] = Math.max(line + 3, Math.ceil(aoa[row][0].v.length / (across * per)) * line + 6); });
+                const merges = paras.map(([row]) => 'A' + (row + 1) + ':' + colName(widest - 1) + (row + 1));
                 const who = (r.subject?.short || r.subject?.barangay || 'report').replace(/[^a-z0-9]+/gi, '-');
                 await downloadXlsx([{ name: 'Report', rows: aoa, cols, merges, heights }], [r.key, who, r.period?.from, r.period?.to].filter(Boolean).join('_') + '.xlsx', { title: r.title });
                 this.$dispatch('toast', { message: 'Saved to Excel. The copy is recorded under your name.', variant: 'success' });
