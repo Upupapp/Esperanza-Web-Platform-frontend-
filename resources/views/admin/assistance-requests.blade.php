@@ -740,7 +740,9 @@
             // actions' own gates on the server).
             get primaryPermission() {
                 const st = this.selected?.status;
-                if (['Initial Screening', 'Returned for Reassessment', 'Assessment'].includes(st)) return 'review';
+                // Beginning and writing the assessment: the assess step (staff
+                // access, 2026-11-20), which a Head holds as review.
+                if (['Initial Screening', 'Returned for Reassessment', 'Assessment'].includes(st)) return 'assess';
                 if (st === 'For Approval') return 'approve';
                 if (['Assistance Processing', 'Ready for Release'].includes(st)) return 'release';
                 return null;
@@ -757,7 +759,7 @@
                 const perm = this.primaryPermission;
                 const reqWaiting = (this.selected.requirements || []).some(r => r.status === 'Submitted' || r.status === 'Resubmitted');
                 if (perm && this.may(perm)) return false;
-                if (reqWaiting && this.may('review')) return false;
+                if (reqWaiting && this.may('screen')) return false;
                 return !this.canMove('Cancelled') && !this.canMove('Rejected') && !this.canMove('Returned for Reassessment');
             },
             get waitingOn() {
@@ -768,7 +770,12 @@
                 return 'Waiting for an officer who can screen and assess Tulong cases (usually the Department Head).';
             },
             may(action) {
-                return !this.selected?.permitted || !!this.selected.permitted[action];
+                const p = this.selected?.permitted;
+                if (!p) return true;
+                // Screen and assess are the halves of review (staff access,
+                // 2026-11-20); a server without them answers by review.
+                if (!(action in p) && (action === 'screen' || action === 'assess')) return !!p.review;
+                return !!p[action];
             },
             // Nothing uploaded means nothing to accept, unless the document is
             // optional ('(if applicable)'), or is a step the office does itself
@@ -1077,7 +1084,7 @@
         {{-- Cases | Sessions (welfare round, 2026-10-29): views of this page,
              never sidebar entries (owner rule). Services rendered left in
              round 2 (2026-10-30): it was the cases again. --}}
-        <div class="flex flex-wrap items-center gap-2 mb-4" x-show="$store.session.canPerm('tulong_sessions', 'view') || $store.session.canPerm('set_service_catalog', 'view')" x-cloak>
+        <div class="flex flex-wrap items-center gap-2 mb-4" x-show="$store.session.canPerm('tulong_sessions', 'view') || $store.session.canPerm('set_service_catalog', 'view') || $store.session.canStaffAccess()" x-cloak>
             <div class="flex flex-wrap items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full" role="group" aria-label="Tulong views">
                 @foreach(['cases' => ['Cases', 'folder-open', null], 'sessions' => ['Sessions', 'calendar-days', 'tulong_sessions']] as $viewKey => [$viewLabel, $viewIcon, $viewPerm])
                     <button type="button" @click="setView('{{ $viewKey }}')" :aria-pressed="view === '{{ $viewKey }}'" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" @endif
@@ -1090,6 +1097,11 @@
                 <a href="{{ route('admin.assistance-requests.types') }}" x-show="$store.session.canPerm('set_service_catalog', 'view')"
                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors whitespace-nowrap text-ink-muted hover:text-ink">
                     <i data-lucide="layout-list" class="w-3.5 h-3.5"></i>Tulong types
+                </a>
+                {{-- Staff access (2026-11-20): the Head's switches for the office's Staff. --}}
+                <a href="{{ route('admin.assistance-requests.staff-access') }}" x-show="$store.session.canStaffAccess()"
+                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors whitespace-nowrap text-ink-muted hover:text-ink">
+                    <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>Staff access
                 </a>
             </div>
         </div>
@@ -1493,7 +1505,7 @@
                                          Flag for Replacement / Reject. No separate "needs verification"
                                          action — reviewing a requirement here already IS the
                                          verification step. --}}
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome && may('review')">
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome && may('screen')">
                                         <button type="button" x-show="mayAccept(req)" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
                                         <span x-show="!mayAccept(req)" class="text-[11px] text-ink-muted">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>

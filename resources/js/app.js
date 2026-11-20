@@ -970,6 +970,12 @@ document.addEventListener('alpine:init', () => {
             if (!this.deptRestricted()) return true;
             return this.account.dept === office;
         },
+        // Staff access (owner decision 2026-11-20): the steps an office's
+        // Department Staff take, set by the office's own Department Head and
+        // by the Super Administrator (GET/PUT /admin/staff-access decides).
+        canStaffAccess() {
+            return !!this.account && ['department_head', 'super_admin'].includes(this.account.roleKey);
+        },
         // Whether the account is held to its own office (above). The Dokyu
         // and Tulong types pages fix such an officer's office (round 2).
         deptRestricted() {
@@ -2172,6 +2178,8 @@ area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistan
 // Dokyu's Document types and Tulong's Tulong types (round 2, 2026-10-30):
 // the catalog editor, moved out of Settings, on those two pages only.
 area(/^\/admin\/(document-requests|assistance-requests)\/types(\/|$)/.test(areaPath), () => import('./catalog-editor'));
+// Staff access (2026-11-20): the Head's switches, on those two tabs' own page.
+area(/^\/admin\/(document-requests|assistance-requests)\/staff-access(\/|$)/.test(areaPath), () => import('./staff-access'));
 // Sakuna's maps (2026-10-26): Leaflet only where a map is drawn.
 area(/^\/(admin\/sakuna|citizen\/emergency)(\/|$)/.test(areaPath), () => import('./sakuna-map'));
 // Two BDRRMC forms filled from records, and saved forms reopened (2026-10-27).

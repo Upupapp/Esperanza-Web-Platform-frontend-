@@ -23,11 +23,13 @@
             ['Requests', 'file-text', route('admin.document-requests'), null, null],
             ['Document types', 'layout-list', null, null, null],
             ['Citizen Document Storage', 'folder-open', route('admin.papeles'), null, 'papeles'],
+            ['Staff access', 'user-cog', route('admin.document-requests.staff-access'), null, 'staff-access'],
         ]
         : [
             ['Cases', 'folder-open', route('admin.assistance-requests'), null, null],
             ['Sessions', 'calendar-days', route('admin.assistance-requests').'?view=sessions', 'tulong_sessions', null],
             ['Tulong types', 'layout-list', null, null, null],
+            ['Staff access', 'user-cog', route('admin.assistance-requests.staff-access'), null, 'staff-access'],
         ];
 @endphp
 
@@ -42,7 +44,7 @@
                 @if($viewHref === null)
                     <span aria-current="page" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap bg-white text-brand-700 shadow-sm"><i data-lucide="{{ $viewIcon }}" class="w-3.5 h-3.5"></i>{{ $viewLabel }}</span>
                 @else
-                    <a href="{{ $viewHref }}" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" x-cloak @elseif($viewModule) x-show="$store.session.can('{{ $viewModule }}')" x-cloak @endif
+                    <a href="{{ $viewHref }}" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" x-cloak @elseif($viewModule === 'staff-access') x-show="$store.session.canStaffAccess()" x-cloak @elseif($viewModule) x-show="$store.session.can('{{ $viewModule }}')" x-cloak @endif
                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap text-ink-muted hover:text-ink transition-colors"><i data-lucide="{{ $viewIcon }}" class="w-3.5 h-3.5"></i>{{ $viewLabel }}</a>
                 @endif
             @endforeach

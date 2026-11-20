@@ -2246,7 +2246,12 @@
             // Department Staff every Tulong decision (QA run 2026-10-05). Unknown
             // means shown: the server still decides.
             may(action) {
-                return !this.selected?.permitted || !!this.selected.permitted[action];
+                const p = this.selected?.permitted;
+                if (!p) return true;
+                // Screening is a step of review (staff access, 2026-11-20); a
+                // server without it answers by review.
+                if (!(action in p) && (action === 'screen' || action === 'assess')) return !!p.review;
+                return !!p[action];
             },
             // Nothing uploaded means nothing to accept, unless the document is
             // optional ('(if applicable)'), or is a step the office does itself
@@ -2445,7 +2450,7 @@
              only to a role that may open its page (UI sweep 2026-11-18: Department
              Staff got Access Restricted on Papeles); with neither, the strip
              hides, as on Tulong. --}}
-        <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full mb-4" x-show="$store.session.canPerm('set_service_catalog', 'view') || $store.session.can('papeles')" x-cloak>
+        <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full mb-4" x-show="$store.session.canPerm('set_service_catalog', 'view') || $store.session.can('papeles') || $store.session.canStaffAccess()" x-cloak>
             <button
                 type="button" @click="view = 'requests'"
                 class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
@@ -2454,6 +2459,10 @@
             <a href="{{ route('admin.document-requests.types') }}" x-show="$store.session.canPerm('set_service_catalog', 'view')" x-cloak
                class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap text-ink-muted hover:text-slate-700"
             ><i data-lucide="layout-list" class="w-3.5 h-3.5"></i> Document types</a>
+            {{-- Staff access (2026-11-20): the Head's switches for the office's Staff. --}}
+            <a href="{{ route('admin.document-requests.staff-access') }}" x-show="$store.session.canStaffAccess()" x-cloak
+               class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap text-ink-muted hover:text-slate-700"
+            ><i data-lucide="user-cog" class="w-3.5 h-3.5"></i> Staff access</a>
             <a
                 href="{{ route('admin.papeles') }}" x-show="$store.session.can('papeles')" x-cloak
                 class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap text-ink-muted hover:text-slate-700"
@@ -2855,7 +2864,7 @@
                                          Flag for Replacement / Reject. No separate "needs verification"
                                          action — reviewing a requirement here already IS the
                                          verification step. --}}
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome && may('review')">
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome && may('screen')">
                                         <button type="button" x-show="mayAccept(req)" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
                                         <span x-show="!mayAccept(req)" class="text-[11px] text-ink-muted">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>

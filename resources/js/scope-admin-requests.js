@@ -813,7 +813,10 @@ export function requestWorkflow() {
         get wf() { return (this.selected && this.selected.workflow) || null; },
         get wfMay() {
             const r = this.selected;
-            return !!(r && r.permitted && r.permitted.review && !this.terminalStatuses.includes(r.status));
+            // The screening step (staff access, 2026-11-20); review on an older server.
+            const p = r && r.permitted;
+            const screen = p && ('screen' in p ? p.screen : p.review);
+            return !!(screen && !this.terminalStatuses.includes(r.status));
         },
         get wfSummary() {
             const steps = this.wf?.steps || [];

@@ -65,6 +65,10 @@ Route::view('/admin/assistance-requests', 'admin.assistance-requests')->name('ad
 // nothing to the Dokyu and Tulong pages.
 Route::view('/admin/document-requests/types', 'admin.request-types', ['kind' => 'dokyu'])->name('admin.document-requests.types');
 Route::view('/admin/assistance-requests/types', 'admin.request-types', ['kind' => 'tulong'])->name('admin.assistance-requests.types');
+// Staff access (owner decision 2026-11-20): what the office's Department Staff
+// may do, set by its Head. A view of each tab, never a sidebar entry.
+Route::view('/admin/document-requests/staff-access', 'admin.staff-access', ['kind' => 'dokyu'])->name('admin.document-requests.staff-access');
+Route::view('/admin/assistance-requests/staff-access', 'admin.staff-access', ['kind' => 'tulong'])->name('admin.assistance-requests.staff-access');
 Route::view('/admin/payments', 'admin.payments')->name('admin.payments');
 
 // Constituents — Registry, Profiling Coverage, and Data Quality as tabs.

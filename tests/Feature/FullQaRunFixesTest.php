@@ -104,7 +104,8 @@ class FullQaRunFixesTest extends TestCase
         foreach (['resources/views/admin/document-requests.blade.php', 'resources/views/admin/assistance-requests.blade.php'] as $path) {
             $view = $this->source($path);
             $this->assertStringContainsString('r.permitted = d.permitted || null;', $view, $path);
-            $this->assertStringContainsString("&& may('review')\">", $view, "{$path}: document decisions need review");
+            // Screening is the review step Staff may hold (staff access, 2026-11-20).
+            $this->assertStringContainsString("&& may('screen')\">", $view, "{$path}: document decisions need the screening step");
             $this->assertStringContainsString('may(primaryPermission)', $view, "{$path}: the primary button needs its stage's permission");
             // A required document nobody uploaded cannot be accepted (the server's rule too).
             $this->assertStringContainsString('x-show="mayAccept(req)" @click="verifyRequirement(req)"', $view, $path);
