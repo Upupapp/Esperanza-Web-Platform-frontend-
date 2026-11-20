@@ -32,7 +32,7 @@ class FlowsFinalFixesTest extends TestCase
         $this->assertStringContainsString("st.textContent = 'img { display: inline-block; }';", $js);
 
         // Excel: each summary paragraph one merged wrapped cell; amounts in pesos.
-        $this->assertStringContainsString("aoa.push([{ v: String(p), s: S.para }]);", $js);
+        $this->assertStringContainsString('aoa.push([{ v: String(p), s: S.para }]);', $js);
         $this->assertStringContainsString("const merges = paras.map((row) => 'A' + (row + 1) + ':' + colName(widest - 1) + (row + 1));", $js);
         $this->assertStringContainsString('aoa[row][col] = { v: Number(v), s: S.peso };', $js);
         $this->assertStringNotContainsString('(line + \' \' + word).length > 110', $js);
