@@ -34,7 +34,13 @@ class FlowsFinalFixesTest extends TestCase
         // repeats its header row; the report code loads with the PDF only.
         $pdf = $this->source('resources/js/report-pdf.js');
         $this->assertStringContainsString('img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]', $pdf);
-        $this->assertStringContainsString("style.textContent = PROBE + ' { display: inline !important; }';", $pdf);
+        $this->assertStringContainsString("style.textContent = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';", $pdf);
+        // The citizen slip and the certificates draw under body.dp-printing, which hid the probe (text drawn high).
+        foreach (['resources/js/scope-citizen.js', 'resources/js/welfare-certificate.js'] as $file) {
+            $src = $this->source($file);
+            $this->assertStringContainsString("[html2pdf, { withTrueBaseline }] = await Promise.all([window.loadHtml2Pdf(), import('./report-pdf')]);", $src);
+            $this->assertStringContainsString('await withTrueBaseline(() => html2pdf().set({', $src);
+        }
         $this->assertStringContainsString('document.head.appendChild(style);', $pdf);
         $this->assertStringContainsString('if (thead) next.appendChild(thead.cloneNode(true));', $pdf);
         $this->assertStringContainsString("import('./report-pdf')", $js);

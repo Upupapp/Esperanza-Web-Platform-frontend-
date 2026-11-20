@@ -7,7 +7,8 @@
 //    to its own line and the baseline comes out a whole line too low: every
 //    table cell's text sat on its bottom border, and the paper's last line
 //    (the "Generated from ..." footer) fell half off the last page. A style
-//    on the live page, for the length of the render, keeps the probe inline.
+//    on the live page, for the length of the render, keeps the probe inline
+//    (and shown, under print mode).
 //
 // 2. Page breaks a reader can follow. A table that runs onto the next page is
 //    split there and the part on the new page starts with the header row
@@ -19,7 +20,11 @@ const PROBE = 'img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]';
 /** Runs `render` with html2canvas's baseline probe kept inline on the live page. */
 export async function withTrueBaseline(render) {
     const style = document.createElement('style');
-    style.textContent = PROBE + ' { display: inline !important; }';
+    // Under body.dp-printing (the citizen slip and the certificates) every
+    // other child of body is hidden, the probe's box too: the baseline then
+    // came out at 2px and text was drawn high, against the line above it.
+    // The ids only outrank that rule; the probe stays visibility:hidden.
+    style.textContent = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';
     document.head.appendChild(style);
     try {
         return await render();

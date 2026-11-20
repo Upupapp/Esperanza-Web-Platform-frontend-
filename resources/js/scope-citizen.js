@@ -355,8 +355,9 @@ function printSheet(sheet) {
 async function downloadSheet(sheet, filename) {
     if (!sheet) return;
     let html2pdf;
+    let withTrueBaseline;
     try {
-        html2pdf = await window.loadHtml2Pdf();
+        [html2pdf, { withTrueBaseline }] = await Promise.all([window.loadHtml2Pdf(), import('./report-pdf')]);
     } catch {
         toast(tr('Could not load the PDF generator. Check your connection and try again.', 'Hindi ma-load ang gumagawa ng PDF. Suriin ang koneksyon at subukang muli.'), 'error');
         return;
@@ -368,14 +369,15 @@ async function downloadSheet(sheet, filename) {
         await new Promise((resolve) => requestAnimationFrame(() => resolve()));
         if (editor.waitForImages) await editor.waitForImages(sheet);
         if (editor.sanitizeExportColors) restoreColors = editor.sanitizeExportColors(document.body);
-        await html2pdf().set({
+        // Text where the browser puts it, not a line low (resources/js/report-pdf.js, 2026-11-21).
+        await withTrueBaseline(() => html2pdf().set({
             margin: 0,
             filename,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
-        }).from(editor.exportClone ? editor.exportClone(sheet) : sheet).save();
+        }).from(editor.exportClone ? editor.exportClone(sheet) : sheet).save());
     } catch {
         toast(tr('Could not download the PDF. Use Print and choose Save as PDF.', 'Hindi ma-download ang PDF. Gamitin ang I-print at piliin ang Save as PDF.'), 'error');
     } finally {

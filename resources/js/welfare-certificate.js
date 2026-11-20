@@ -202,8 +202,9 @@ export function welfareCertificate(certByKey = {}, bilingual = false) {
             if (!sheet || this.certBusy) return;
             this.certBusy = true;
             let html2pdf;
+            let withTrueBaseline;
             try {
-                html2pdf = await window.loadHtml2Pdf();
+                [html2pdf, { withTrueBaseline }] = await Promise.all([window.loadHtml2Pdf(), import('./report-pdf')]);
             } catch {
                 this.certBusy = false;
                 toast(this.certT('Could not load the PDF maker. Check the connection and try again.', 'Hindi ma-load ang gumagawa ng PDF. Suriin ang koneksyon at subukang muli.'), 'error');
@@ -216,14 +217,15 @@ export function welfareCertificate(certByKey = {}, bilingual = false) {
                 await new Promise((resolve) => requestAnimationFrame(() => resolve()));
                 if (editor.waitForImages) await editor.waitForImages(sheet);
                 if (editor.sanitizeExportColors) restoreColors = editor.sanitizeExportColors(document.body);
-                await html2pdf().set({
+                // Text where the browser puts it, not a line low (resources/js/report-pdf.js, 2026-11-21).
+                await withTrueBaseline(() => html2pdf().set({
                     margin: 0,
                     filename: (this.cert?.title || 'Certificate').replace(/[^\w-]+/g, '-') + '-' + (this.cert?.control || '') + '.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape', compress: true },
                     pagebreak: { mode: ['avoid-all'] },
-                }).from(editor.exportClone ? editor.exportClone(sheet) : sheet).save();
+                }).from(editor.exportClone ? editor.exportClone(sheet) : sheet).save());
             } catch {
                 toast(this.certT('Could not make the PDF. Use Print and choose Save as PDF.', 'Hindi magawa ang PDF. Gamitin ang I-print at piliin ang Save as PDF.'), 'error');
             } finally {
