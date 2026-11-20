@@ -2043,7 +2043,9 @@
                         <x-citizen.scope.request-extras kind="dokyu" />
 
                         <div class="grid grid-cols-2 gap-3 mt-5">
-                            <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5">
+                            {{-- Only while it is still on its way: once released or closed
+                                 there is nothing to expect (flows review, 2026-11-20). --}}
+                            <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5" x-show="!['Released', 'Completed', 'Rejected', 'Cancelled', 'Archived'].includes(selectedRequest.status)">
                                 <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-1"><x-ui.t fil="Inaasahang Petsa ng Release" en="Expected Release" /></p>
                                 <p class="text-sm font-semibold text-ink" x-text="expectedRelease"></p>
                             </div>
