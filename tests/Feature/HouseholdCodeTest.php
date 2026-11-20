@@ -36,7 +36,7 @@ class HouseholdCodeTest extends TestCase
 
         $this->assertStringContainsString("profileReview?.outcome !== 'returned' && \$store.citizenSession.account?.fullServiceAccess\"><x-ui.t fil=\"Verified na ang account mo. Hiwalay na step ang Resident Profile", $view);
         $this->assertStringContainsString('en="Your account is verified. The Resident Profile is a separate step: fill it in and send it', $view);
-        $this->assertStringContainsString("&& !\$store.citizenSession.account?.fullServiceAccess\"><x-ui.t fil=\"Hindi mo pa naipapadala.", $view);
+        $this->assertStringContainsString('&& !$store.citizenSession.account?.fullServiceAccess"><x-ui.t fil="Hindi mo pa naipapadala.', $view);
         $this->assertStringNotContainsString('kapag na-verify ang iyong profile', $view);
         $this->assertStringNotContainsString('Hindi pa naisusumite', $view);
     }
