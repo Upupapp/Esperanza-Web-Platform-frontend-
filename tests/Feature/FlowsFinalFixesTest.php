@@ -33,8 +33,12 @@ class FlowsFinalFixesTest extends TestCase
         // draws (a style in its copy never reached it); a table that runs on
         // repeats its header row; the report code loads with the PDF only.
         $pdf = $this->source('resources/js/report-pdf.js');
-        $this->assertStringContainsString('img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]', $pdf);
-        $this->assertStringContainsString("style.textContent = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';", $pdf);
+        $this->assertStringContainsString('img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]', $this->source('resources/js/dokyu-editor.js'));
+        $editor = $this->source('resources/js/dokyu-editor.js');
+        $this->assertStringContainsString("export const TRUE_BASELINE_CSS = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';", $editor);
+        // Every download calls sanitizeExportColors() for the capture (the Dokyu documents use only that).
+        $this->assertStringContainsString('const restores = [() => baseline.remove()];', $editor);
+        $this->assertStringContainsString('style.textContent = TRUE_BASELINE_CSS;', $pdf);
         // The citizen slip and the certificates draw under body.dp-printing, which hid the probe (text drawn high).
         foreach (['resources/js/scope-citizen.js', 'resources/js/welfare-certificate.js'] as $file) {
             $src = $this->source($file);

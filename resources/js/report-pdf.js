@@ -15,16 +15,15 @@
 //    again; a row, a paragraph, a graph with its heading, and the signatures
 //    never break across two pages.
 
-const PROBE = 'img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]';
+import { TRUE_BASELINE_CSS } from './dokyu-editor';
 
 /** Runs `render` with html2canvas's baseline probe kept inline on the live page. */
 export async function withTrueBaseline(render) {
     const style = document.createElement('style');
-    // Under body.dp-printing (the citizen slip and the certificates) every
-    // other child of body is hidden, the probe's box too: the baseline then
-    // came out at 2px and text was drawn high, against the line above it.
-    // The ids only outrank that rule; the probe stays visibility:hidden.
-    style.textContent = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';
+    // The same style DokyuEditor.sanitizeExportColors() adds (the Dokyu
+    // documents' own downloads use only that); under body.dp-printing (the
+    // citizen slip and the certificates) it also keeps the probe's box shown.
+    style.textContent = TRUE_BASELINE_CSS;
     document.head.appendChild(style);
     try {
         return await render();

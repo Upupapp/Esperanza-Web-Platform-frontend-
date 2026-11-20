@@ -700,12 +700,25 @@ function toExportSafeColor(value) {
 // rendering of the source oklch color), so nothing visibly changes even for
 // the brief moment the override is in place, and the caller always reverts
 // it in a finally block immediately after capture.
+//
+// Every html2canvas download calls this for the length of its capture, so it
+// also puts the text where the browser does (2026-11-21): html2canvas measures
+// each font's baseline with a 1x1 probe image in the LIVE page. Tailwind's
+// preflight made the probe display:block (text drawn a line low, on the cell's
+// bottom border), and under body.dp-printing its box was hidden (text drawn
+// high). The style keeps it inline and shown (still visibility:hidden); the
+// ids only outrank the print-mode rule.
+export const PROBE = 'img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]';
+export const TRUE_BASELINE_CSS = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';
 export function sanitizeExportColors(rootEl) {
     if (!rootEl) return () => {};
     const doc = rootEl.ownerDocument || document;
     const win = doc.defaultView || window;
     const elements = rootEl.nodeType === 1 ? [rootEl, ...rootEl.querySelectorAll('*')] : Array.from(rootEl.querySelectorAll('*'));
-    const restores = [];
+    const baseline = doc.createElement('style');
+    baseline.textContent = TRUE_BASELINE_CSS;
+    doc.head.appendChild(baseline);
+    const restores = [() => baseline.remove()];
     elements.forEach((el) => {
         const computed = win.getComputedStyle(el);
         OKLCH_COLOR_PROPS.forEach((prop) => {
