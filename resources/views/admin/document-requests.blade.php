@@ -3053,7 +3053,7 @@
                             <template x-if="selected.reference_pdf">
                                 <div class="mt-2.5">
                                     <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50" style="height: 220px;">
-                                        <iframe :src="selected.reference_pdf" class="w-full h-full" title="Reference form preview"></iframe>
+                                        <iframe x-effect="window.framePdf($el, selected.reference_pdf)" class="w-full h-full" title="Reference form preview"></iframe>
                                     </div>
                                     <a :href="selected.reference_pdf" target="_blank" rel="noopener" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium inline-flex items-center gap-1 mt-1.5">
                                         <i data-lucide="external-link" class="w-3 h-3"></i> Open in new tab

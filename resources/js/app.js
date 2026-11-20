@@ -469,6 +469,29 @@ function matchOption(options, value) {
 window.profileDefaults = profileDefaults;
 window.matchOption = matchOption;
 
+// The site may not be framed, its own PDFs included (X-Frame-Options DENY,
+// frame-ancestors 'none' on every path), so a reference form shown in an
+// iframe was the browser's broken-page icon for everyone (20 Nov MSWDO
+// guide). Fetched and shown from a blob: URL instead, which frame-src allows.
+const pdfFrames = new WeakMap();
+window.framePdf = async (frame, url) => {
+    const before = pdfFrames.get(frame);
+    if (before?.url === url) return;
+    if (before?.blob) URL.revokeObjectURL(before.blob);
+    pdfFrames.set(frame, { url, blob: null });
+    if (!url) { frame.removeAttribute('src'); return; }
+    try {
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = URL.createObjectURL(new Blob([await res.blob()], { type: 'application/pdf' }));
+        if (pdfFrames.get(frame)?.url !== url) { URL.revokeObjectURL(blob); return; }
+        pdfFrames.set(frame, { url, blob });
+        frame.src = blob;
+    } catch {
+        frame.removeAttribute('src');
+    }
+};
+
 // The family a resident listed in their Resident Profile (GET
 // /citizen/resident-profile, family.members), as rows of a form's family
 // table: each column is filled from the member's detail of the same meaning,

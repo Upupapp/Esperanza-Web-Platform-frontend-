@@ -39,6 +39,14 @@ class PastOfficeRecordsTest extends TestCase
         $app = $this->source('resources/js/app.js');
         $this->assertStringContainsString('const option = matchOption(field.options, value);', $app);
         $this->assertStringContainsString('return near.length === 1 ? near[0] : null;', $app);
+        // Reference forms are shown from a blob: URL: the site may not frame
+        // its own pages, so the iframe was a broken icon (20 Nov MSWDO guide).
+        $this->assertStringContainsString('window.framePdf = async (frame, url) => {', $app);
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $view = $this->source("resources/views/admin/{$page}.blade.php");
+            $this->assertStringContainsString('x-effect="window.framePdf($el, selected.reference_pdf)"', $view);
+            $this->assertStringNotContainsString('<iframe :src="selected.reference_pdf"', $view);
+        }
     }
 
     public function test_an_officer_adds_an_office_record_that_may_be_the_residents(): void
