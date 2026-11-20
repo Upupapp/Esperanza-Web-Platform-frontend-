@@ -1114,7 +1114,7 @@ export function reportSheet() {
                 aoa.push([]);
                 aoa.push(this.signatories.map((s) => String(s.name || '').toUpperCase()));
                 aoa.push(this.signatories.map((s) => s.position || ''));
-                // Every amount a number in pesos (the month rows came as text).
+                // Every amount a number in the peso format (the months showed plain numbers).
                 money.forEach(([row, col]) => {
                     const v = aoa[row][col];
                     if (v !== '' && v !== null && Number.isFinite(Number(v))) aoa[row][col] = { v: Number(v), s: S.peso };
