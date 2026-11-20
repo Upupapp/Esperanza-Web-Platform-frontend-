@@ -317,6 +317,7 @@
                 <div class="rounded-2xl bg-rose-50 px-3 py-2.5"><dt class="text-[11px] font-semibold text-rose-700">Not imported</dt><dd class="text-xl font-extrabold text-ink tabular-nums" x-text="(summary?.failed ?? 0).toLocaleString()"></dd></div>
             </dl>
             <p x-show="summary?.unlinked" class="text-xs text-ink-muted mb-4" x-text="summary?.unlinked + (summary?.unlinked === 1 ? ' record is' : ' records are') + ' kept by name only: no resident was matched or chosen.'"></p>
+            <p x-show="summary?.already" class="text-xs text-ink-muted mb-4" x-text="summary?.already + (summary?.already === 1 ? ' record was' : ' records were') + ' already imported before, so not added again.'"></p>
             <p x-show="summary?.stopped" class="text-xs text-ink-muted mb-4">The rest of the file was not sent. To add it, import the same file again: the records already in are recognised and left out.</p>
             <p x-show="summary?.undone" class="text-xs text-amber-700 mb-4">This import was undone.</p>
             <div class="flex flex-wrap gap-2">
@@ -370,7 +371,7 @@
         <template x-if="panel==='import' && step===3">
             <div class="flex items-center gap-2.5 w-full">
                 <p class="text-xs mr-auto" :class="unchosen || !plan.add ? 'font-semibold text-ink' : 'text-ink-muted'"
-                   x-text="!plan.add && plan.fix ? 'Nothing to import yet: the records need fixing in the file.' : !plan.add ? 'Every record in this file is already imported.' : unchosen ? unchosen + (unchosen === 1 ? ' record needs' : ' records need') + ' a resident chosen (or No resident).' : plan.add.toLocaleString() + ' to import · ' + plan.linked.toLocaleString() + ' linked to residents · ' + plan.skip.toLocaleString() + ' left out · ' + plan.fix.toLocaleString() + ' need fixing'"></p>
+                   x-text="!plan.add && plan.fix ? 'Nothing to import yet: the records need fixing in the file.' : !plan.add ? 'Every record in this file is already imported.' : unchosen ? unchosen + (unchosen === 1 ? ' record needs' : ' records need') + ' a resident chosen (or No resident).' : plan.add.toLocaleString() + ' to import · ' + plan.linked.toLocaleString() + ' linked to residents' + (plan.already ? ' · ' + plan.already.toLocaleString() + ' already imported' : '') + ' · ' + plan.skip.toLocaleString() + ' left out · ' + plan.fix.toLocaleString() + ' need fixing'"></p>
                 <button type="button" @click="step=2;$nextTick(()=>window.renderIcons?.())" class="px-4 py-2 rounded-xl text-sm font-semibold text-ink hover:bg-slate-100">Back</button>
                 <button type="button" @click="runImport()" :disabled="!plan.add || unchosen || running" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue disabled:opacity-50"><i data-lucide="file-up" class="w-4 h-4"></i><span x-text="'Import ' + plan.add.toLocaleString() + (plan.add === 1 ? ' record' : ' records')"></span></button>
             </div>

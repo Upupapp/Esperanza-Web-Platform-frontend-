@@ -362,11 +362,17 @@ export function requestImport(type, keys = [], barangayList = []) {
             let linked = 0;
             let skip = 0;
             let fix = 0;
+            // Already imported is its own count, not "left out": the finished
+            // import's Left out is what the officer chose to leave out
+            // (flows review, 2026-11-20: the footer said 1 left out, the
+            // summary 0).
+            let already = 0;
             this.pending.forEach((r) => {
                 if (r.status === 'error') fix++;
+                else if (r.status === 'duplicate') already++;
                 else if (this.willImport(r)) { add++; if (r.choice && r.choice !== 'none') linked++; } else if (r.status !== 'outside') skip++;
             });
-            return { add, linked, skip, fix };
+            return { add, linked, skip, fix, already };
         },
         candidateLabel(c) { return c.name + (c.age != null ? ', ' + c.age : '') + ' (' + c.ref + ')'; },
 
@@ -451,6 +457,7 @@ export function requestImport(type, keys = [], barangayList = []) {
                 this.summary = {
                     ref: d.ref, created: d.created, linked: d.linked, unlinked: d.created - d.linked,
                     skipped: d.skipped, failed: this.rows.filter((r) => r.status === 'error' && !r.outcome).length,
+                    already: this.rows.filter((r) => r.status === 'duplicate').length,
                     // Stopped, or finished with what is in after a drop (not when
                     // every record was sent and only the close was retried).
                     stopped: this.stoppedAt !== null && !this.closeFailed,
