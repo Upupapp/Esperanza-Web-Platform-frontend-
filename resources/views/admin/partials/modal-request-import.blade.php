@@ -340,8 +340,8 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-bold text-ink"><span x-text="h.filename"></span> <span class="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1" :class="{'Completed':'bg-emerald-50 text-emerald-700 ring-emerald-200','In Progress':'bg-sky-50 text-sky-700 ring-sky-200','Undone':'bg-slate-100 text-slate-600 ring-slate-200'}[h.status]" x-text="h.status"></span></p>
                         <p class="text-xs text-ink-muted" x-text="h.ref + ' · ' + (h.created_by || '—') + ' · ' + when(h.created_at) + (h.scope ? ' · Brgy. ' + h.scope : '')"></p>
-                        <p class="text-xs text-ink mt-1" x-text="h.created + ' added · ' + h.linked + ' linked to residents · ' + h.skipped + ' left out · ' + h.failed + ' not imported'"></p>
-                        <p x-show="h.status==='Undone'" class="text-xs text-amber-700 mt-1" x-text="'Undone by ' + (h.undone_by || '—') + ': ' + ((h.undo_summary || {}).removed || 0) + ' records archived' + (h.undo_reason ? ' · ' + h.undo_reason : '')"></p>
+                        <p class="text-xs text-ink mt-1" x-text="h.created + ' added · ' + h.linked + (h.linked === 1 ? ' linked to a resident · ' : ' linked to residents · ') + h.skipped + ' left out · ' + h.failed + ' not imported'"></p>
+                        <p x-show="h.status==='Undone'" class="text-xs text-amber-700 mt-1" x-text="'Undone by ' + (h.undone_by || '—') + ': ' + ((h.undo_summary || {}).removed || 0) + (((h.undo_summary || {}).removed || 0) === 1 ? ' record archived' : ' records archived') + (h.undo_reason ? ' · ' + h.undo_reason : '')"></p>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button type="button" x-show="h.status!=='Undone' && h.created" @click="showImported(h.ref)" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-700 hover:bg-brand-50">Show records</button>

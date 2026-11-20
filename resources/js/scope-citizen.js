@@ -13,7 +13,9 @@ import { scanId, telHref, isPwd, revealProblem, REVEAL_REASONS, GUARDIAN_SOURCES
 const TZ = 'Asia/Manila';
 const isEn = () => window.Alpine?.store('lang')?.current === 'en';
 const tr = (en, fil) => (isEn() ? en : fil);
-const locale = () => (isEn() ? 'en-US' : 'fil-PH');
+// Short month names as the app writes them, in both languages ("Nov 20", not
+// "Nob 20" beside the records' "Nov 20"; 2026-11-20).
+const locale = () => 'en-US';
 const icons = () => window.Alpine?.nextTick(() => window.renderIcons?.());
 
 // On window, not $dispatch: the button that asked may be gone by the time the

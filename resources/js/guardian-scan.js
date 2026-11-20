@@ -24,7 +24,7 @@ export const REVEAL_REASONS = [
 
 /** Where the guardian information came from (App\Domain\Constituents\Guardians). */
 export const GUARDIAN_SOURCES = {
-    record: { en: 'Recorded by the office on the resident record', fil: 'Itinala ng opisina sa record ng residente' },
+    record: { en: 'Recorded by the office on the resident record', fil: 'Naitala ng office sa record ng residente' },
     id_application: { en: 'From the person’s PWD, Solo Parent or Senior Citizen ID application', fil: 'Mula sa aplikasyon ng PWD, Solo Parent o Senior Citizen ID' },
     household: { en: 'From the household roster (a parent or the household head)', fil: 'Mula sa listahan ng sambahayan (magulang o puno ng sambahayan)' },
 };

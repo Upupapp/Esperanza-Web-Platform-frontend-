@@ -905,6 +905,27 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
 .rep-tiles-8 .rep-tile-hint {
     font-size: 7pt;
 }
+/* A figure never breaks ("₱423,000.0 / 0" on two lines, 2026-11-20): it stays
+   on one line and a long one (an amount) takes smaller type to fit its tile. */
+.rep-tile .rep-tile-value {
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+.rep-tiles-5 .rep-tile-value-long {
+    font-size: 11pt;
+}
+.rep-tiles-6 .rep-tile-value-long {
+    font-size: 10pt;
+}
+.rep-tiles-7 .rep-tile-value-long,
+.rep-tiles-8 .rep-tile-value-long {
+    font-size: 9pt;
+}
+.rep-tiles-6 .rep-tile-value-longer,
+.rep-tiles-7 .rep-tile-value-longer,
+.rep-tiles-8 .rep-tile-value-longer {
+    font-size: 8pt;
+}
 .rep-chart {
     margin: 1mm 0 2.5mm;
 }

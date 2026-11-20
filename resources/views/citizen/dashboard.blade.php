@@ -167,7 +167,7 @@
                         <p class="text-sm text-rose-900/90 mt-0.5 whitespace-pre-line" x-text="alertText(alert.body)"></p>
                         <p class="text-xs text-rose-800 mt-1">
                             <span x-text="alert.barangays && alert.barangays.length ? alert.barangays.join(', ') : ($store.lang.current === 'en' ? 'Whole municipality' : 'Buong munisipyo')"></span>
-                            <span x-show="alert.published_at"> · <span x-text="alert.published_at ? new Date(alert.published_at).toLocaleString($store.lang.current === 'en' ? 'en-US' : 'fil-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span></span>
+                            <span x-show="alert.published_at"> · <span x-text="alert.published_at ? new Date(alert.published_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span></span>
                         </p>
                     </div>
                 </div>

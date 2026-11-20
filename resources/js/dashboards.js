@@ -1,5 +1,4 @@
 import api from './api/client';
-import { loadXlsx } from './resident-import';
 import { chartSvg } from './report-charts';
 
 // Office and barangay dashboards, and the standard printed reports (owner,
@@ -1040,7 +1039,10 @@ export function reportSheet() {
                     margin: this.landscape ? [10, 0, 12, 0] : [12, 0, 14, 0],
                     filename: (this.report.key || 'report') + '-' + new Date().toISOString().slice(0, 10) + '.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+                    // Text sat on each cell's bottom border (2026-11-20): html2canvas
+                    // places text too low while images are display:block (Tailwind's
+                    // preflight); inline-block in its copy puts it where the browser does.
+                    html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff', onclone: (doc) => { const st = doc.createElement('style'); st.textContent = 'img { display: inline-block; }'; doc.head.appendChild(st); } },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: this.landscape ? 'landscape' : 'portrait', compress: true },
                     pagebreak: { mode: ['css', 'legacy'] },
                 }).from(copy).toPdf().get('pdf').then((doc) => {
@@ -1068,10 +1070,11 @@ export function reportSheet() {
             this.busy = 'excel';
             try {
                 const res = await api.post('/admin/reports/' + this.report.key + '/export', { ...this.query(), format: 'XLSX' });
-                const XLSX = await loadXlsx();
+                const { S, colName, downloadXlsx } = await import('./xlsx-report');
                 const r = res.data;
                 const aoa = [];
                 const money = [];
+                const paras = [];
                 const head = ['Republic of the Philippines', 'Province of Masbate', 'Municipality of Esperanza', this.officeLine];
                 if (this.subOfficeLine) head.push(this.subOfficeLine);
                 head.forEach((h) => aoa.push([h]));
@@ -1081,16 +1084,14 @@ export function reportSheet() {
                 if (r.filters?.label) aoa.push(['Narrowed to: ' + r.filters.label]);
                 if (r.filters?.note) aoa.push([r.filters.note]);
                 aoa.push([]);
-                // The executive summary, a line of about 110 characters to a row so
-                // it reads in Excel without wrapping a cell (2026-11-03).
+                // The executive summary, each paragraph one cell merged across the
+                // table's width and wrapped (2026-11-20: a line to a row broke
+                // sentences across rows).
                 if ((r.summary || []).length) {
                     aoa.push(['Executive Summary']);
                     r.summary.forEach((p) => {
-                        let line = '';
-                        String(p).split(' ').forEach((word) => {
-                            if (line && (line + ' ' + word).length > 110) { aoa.push([line]); line = word; } else { line = line ? line + ' ' + word : word; }
-                        });
-                        if (line) aoa.push([line]);
+                        paras.push(aoa.length);
+                        aoa.push([{ v: String(p), s: S.para }]);
                         aoa.push([]);
                     });
                 }
@@ -1113,17 +1114,19 @@ export function reportSheet() {
                 aoa.push([]);
                 aoa.push(this.signatories.map((s) => String(s.name || '').toUpperCase()));
                 aoa.push(this.signatories.map((s) => s.position || ''));
-                const ws = XLSX.utils.aoa_to_sheet(aoa);
+                // Every amount a number in pesos (the month rows came as text).
                 money.forEach(([row, col]) => {
-                    const ref = XLSX.utils.encode_cell({ r: row, c: col });
-                    if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = '#,##0.00';
+                    const v = aoa[row][col];
+                    if (v !== '' && v !== null && Number.isFinite(Number(v))) aoa[row][col] = { v: Number(v), s: S.peso };
                 });
                 const widest = Math.max(...(r.sections || []).map((s) => s.columns.length), 3);
-                ws['!cols'] = Array.from({ length: widest }, (_, i) => ({ wch: i === 0 ? 34 : 18 }));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Report');
+                const cols = Array.from({ length: widest }, (_, i) => (i === 0 ? 34 : 18));
+                const across = cols.reduce((a, b) => a + b, 0) - 4;
+                const heights = {};
+                paras.forEach((row) => { heights[row] = Math.max(18, Math.ceil(aoa[row][0].v.length / across) * 15 + 6); });
+                const merges = paras.map((row) => 'A' + (row + 1) + ':' + colName(widest - 1) + (row + 1));
                 const who = (r.subject?.short || r.subject?.barangay || 'report').replace(/[^a-z0-9]+/gi, '-');
-                XLSX.writeFile(wb, [r.key, who, r.period?.from, r.period?.to].filter(Boolean).join('_') + '.xlsx');
+                await downloadXlsx([{ name: 'Report', rows: aoa, cols, merges, heights }], [r.key, who, r.period?.from, r.period?.to].filter(Boolean).join('_') + '.xlsx', { title: r.title });
                 this.$dispatch('toast', { message: 'Saved to Excel. The copy is recorded under your name.', variant: 'success' });
             } catch (e) {
                 this.$dispatch('toast', { message: e?.localised ? e.localised('en') : 'Could not save the report.', variant: 'error' });

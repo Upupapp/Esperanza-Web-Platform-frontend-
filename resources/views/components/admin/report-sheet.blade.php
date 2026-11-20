@@ -73,7 +73,7 @@
                                             <template x-for="(t, ti) in s.rows" :key="ti">
                                                 <div class="rep-tile">
                                                     <p class="rep-tile-label" x-text="t.item"></p>
-                                                    <p class="rep-tile-value" x-text="t.value"></p>
+                                                    <p class="rep-tile-value" :class="String(t.value).length >= 13 ? 'rep-tile-value-long rep-tile-value-longer' : String(t.value).length >= 10 && 'rep-tile-value-long'" x-text="t.value"></p>
                                                     <p class="rep-tile-hint" x-text="t.hint"></p>
                                                 </div>
                                             </template>

@@ -44,18 +44,18 @@ export function showCode(code) {
     return c.length > 4 ? c.slice(0, 4) + '-' + c.slice(4) : c;
 }
 
-/** 'Nob 12, 2026, 8:00 AM' in Esperanza time. */
+/** 'Nov 12, 2026, 8:00 AM' in Esperanza time (English month names in both languages, as the app). */
 function when(value) {
     const d = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString(isEn() ? 'en-US' : 'fil-PH', { timeZone: TZ, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    return d.toLocaleString('en-US', { timeZone: TZ, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-/** 'Nob 12, 2026' for a Y-m-d day. */
+/** 'Nov 12, 2026' for a Y-m-d day. */
 function dayText(value) {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ''));
     if (!m) return value || '';
-    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], 12)).toLocaleDateString(isEn() ? 'en-US' : 'fil-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], 12)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
 /**

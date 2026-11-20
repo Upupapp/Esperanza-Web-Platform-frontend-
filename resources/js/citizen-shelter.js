@@ -53,7 +53,7 @@ function citizenShelter() {
             if (!iso) return '';
             const d = new Date(iso);
             if (Number.isNaN(d.getTime())) return String(iso);
-            return d.toLocaleDateString(this.$store.lang.current === 'en' ? 'en-PH' : 'fil-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: TZ });
+            return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: TZ });
         },
         error(err, en, fil) {
             return err?.localised ? err.localised(this.$store.lang.current) : this.t(en, fil);

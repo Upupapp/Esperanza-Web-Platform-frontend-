@@ -16,7 +16,7 @@ function fmtDate(value) {
     const bare = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value).slice(0, 10));
     const d = bare ? new Date(Date.UTC(+bare[1], +bare[2] - 1, +bare[3], 12)) : new Date(value);
     if (Number.isNaN(d.getTime())) return String(value);
-    return d.toLocaleDateString(isEn() ? 'en-US' : 'fil-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: bare ? 'UTC' : TZ });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: bare ? 'UTC' : TZ });
 }
 
 /** GET /citizen/certificates: every certificate naming them (applicant or partner), each with the document to draw. */

@@ -56,7 +56,7 @@ export function citizenRecords(type = null, pages = {}) {
         },
         source(q) {
             if (!q.from_office) return this.t('Filed here on the portal', 'In-file mo rito sa portal');
-            return q.office ? this.t('Recorded by ' + q.office, 'Itinala ng ' + q.office) : this.t('Recorded by the office', 'Naitala ng office');
+            return q.office ? this.t('Recorded by ' + q.office, 'Naitala ng ' + q.office) : this.t('Recorded by the office', 'Naitala ng office');
         },
         // A request filed here opens on its page; an office's record is all here.
         link(q) {

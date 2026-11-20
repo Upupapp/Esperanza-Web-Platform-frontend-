@@ -19,12 +19,13 @@
                 if (!iso) return '';
                 const diffMs = Date.now() - new Date(iso).getTime();
                 const mins = Math.floor(diffMs / 60000);
-                if (mins < 1) return 'Just now';
-                if (mins < 60) return mins + ' minute' + (mins === 1 ? '' : 's') + ' ago';
+                const en = this.$store.lang.current === 'en';
+                if (mins < 1) return en ? 'Just now' : 'Ngayon lang';
+                if (mins < 60) return en ? mins + ' minute' + (mins === 1 ? '' : 's') + ' ago' : mins + ' minuto ang nakalipas';
                 const hrs = Math.floor(mins / 60);
-                if (hrs < 24) return hrs + ' hour' + (hrs === 1 ? '' : 's') + ' ago';
+                if (hrs < 24) return en ? hrs + ' hour' + (hrs === 1 ? '' : 's') + ' ago' : hrs + ' oras ang nakalipas';
                 const days = Math.floor(hrs / 24);
-                if (days < 7) return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+                if (days < 7) return en ? days + ' day' + (days === 1 ? '' : 's') + ' ago' : days + ' araw ang nakalipas';
                 return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
             goTo(n) {
