@@ -150,7 +150,7 @@ function columns(section, chart, title) {
     return svg(top + plotH + 32, out, title);
 }
 
-/** Shares of a whole (persons by sex): a ring with the total inside, and each part's number and share beside it. */
+/** Shares of a whole (persons by sex, cases by how they came in): a ring with the total inside, and each part's number and share beside it. */
 function pie(section, chart, title) {
     const key = chart.series?.[0]?.key;
     const rows = (section.rows || []).filter((r) => num(r[key]) > 0);
@@ -180,7 +180,10 @@ function pie(section, chart, title) {
         a0 = a1;
     });
     out += text(cx, cy + 4, fmt(total), `font-size="20" font-weight="700" fill="${INK}" text-anchor="middle"`);
-    out += text(cx, cy + 20, total === 1 ? 'person' : 'persons', `font-size="10" fill="${MUTED}" text-anchor="middle"`);
+    // The ring counts what its column counts: persons (who was served) or
+    // cases ("How the cases came in", flows review 2026-11-20).
+    const [one, many] = key === 'people' ? ['person', 'persons'] : ['case', 'cases'];
+    out += text(cx, cy + 20, total === 1 ? one : many, `font-size="10" fill="${MUTED}" text-anchor="middle"`);
     const lx = 220;
     const ly = cy - ((rows.length - 1) * 26) / 2;
     rows.forEach((r, i) => {
