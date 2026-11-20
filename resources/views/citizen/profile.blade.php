@@ -546,14 +546,17 @@
                         <p class="text-xs text-amber-800 leading-relaxed break-words" x-text="profileReview?.note"></p>
                         <p class="text-[11px] text-ink-muted"><x-ui.t fil="Ayusin ito rito, o sa Esperanza app (Android), at isumite muli." en="Fix it here, or in the Esperanza app (Android), and send it again." /></p>
                     </div>
-                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Unverified' && profileReview?.outcome !== 'returned'"><x-ui.t fil="Hindi pa naisusumite. Kumpletuhin ito rito, o sa Esperanza app (Android)." en="Not submitted yet. Complete it here, or in the Esperanza app (Android)." /></p>
+                    {{-- Not sent yet. A verified account reads it as a separate step to send,
+                         not as something its verification left undone (flows review, 2026-11-20). --}}
+                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Unverified' && profileReview?.outcome !== 'returned' && $store.citizenSession.account?.fullServiceAccess"><x-ui.t fil="Verified na ang account mo. Hiwalay na step ang Resident Profile: punan at ipadala ito para ma-check ng barangay office ang detalye mo at ng household mo. Puwede rito o sa Esperanza app (Android)." en="Your account is verified. The Resident Profile is a separate step: fill it in and send it so your barangay office can check your and your household's details. Do it here or in the Esperanza app (Android)." /></p>
+                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Unverified' && profileReview?.outcome !== 'returned' && !$store.citizenSession.account?.fullServiceAccess"><x-ui.t fil="Hindi mo pa naipapadala. Punan ito rito, o sa Esperanza app (Android)." en="Not sent yet. Fill it in here, or in the Esperanza app (Android)." /></p>
                     {{-- The household's code in the barangay's resident registry
                          (2026-10-27): the server assigns it; shown as the app shows it. --}}
                     <div class="mt-2.5 rounded-xl surface-pressed-sm px-3 py-2.5" x-show="residentProfileView?.household?.ref" x-cloak data-household-code>
                         <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide"><x-ui.t fil="Code ng sambahayan" en="Household code" /></p>
                         <p class="text-sm font-bold text-ink font-mono tracking-wide select-all" x-text="residentProfileView?.household?.ref"></p>
                         <p class="text-[11px] text-ink-muted leading-relaxed mt-0.5"><x-ui.t fil="Ang code ng inyong sambahayan sa talaan ng mga residente ng barangay. Ginagamit ito ng staff sa mga form ng paglikas at relief." en="Your household's code in the barangay's resident registry. Staff use it on evacuation and relief forms." /></p>
-                        <p class="text-[11px] text-amber-700 leading-relaxed mt-0.5" x-show="profileVerification !== 'Verified'"><x-ui.t fil="Kukumpirmahin ito ng iyong barangay office kapag na-verify ang iyong profile." en="Your barangay office confirms it when it verifies your profile." /></p>
+                        <p class="text-[11px] text-amber-700 leading-relaxed mt-0.5" x-show="profileVerification !== 'Verified'"><x-ui.t fil="Kukumpirmahin ito ng barangay office kapag na-check na nila ang Resident Profile mo." en="Your barangay office confirms it once they have checked your Resident Profile." /></p>
                     </div>
                     {{-- The website fills and corrects it too (live test 2026-10-07,
                          UX-8): the app is Android only. --}}
