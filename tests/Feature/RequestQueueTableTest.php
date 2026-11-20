@@ -36,7 +36,7 @@ class RequestQueueTableTest extends TestCase
         // The page itself gates on the same key.
         $this->assertStringContainsString('x-show="!$store.session.can(\'papeles\')"', $this->source('resources/views/admin/papeles.blade.php'));
         // With neither link, the strip would hold Requests alone: it hides, as on Tulong.
-        $this->assertStringContainsString('mb-4" x-show="$store.session.canPerm(\'set_service_catalog\', \'view\') || $store.session.can(\'papeles\')" x-cloak>', $view);
+        $this->assertStringContainsString('mb-4" x-show="$store.session.canPerm(\'set_service_catalog\', \'view\') || $store.session.can(\'papeles\') || $store.session.canStaffAccess()" x-cloak>', $view);
     }
 
     /** The same strip on the Document types page carries the same check. */

@@ -59,7 +59,7 @@
                             </p>
                         </div>
                         {{-- The Super Administrator picks the office; a Head has only their own. --}}
-                        <select x-show="(data.offices || []).length > 1" x-cloak x-model="office" @change="load()" aria-label="Office"
+                        <select aria-label="Office" x-show="(data.offices || []).length > 1" x-cloak x-model="office" @change="load()"
                                 class="text-xs rounded-2xl py-2 pl-3 pr-8 border-0 surface-pressed-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-full sm:max-w-[18rem]">
                             <template x-for="o in (data.offices || [])" :key="o"><option :value="o" x-text="o" :selected="o === data.office"></option></template>
                         </select>

@@ -92,7 +92,7 @@ class WelfareRoundTwoTest extends TestCase
         $this->assertStringContainsString('<a href="{{ route(\'admin.document-requests.types\') }}" x-show="$store.session.canPerm(\'set_service_catalog\', \'view\')"', $dokyu);
         $this->assertStringContainsString('<i data-lucide="file-text" class="w-3.5 h-3.5"></i> Requests</button>', $dokyu);
         $this->assertStringContainsString('<a href="{{ route(\'admin.assistance-requests.types\') }}" x-show="$store.session.canPerm(\'set_service_catalog\', \'view\')"', $tulong);
-        $this->assertStringContainsString("|| \$store.session.canPerm('set_service_catalog', 'view')\" x-cloak>", $tulong, 'the switch shows for whoever may see the types');
+        $this->assertStringContainsString("|| \$store.session.canPerm('set_service_catalog', 'view') || \$store.session.canStaffAccess()\" x-cloak>", $tulong, 'the switch shows for whoever may see the types or set Staff access');
     }
 
     public function test_settings_lost_the_catalog_and_its_old_address_forwards(): void
