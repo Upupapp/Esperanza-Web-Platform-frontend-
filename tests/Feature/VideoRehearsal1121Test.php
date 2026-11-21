@@ -41,7 +41,7 @@ class VideoRehearsal1121Test extends TestCase
         $tulong = $this->source('resources/views/admin/partials/modal-tulong-report.blade.php');
 
         // The API's PERIOD_TOO_LONG is more than 731 days; a method, since the picker is spread into each component.
-        $this->assertStringContainsString("return (Date.parse(this.to) - Date.parse(this.from)) / 86400000 > 731;", $js);
+        $this->assertStringContainsString('return (Date.parse(this.to) - Date.parse(this.from)) / 86400000 > 731;', $js);
         $this->assertStringContainsString('<p x-show="periodTooLong?.()" x-cloak role="alert"', $picker);
         $this->assertStringContainsString('A report covers at most two years. Choose a shorter period.', $picker);
         $this->assertStringContainsString('x-bind:disabled="!office || !from || !to || periodTooLong()"', $tulong);
