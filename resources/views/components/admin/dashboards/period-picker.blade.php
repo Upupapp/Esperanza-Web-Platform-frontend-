@@ -17,4 +17,5 @@
         <label class="sr-only" :for="$id('to')">To</label>
         <input :id="$id('to')" type="date" x-model="to" @change="customChanged()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
     </div>
+    <p x-show="periodTooLong?.()" x-cloak role="alert" class="w-full text-xs text-rose-600">A report covers at most two years. Choose a shorter period.</p>
 </div>

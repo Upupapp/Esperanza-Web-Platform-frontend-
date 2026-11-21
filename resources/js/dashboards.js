@@ -200,6 +200,11 @@ function periodPicker() {
         customChanged() {
             if (this.from && this.to) this.changed();
         },
+        /** A printed report covers at most two years (the API's PERIOD_TOO_LONG, 731 days). A method: spreading the picker would freeze a getter. */
+        periodTooLong() {
+            if (this.period !== 'custom' || !this.from || !this.to) return false;
+            return (Date.parse(this.to) - Date.parse(this.from)) / 86400000 > 731;
+        },
         changed() {},
     };
 }
@@ -561,7 +566,7 @@ export function tulongReport() {
             this.$nextTick(() => window.renderIcons?.());
         },
         preview() {
-            if (!this.office || !this.from || !this.to) return;
+            if (!this.office || !this.from || !this.to || this.periodTooLong()) return;
             this.open = false;
             openReport({ key: 'dept_summary', office: this.office, from: this.from, to: this.to, type: 'tulong', service: this.service || '', source: this.source || '' });
         },

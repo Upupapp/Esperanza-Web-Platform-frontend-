@@ -13,6 +13,32 @@ import api from './api/client';
 // `requests-imported` ({ type, ref }) when records were added.
 
 const BATCH = 250;
+
+// The same record twice in one file (video rehearsal, 2026-11-21: three
+// food-pack rows of one person on one day were left out only when the import
+// ran, after the review had promised all of them). The server keeps the first
+// and answers the later ones "Already imported", by the keys it uses: the
+// service and its control number, or the service, the day and the person.
+// The review now says so before the import.
+const nameKey = (r) => [r.first_name, r.middle_name, r.last_name].join(' ').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .split(/[^a-z0-9]+/).filter((w) => w.length > 1).sort().join(' ') + (r.suffix ? ' ' + r.suffix.toLowerCase() : '');
+export function markListedTwice(rows) {
+    const seen = new Map();
+    rows.forEach((r) => {
+        if (!['linked', 'possible', 'none'].includes(r.status) || !r.service_key) return;
+        const keys = [
+            r.source_ref ? r.service_key + '|ref|' + String(r.source_ref).trim().toLowerCase() : null,
+            r.status === 'linked' && r.resident?.ref ? r.service_key + '|' + r.date + '|' + r.resident.ref : null,
+            r.service_key + '|' + r.date + '|' + nameKey(r) + '|' + r.barangay,
+        ].filter(Boolean);
+        const first = keys.map((k) => seen.get(k)).find(Boolean);
+        if (first) { r.status = 'duplicate'; r.twinRow = first; return; }
+        keys.forEach((k) => seen.set(k, r.row));
+    });
+    return rows;
+}
+export const duplicateNote = (r) => (r.twinRow ? 'Listed twice in the file: the same record as row ' + r.twinRow : 'Already imported as ' + r.duplicateOf);
+
 const CHECK_BATCH = 500;
 
 const REASONS = {
@@ -41,6 +67,7 @@ const letter = (i) => {
 
 export function requestImport(type, keys = [], barangayList = []) {
     return {
+        duplicateNote,
         type,
         keys,
         barangayList,
@@ -320,6 +347,7 @@ export function requestImport(type, keys = [], barangayList = []) {
                 this.error = e?.localised ? e.localised('en') : 'Could not check the records. Check the connection and try again.';
                 return;
             }
+            markListedTwice(rows);
             this.rows = rows;
             this.filter = this.counts.possible ? 'possible' : this.counts.error ? 'error' : 'all';
             this.page = 1;
@@ -457,7 +485,8 @@ export function requestImport(type, keys = [], barangayList = []) {
                 this.summary = {
                     ref: d.ref, created: d.created, linked: d.linked, unlinked: d.created - d.linked,
                     skipped: d.skipped, failed: this.rows.filter((r) => r.status === 'error' && !r.outcome).length,
-                    already: this.rows.filter((r) => r.status === 'duplicate').length,
+                    already: this.rows.filter((r) => r.status === 'duplicate' && !r.twinRow).length,
+                    twice: this.rows.filter((r) => r.status === 'duplicate' && r.twinRow).length,
                     // Stopped, or finished with what is in after a drop (not when
                     // every record was sent and only the close was retried).
                     stopped: this.stoppedAt !== null && !this.closeFailed,
@@ -492,7 +521,7 @@ export function requestImport(type, keys = [], barangayList = []) {
             if (r.status === 'outside') return 'Brgy. ' + r.barangay + ': not your barangay (' + this.scope + ')';
             if (r.status === 'error') return r.errors.join('; ');
             if (r.outcome === 'skipped') return r.outcomeMessage || 'Left out';
-            if (r.status === 'duplicate') return 'Already imported as ' + r.duplicateOf;
+            if (r.status === 'duplicate') return duplicateNote(r);
             if (r.action === 'skip') return 'Left out in the review';
             return 'Not sent';
         },

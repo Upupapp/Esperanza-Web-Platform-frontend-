@@ -250,7 +250,7 @@
                                         <p class="flex items-start gap-1.5 text-rose-700"><i data-lucide="circle-alert" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span x-text="r.errors.join('; ')"></span></p>
                                     </template>
                                     <template x-if="r.status==='duplicate'">
-                                        <p class="text-sky-700" x-text="'Already imported as ' + r.duplicateOf"></p>
+                                        <p class="text-sky-700" x-text="duplicateNote(r)"></p>
                                     </template>
                                     <template x-if="r.status==='outside'">
                                         <p class="text-ink-muted" x-text="'Brgy. ' + r.barangay + ': not your barangay'"></p>
@@ -318,6 +318,7 @@
             </dl>
             <p x-show="summary?.unlinked" class="text-xs text-ink-muted mb-4" x-text="summary?.unlinked + (summary?.unlinked === 1 ? ' record is' : ' records are') + ' kept by name only: no resident was matched or chosen.'"></p>
             <p x-show="summary?.already" class="text-xs text-ink-muted mb-4" x-text="summary?.already + (summary?.already === 1 ? ' record was' : ' records were') + ' already imported before, so not added again.'"></p>
+            <p x-show="summary?.twice" class="text-xs text-ink-muted mb-4" x-text="summary?.twice + (summary?.twice === 1 ? ' record was' : ' records were') + ' listed twice in the file, so each was added once.'"></p>
             <p x-show="summary?.stopped" class="text-xs text-ink-muted mb-4">The rest of the file was not sent. To add it, import the same file again: the records already in are recognised and left out.</p>
             <p x-show="summary?.undone" class="text-xs text-amber-700 mb-4">This import was undone.</p>
             <div class="flex flex-wrap gap-2">

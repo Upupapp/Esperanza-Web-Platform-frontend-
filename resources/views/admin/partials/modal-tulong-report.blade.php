@@ -51,7 +51,7 @@
     <x-slot:footer>
         <div class="flex items-center justify-end gap-2">
             <x-ui.button variant="ghost" size="sm" @click="open = false">Cancel</x-ui.button>
-            <x-ui.button size="sm" icon="eye" x-bind:disabled="!office || !from || !to" @click="preview()">Preview Report</x-ui.button>
+            <x-ui.button size="sm" icon="eye" x-bind:disabled="!office || !from || !to || periodTooLong()" @click="preview()">Preview Report</x-ui.button>
         </div>
     </x-slot:footer>
 </x-ui.modal>
