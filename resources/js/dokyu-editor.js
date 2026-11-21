@@ -725,15 +725,22 @@ export function sanitizeExportColors(rootEl) {
     baseline.textContent = CAPTURE_CSS;
     doc.head.appendChild(baseline);
     const restores = [() => baseline.remove()];
+    // Every colour is read first, then every one is written: reading a
+    // computed style after an inline write makes the browser restyle the
+    // page again, once per element, and this walks the whole page (video
+    // rehearsal, 2026-11-21: a PDF from a page with a long list was slow).
+    const swaps = [];
     elements.forEach((el) => {
         const computed = win.getComputedStyle(el);
         OKLCH_COLOR_PROPS.forEach((prop) => {
             const safe = toExportSafeColor(computed[prop]);
-            if (!safe) return;
-            const prior = el.style[prop];
-            el.style[prop] = safe;
-            restores.push(() => { el.style[prop] = prior; });
+            if (safe) swaps.push([el, prop, safe]);
         });
+    });
+    swaps.forEach(([el, prop, safe]) => {
+        const prior = el.style[prop];
+        el.style[prop] = safe;
+        restores.push(() => { el.style[prop] = prior; });
     });
     return () => restores.forEach((restore) => restore());
 }

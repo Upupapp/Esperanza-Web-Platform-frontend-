@@ -47,4 +47,24 @@ class VideoRehearsal1121Test extends TestCase
         $this->assertStringContainsString('x-bind:disabled="!office || !from || !to || periodTooLong()"', $tulong);
         $this->assertStringContainsString('if (!this.office || !this.from || !this.to || this.periodTooLong()) return;', $js);
     }
+
+    public function test_the_tulong_and_dokyu_case_lists_show_fifty_cases_a_page(): void
+    {
+        foreach (['resources/views/admin/assistance-requests.blade.php', 'resources/views/admin/document-requests.blade.php'] as $page) {
+            $view = $this->source($page);
+            // 1,094 imported past records drew 57,000 elements: one page of fifty at a time, as on Constituents.
+            $this->assertStringContainsString("<template x-for=\"r in paged(filteredRequests, 'req')\" :key=\"r.ref\">", $view, $page);
+            $this->assertStringContainsString('<x-admin.pager list="filteredRequests" key="req" />', $view, $page);
+            $this->assertStringContainsString('pageSize: 50,', $view, $page);
+            $this->assertStringContainsString("this.\$watch('listFilterKey', () => { this.pages = {}; });", $view, $page);
+            $this->assertStringNotContainsString('x-for="r in filteredRequests"', $view, $page);
+        }
+    }
+
+    public function test_the_pdf_colour_swap_reads_every_colour_before_writing_any(): void
+    {
+        $editor = $this->source('resources/js/dokyu-editor.js');
+        $this->assertStringContainsString('if (safe) swaps.push([el, prop, safe]);', $editor);
+        $this->assertStringContainsString('swaps.forEach(([el, prop, safe]) => {', $editor);
+    }
 }

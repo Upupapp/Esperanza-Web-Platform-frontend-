@@ -76,6 +76,18 @@
             // 2026-10-30: the services rendered just means the tulong): the
             // cases are the services given, and a case's work is its notes.
             view: 'cases',
+            // Fifty cases at a time (video rehearsal, 2026-11-21): after the
+            // MSWDO's 1,094 past records were imported the list drew every
+            // case at once (57,000 elements); the page grew slow and its
+            // Summary Report PDF took five minutes instead of half a minute.
+            // x-admin.pager draws the controls, as on the Constituents page.
+            pageSize: 50,
+            pages: {},
+            pageCount(list) { return Math.max(1, Math.ceil((list || []).length / this.pageSize)); },
+            pageOf(key, list) { return Math.min(Math.max(1, this.pages[key] || 1), this.pageCount(list)); },
+            paged(list, key) { const p = this.pageOf(key, list); return (list || []).slice((p - 1) * this.pageSize, p * this.pageSize); },
+            turnPage(key, step, list) { this.pages = { ...this.pages, [key]: this.pageOf(key, list) + step }; this.$nextTick(() => window.renderIcons?.()); },
+            get listFilterKey() { return [this.tab, this.search, this.categoryFilter, this.officeFilter, this.levelFilter, this.assignedFilter, this.barangayFilter, this.importFilter, this.openOnly, this.statusFilter, (this.statusList || []).join(',')].join('|'); },
             search: '',
             categoryFilter: '',
             officeFilter: '',
@@ -245,6 +257,7 @@
             // Arrived from a resident's profile via Open in Tulong — pre-filter to
             // their name and surface a way back to exactly where they came from.
             init() {
+                this.$watch('listFilterKey', () => { this.pages = {}; });
                 const params = new URLSearchParams(window.location.search);
                 const ref = params.get('ref');
                 const citizen = params.get('citizen');
@@ -1238,7 +1251,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-brand-600/[.08]">
-                <template x-for="r in filteredRequests" :key="r.ref">
+                <template x-for="r in paged(filteredRequests, 'req')" :key="r.ref">
                     <tr class="hover:bg-white/60 transition-colors group cursor-pointer" @click="openRequest(r)"
         tabindex="0"
         @keydown.enter.prevent="openRequest(r)"
@@ -1290,6 +1303,7 @@
                 </template>
             </tbody>
         </x-ui.table>
+        <x-admin.pager list="filteredRequests" key="req" />
 
         <div x-show="requestsLoading" class="space-y-2 mt-3"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
         <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="'Could not load assistance requests.'" retryExpr="loadRequests()" :retryable="true" /></div>
