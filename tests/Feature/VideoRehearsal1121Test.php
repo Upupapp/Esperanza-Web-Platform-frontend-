@@ -55,7 +55,7 @@ class VideoRehearsal1121Test extends TestCase
             // 1,094 imported past records drew 57,000 elements: one page of fifty at a time, as on Constituents.
             $this->assertStringContainsString("<template x-for=\"r in paged(filteredRequests, 'req')\" :key=\"r.ref\">", $view, $page);
             $this->assertStringContainsString('<x-admin.pager list="filteredRequests" key="req" />', $view, $page);
-            $this->assertStringContainsString('pageSize: 50,', $view, $page);
+            $this->assertStringContainsString('...window.listPager(),', $view, $page);
             $this->assertStringContainsString("this.\$watch('listFilterKey', () => { this.pages = {}; });", $view, $page);
             $this->assertStringNotContainsString('x-for="r in filteredRequests"', $view, $page);
         }
@@ -63,6 +63,7 @@ class VideoRehearsal1121Test extends TestCase
 
     public function test_the_pdf_colour_swap_reads_every_colour_before_writing_any(): void
     {
+        $this->assertStringContainsString('window.listPager = (size = 50) => ({', $this->source('resources/js/app.js'));
         $editor = $this->source('resources/js/dokyu-editor.js');
         $this->assertStringContainsString('if (safe) swaps.push([el, prop, safe]);', $editor);
         $this->assertStringContainsString('swaps.forEach(([el, prop, safe]) => {', $editor);

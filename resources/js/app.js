@@ -581,6 +581,18 @@ function showIfMet(rule, answers) {
 }
 window.showIfMet = showIfMet;
 
+// Fifty rows a page for a long list drawn in the browser (the Tulong and
+// Dokyu case lists, 2026-11-21: 1,094 imported records drew 57,000
+// elements). Spread into the page's x-data; x-admin.pager draws the controls.
+window.listPager = (size = 50) => ({
+    pageSize: size,
+    pages: {},
+    pageCount(list) { return Math.max(1, Math.ceil((list || []).length / this.pageSize)); },
+    pageOf(key, list) { return Math.min(Math.max(1, this.pages[key] || 1), this.pageCount(list)); },
+    paged(list, key) { const p = this.pageOf(key, list); return (list || []).slice((p - 1) * this.pageSize, p * this.pageSize); },
+    turnPage(key, step, list) { this.pages = { ...this.pages, [key]: this.pageOf(key, list) + step }; this.$nextTick(() => window.renderIcons?.()); },
+});
+
 // A catalog's requirements as {label, showIf}: staff and the config may give
 // each as text or as an object carrying its condition.
 window.requirementRules = (list) => (list || []).map((r) => (typeof r === 'string'

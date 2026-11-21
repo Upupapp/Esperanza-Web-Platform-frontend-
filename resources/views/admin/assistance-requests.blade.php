@@ -76,17 +76,12 @@
             // 2026-10-30: the services rendered just means the tulong): the
             // cases are the services given, and a case's work is its notes.
             view: 'cases',
-            // Fifty cases at a time (video rehearsal, 2026-11-21): after the
-            // MSWDO's 1,094 past records were imported the list drew every
-            // case at once (57,000 elements); the page grew slow and its
-            // Summary Report PDF took five minutes instead of half a minute.
-            // x-admin.pager draws the controls, as on the Constituents page.
-            pageSize: 50,
-            pages: {},
-            pageCount(list) { return Math.max(1, Math.ceil((list || []).length / this.pageSize)); },
-            pageOf(key, list) { return Math.min(Math.max(1, this.pages[key] || 1), this.pageCount(list)); },
-            paged(list, key) { const p = this.pageOf(key, list); return (list || []).slice((p - 1) * this.pageSize, p * this.pageSize); },
-            turnPage(key, step, list) { this.pages = { ...this.pages, [key]: this.pageOf(key, list) + step }; this.$nextTick(() => window.renderIcons?.()); },
+            {{-- Fifty cases at a time (video rehearsal, 2026-11-21): after the
+                 MSWDO's 1,094 past records were imported the list drew every
+                 case at once (57,000 elements); the page grew slow and its
+                 Summary Report PDF took five minutes instead of half a minute.
+                 window.listPager() (app.js) and x-admin.pager, as on Constituents. --}}
+            ...window.listPager(),
             get listFilterKey() { return [this.tab, this.search, this.categoryFilter, this.officeFilter, this.levelFilter, this.assignedFilter, this.barangayFilter, this.importFilter, this.openOnly, this.statusFilter, (this.statusList || []).join(',')].join('|'); },
             search: '',
             categoryFilter: '',
