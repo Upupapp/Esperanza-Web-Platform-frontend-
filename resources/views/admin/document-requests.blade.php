@@ -2149,7 +2149,10 @@
                     this.$dispatch('toast', { message: this.apiMessage(err, 'Could not reject ' + r.ref + '.'), variant: 'error' });
                 } finally { this.processing = false; }
             },
-            rejectReasons: ['Invalid document', 'Incorrect document', 'Unreadable', 'Expired', 'Wrong document', 'Missing information', 'Does not meet requirement', 'Other'],
+            {{-- Only what the validation guide's standard reasons lack: the old list
+                 repeated them in other words (Unreadable, Expired, Wrong document...;
+                 video rehearsal 2026-11-21). --}}
+            rejectReasons: ['Missing information', 'Does not meet requirement', 'Other'],
             // Plain-language read on what to do next, shown in the System
             // Advice panel beside the stepper — mirrors the Esperanza Mobile
             // app's own VerificationStatusPanel pattern (icon + title +

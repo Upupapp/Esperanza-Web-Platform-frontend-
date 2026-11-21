@@ -68,4 +68,13 @@ class VideoRehearsal1121Test extends TestCase
         $this->assertStringContainsString('if (safe) swaps.push([el, prop, safe]);', $editor);
         $this->assertStringContainsString('swaps.forEach(([el, prop, safe]) => {', $editor);
     }
+
+    public function test_the_requirement_reasons_are_not_listed_twice_in_other_words(): void
+    {
+        foreach (['resources/views/admin/assistance-requests.blade.php', 'resources/views/admin/document-requests.blade.php'] as $page) {
+            $view = $this->source($page);
+            $this->assertStringContainsString("rejectReasons: ['Missing information', 'Does not meet requirement', 'Other'],", $view, $page);
+            $this->assertStringNotContainsString("'Unreadable', 'Expired', 'Wrong document'", $view, $page);
+        }
+    }
 }

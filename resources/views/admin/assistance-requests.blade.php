@@ -814,7 +814,10 @@
                     await this.moveCase('return-for-reassessment', { reason }, ref + ' returned for reassessment.', 'warning');
                 }
             },
-            rejectReasons: ['Invalid document', 'Incorrect document', 'Unreadable', 'Expired', 'Wrong document', 'Missing information', 'Does not meet requirement', 'Other'],
+            {{-- Only what the validation guide's standard reasons lack: the old list
+                 repeated them in other words (Unreadable, Expired, Wrong document...;
+                 video rehearsal 2026-11-21). --}}
+            rejectReasons: ['Missing information', 'Does not meet requirement', 'Other'],
             async verifyRequirement(req) {
                 if (req._busy) return;
                 req._busy = true;
