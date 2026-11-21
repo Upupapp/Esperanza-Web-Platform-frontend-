@@ -710,13 +710,19 @@ function toExportSafeColor(value) {
 // ids only outrank the print-mode rule.
 export const PROBE = 'img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"]';
 export const TRUE_BASELINE_CSS = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';
+// A centred title with letter-spacing that wraps came out split in the PDF
+// ("PHILIPPINE REGIS ... TRY FOR PERSONS WITH DISABILITY —", 2026-11-21):
+// html2canvas places letter-spaced text letter by letter and misplaces part
+// of such a line. Titles are drawn without the spacing (0.4px a letter) in
+// the copy html2pdf captures; the page on screen keeps it.
+export const CAPTURE_CSS = TRUE_BASELINE_CSS + ' .html2pdf__container :is(h1, h2, h3, h4, .cert-title, .faced-h) { letter-spacing: 0 !important; }';
 export function sanitizeExportColors(rootEl) {
     if (!rootEl) return () => {};
     const doc = rootEl.ownerDocument || document;
     const win = doc.defaultView || window;
     const elements = rootEl.nodeType === 1 ? [rootEl, ...rootEl.querySelectorAll('*')] : Array.from(rootEl.querySelectorAll('*'));
     const baseline = doc.createElement('style');
-    baseline.textContent = TRUE_BASELINE_CSS;
+    baseline.textContent = CAPTURE_CSS;
     doc.head.appendChild(baseline);
     const restores = [() => baseline.remove()];
     elements.forEach((el) => {

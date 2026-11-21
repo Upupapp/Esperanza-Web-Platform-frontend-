@@ -15,7 +15,7 @@
 //    again; a row, a paragraph, a graph with its heading, and the signatures
 //    never break across two pages.
 
-import { TRUE_BASELINE_CSS } from './dokyu-editor';
+import { CAPTURE_CSS } from './dokyu-editor';
 
 /** Runs `render` with html2canvas's baseline probe kept inline on the live page. */
 export async function withTrueBaseline(render) {
@@ -23,7 +23,7 @@ export async function withTrueBaseline(render) {
     // The same style DokyuEditor.sanitizeExportColors() adds (the Dokyu
     // documents' own downloads use only that); under body.dp-printing (the
     // citizen slip and the certificates) it also keeps the probe's box shown.
-    style.textContent = TRUE_BASELINE_CSS;
+    style.textContent = CAPTURE_CSS;
     document.head.appendChild(style);
     try {
         return await render();

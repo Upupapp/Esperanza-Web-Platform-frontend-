@@ -38,7 +38,10 @@ class FlowsFinalFixesTest extends TestCase
         $this->assertStringContainsString("export const TRUE_BASELINE_CSS = PROBE + ' { display: inline !important; } body > div:has(> ' + PROBE + '):not(#_):not(#_):not(#_) { display: block !important; }';", $editor);
         // Every download calls sanitizeExportColors() for the capture (the Dokyu documents use only that).
         $this->assertStringContainsString('const restores = [() => baseline.remove()];', $editor);
-        $this->assertStringContainsString('style.textContent = TRUE_BASELINE_CSS;', $pdf);
+        $this->assertStringContainsString('style.textContent = CAPTURE_CSS;', $pdf);
+        // A centred, letter-spaced title that wraps split in two in the PDF: titles drop the spacing in the captured copy.
+        $this->assertStringContainsString("' .html2pdf__container :is(h1, h2, h3, h4, .cert-title, .faced-h) { letter-spacing: 0 !important; }'", $editor);
+        $this->assertStringContainsString('baseline.textContent = CAPTURE_CSS;', $editor);
         // The citizen slip and the certificates draw under body.dp-printing, which hid the probe (text drawn high).
         foreach (['resources/js/scope-citizen.js', 'resources/js/welfare-certificate.js'] as $file) {
             $src = $this->source($file);
