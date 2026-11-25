@@ -480,6 +480,11 @@ function matchOption(options, value) {
 window.profileDefaults = profileDefaults;
 window.matchOption = matchOption;
 
+// A vulnerable-sector tag as people read it (owner, 25 Nov: the edit form showed
+// 'solo_parent', 'high_risk', 'ip'). The same names the profile shows.
+const SECTOR_TAG_LABELS = { senior: 'Senior Citizen', osca: 'OSCA', pwd: 'PWD', youth: 'Youth', child: 'Child', osy: 'Out-of-School Youth', '4ps': '4Ps Beneficiary', solo_parent: 'Solo Parent', farmer: 'Farmer', high_risk: 'High Risk', ip: 'Indigenous Peoples' };
+window.sectorTagLabel = (tag) => SECTOR_TAG_LABELS[tag] || String(tag || '').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+
 // The site may not be framed, its own PDFs included (X-Frame-Options DENY,
 // frame-ancestors 'none' on every path), so a reference form shown in an
 // iframe was the browser's broken-page icon for everyone (20 Nov MSWDO

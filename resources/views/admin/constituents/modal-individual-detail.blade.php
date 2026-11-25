@@ -518,8 +518,10 @@
 
             {{-- ── EDIT FORM ── --}}
             <template x-if="editing">
-                <div class="max-w-2xl space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
+                {{-- Full width, the fields on one grid so every column lines up; the
+                     livelihood pair spans two columns with the same gap (owner, 25 Nov). --}}
+                <div class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5">Sex</label>
                             <select aria-label="Sex" x-model="edit.sex" class="w-full rounded-2xl py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
@@ -538,8 +540,6 @@
                                 <option value="Live-in">Live-in</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-contact">Contact Number</label>
                             <input id="ind-edit-contact" type="text" x-model="edit.contact" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
@@ -548,11 +548,6 @@
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-sitio">Sitio / Purok</label>
                             <input id="ind-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
-                    </div>
-                    <x-livelihood-select model="edit" id="ind-edit-livelihood"
-                        label-class="block text-xs font-medium text-slate-700 mb-1.5"
-                        input-class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm" />
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-edu">Education</label>
                             <input id="ind-edit-edu" type="text" x-model="edit.education" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
@@ -561,12 +556,20 @@
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-relation">Relation</label>
                             <input id="ind-edit-relation" type="text" x-model="edit.relation" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
+                        <x-livelihood-select model="edit" id="ind-edit-livelihood" class="gap-4 sm:col-span-2"
+                        label-class="block text-xs font-medium text-slate-700 mb-1.5"
+                        input-class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm" />
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-2">Vulnerable Sector Tags</label>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="tag in ['senior','osca','pwd','youth','child','osy','4ps','solo_parent','farmer','high_risk','ip']" :key="tag">
-                                <button type="button" @click="toggleEditTag(tag)" class="text-xs font-medium rounded-full px-2.5 py-1 border transition-colors" :class="edit.tags.includes(tag) ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-slate-200 text-ink-muted'" x-text="tag"></button>
+                                <button type="button" @click="toggleEditTag(tag)" :aria-pressed="edit.tags.includes(tag)"
+                                        class="inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border transition-colors"
+                                        :class="edit.tags.includes(tag) ? 'bg-brand-50 border-brand-300 text-brand-700' : 'bg-white border-slate-200 text-ink-muted hover:border-slate-300 hover:text-slate-700'">
+                                    <span aria-hidden="true" x-show="edit.tags.includes(tag)">&#10003;</span>
+                                    <span x-text="window.sectorTagLabel(tag)"></span>
+                                </button>
                             </template>
                         </div>
                     </div>
