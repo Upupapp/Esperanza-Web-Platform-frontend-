@@ -55,7 +55,7 @@ class DigitalIdWalletTest extends TestCase
         $wallet = $this->source('resources/views/components/citizen/digital-id-wallet.blade.php');
 
         $this->assertStringContainsString("'Uploaded — Not checked'", $wallet);
-        $this->assertStringContainsString("t('Didit did not check this ID.'", $wallet);
+        $this->assertStringContainsString("t('This ID was not checked.'", $wallet);
         $this->assertStringContainsString('en="Not available"', $wallet);
         $this->assertStringContainsString('Esperanza is not connected to the agency that issued this ID.', $wallet);
         // A returned ID shows the officer's reason; one the LGU verified carries the seal.
@@ -79,7 +79,7 @@ class DigitalIdWalletTest extends TestCase
         $this->assertStringContainsString("'/citizen/wallet/ids/check/' + encodeURIComponent(sessionId) + '/sync'", $wallet);
         $this->assertStringContainsString("has('wallet_check')) this.showDigitalId = true", $profile);
         // Its own mark, apart from the LGU's seal.
-        $this->assertStringContainsString("checked_by_didit: [this.t('Checked by Didit', 'Sinuri ng Didit')", $wallet);
+        $this->assertStringContainsString("checked_by_didit: [this.t('ID checked', 'Na-check ang ID')", $wallet);
         $this->assertStringContainsString('en="Only LGU staff can verify it for the Esperanza seal."', $wallet);
         $this->assertStringNotContainsString("x-show=\"d.document_status === 'checked_by_didit'\" x-cloak src=", $wallet);
         // A card from a check that kept the last four shows those.

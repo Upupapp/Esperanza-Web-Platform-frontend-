@@ -552,7 +552,7 @@
             <!-- Didit's identity check, or "do it later" from My Profile -->
             <div x-show="hosted && signedIn && !identityVerified" x-cloak class="space-y-2">
                 <h3 class="text-base font-bold text-ink" x-text="t('Verify your identity', 'I-verify ang iyong pagkakakilanlan')"></h3>
-                <p class="text-sm text-ink-muted" x-text="t('Have your valid ID ready. You will scan it with your camera, then do a quick face check - about 2 minutes. The check is done by Didit, our identity verification provider. You can also do this later from your profile.', 'Ihanda ang iyong valid ID. I-scan mo ito gamit ang camera, saka isang mabilis na face check - mga 2 minuto. Ang Didit, ang aming identity verification provider, ang gagawa ng pagsusuri. Maaari mo rin itong gawin mamaya mula sa iyong profile.')"></p>
+                <p class="text-sm text-ink-muted" x-text="t('Have your valid ID ready. You will scan it with your camera, then take a quick selfie to show it is really you. It takes about 2 minutes. You can also do this later from your profile.', 'Ihanda ang valid ID mo. I-scan mo ito gamit ang camera, tapos mag-selfie para makita na ikaw talaga ito. Mga 2 minuto lang. Puwede mo rin itong gawin mamaya sa profile mo.')"></p>
                 <x-ui.button type="button" size="lg" class="w-full" icon="scan-line" @click="startDidit()" loading="launchingDidit">
                     <span x-text="t('Verify my identity', 'I-verify ang aking pagkakakilanlan')"></span>
                 </x-ui.button>
