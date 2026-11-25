@@ -297,8 +297,8 @@
                     <input id="ap-ro-date" type="date" x-model="apRecord.completed_on" :max="new Date().toISOString().slice(0, 10)" class="{{ $apUi['input'] }}">
                 </div>
                 <div x-show="apShowsAmount()">
-                    <label for="ap-ro-amount" class="{{ $apUi['label'] }}">Amount (₱)</label>
-                    <input id="ap-ro-amount" type="number" min="0" step="0.01" x-model="apRecord.amount" class="{{ $apUi['input'] }}">
+                    <label for="ap-ro-amount" class="{{ $apUi['label'] }}">Amount (₱)<span x-show="apNeedsAmount()"> *</span></label>
+                    <input id="ap-ro-amount" type="number" min="0" step="0.01" x-model="apRecord.amount" :required="apNeedsAmount()" class="{{ $apUi['input'] }}">
                 </div>
                 <div>
                     <label for="ap-ro-to" class="{{ $apUi['label'] }}">Released to *</label>

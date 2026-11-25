@@ -168,10 +168,16 @@
                 const name = this.catalogNameByKey[this.selected?.service_key] || this.selected?.type;
                 return this.tulongTypesByName[name]?.processingKind || 'general';
             },
-            // Goods and registration programs give a package or an enrollment,
-            // not a sum, so they ask for no peso amount.
+            // Registration programs give an enrollment, not a sum, so they ask
+            // for no peso amount. Goods give a package whose value is the amount.
             get showsAmount() {
-                return !['goods', 'registration'].includes(this.processingKind);
+                return this.processingKind !== 'registration';
+            },
+            // Money or goods: the recommended and the approved amount are
+            // required (owner, 2026-11-25; the server's WelfareCatalog::AMOUNT_KINDS).
+            // Counseling, referral and session services give no money.
+            get needsAmount() {
+                return ['cash', 'goods', 'medical'].includes(this.processingKind);
             },
             peso(v) {
                 if (v === null || v === undefined || v === '') return '—';
@@ -925,6 +931,8 @@
                 const st = this.selected?.status;
                 if (st === 'Initial Screening' && !this.screeningDone) return 'Accept every requirement first. A rejected one must be replaced and accepted.';
                 if (st === 'Assessment' && !this.assessNotes.trim()) return 'Write the eligibility findings first.';
+                if (st === 'Assessment' && this.needsAmount && !(Number(this.assessAmount) > 0)) return 'Enter the recommended amount (₱) first.';
+                if (st === 'For Approval' && this.needsAmount && !(Number(this.approveAmount) > 0)) return 'Enter the approved amount (₱) first.';
                 if (st === 'Ready for Release' && !this.releaseTo.trim()) return 'Record who received the assistance.';
                 if (st === 'Ready for Release' && !this.hasReleaseProof) return 'Capture Proof of Release first.';
                 return '';
@@ -1598,8 +1606,8 @@
                         <textarea id="tulong-assess-notes" x-model="assessNotes" rows="3" maxlength="4000" placeholder="e.g. Enrolled for SY 2026-2027; household income is below the program threshold."
                             class="w-full rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none border-0 surface-pressed-sm"></textarea>
                         <div x-show="showsAmount" class="mt-2">
-                            <label for="tulong-assess-amount" class="block text-[11px] font-medium text-slate-600 mb-1">Recommended amount (₱)</label>
-                            <input id="tulong-assess-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="assessAmount" placeholder="0.00"
+                            <label for="tulong-assess-amount" class="block text-[11px] font-medium text-slate-600 mb-1">Recommended amount (₱) <span class="text-rose-600" x-show="needsAmount">*</span></label>
+                            <input id="tulong-assess-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="assessAmount" :required="needsAmount" placeholder="0.00"
                                 class="w-full sm:w-48 rounded-2xl py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         </div>
                         {{-- The MSWDO General Intake Sheet (MSWDO forms, 2026-10-26). --}}
@@ -1664,8 +1672,8 @@
                     <div class="rounded-xl border border-amber-200 bg-amber-50/30 p-3.5 mt-3" x-show="selected.status === 'For Approval' && !detailLoading && showsAmount" x-cloak>
                         <p class="text-xs font-semibold text-amber-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="stamp" class="w-3.5 h-3.5"></i> Approval</p>
                         <p class="text-[11px] text-ink-muted mt-1">Approve at the recommended amount or set another. The recommendation stays on record either way.</p>
-                        <label for="tulong-approve-amount" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Approved amount (₱)</label>
-                        <input id="tulong-approve-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="approveAmount" placeholder="0.00"
+                        <label for="tulong-approve-amount" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Approved amount (₱) <span class="text-rose-600" x-show="needsAmount">*</span></label>
+                        <input id="tulong-approve-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="approveAmount" :required="needsAmount" placeholder="0.00"
                             class="w-full sm:w-48 rounded-2xl py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
 

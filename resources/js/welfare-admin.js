@@ -385,7 +385,12 @@ export function tulongApply() {
             return !!this.apKey && !this.apSessionRef && can(typePerm(this.apType || { key: this.apKey }), 'release');
         },
         apShowsAmount() {
-            return !['goods', 'registration', 'counseling', 'session', 'referral'].includes(this.apType?.processingKind);
+            return !['registration', 'counseling', 'session', 'referral'].includes(this.apType?.processingKind);
+        },
+        // Money or goods: the amount is required (owner, 2026-11-25; the
+        // server's WelfareCatalog::AMOUNT_KINDS).
+        apNeedsAmount() {
+            return ['cash', 'goods', 'medical'].includes(this.apType?.processingKind);
         },
         /** Step by step, '' when the step is complete. */
         apProblem(step = this.apStep) {
@@ -422,6 +427,7 @@ export function tulongApply() {
                 if (this.apRecordOnly) {
                     if (!this.apRecord.completed_on) return 'Give the date the assistance was given.';
                     if (!this.apRecord.released_to.trim()) return 'Write who received it.';
+                    if (this.apNeedsAmount() && !(Number(this.apRecord.amount) > 0)) return 'Enter the amount (₱) given, more than ₱0.';
                     if (this.apShowsAmount() && String(this.apRecord.amount ?? '').trim() !== '' && Number(this.apRecord.amount) < 0) return 'The amount must be 0 or more.';
                 }
                 return this.apConsent ? '' : 'The person must agree to the privacy notice first.';
