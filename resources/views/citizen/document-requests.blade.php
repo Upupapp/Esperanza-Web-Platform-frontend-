@@ -1732,17 +1732,15 @@
                             </ul>
 
                             <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3"><x-ui.t fil="Ano ang Susunod" en="What Happens Next" /></p>
-                            <div class="flex items-center rounded-xl border border-brand-600/10 bg-slate-50/60 px-4 py-4">
+                            <ol class="flex items-start rounded-xl border border-brand-600/10 bg-slate-50/60 px-2 py-4">
                                 <template x-for="(step_label, i) in docs[selectedDoc]?.process || []" :key="i">
-                                    <div class="flex-1 flex items-center">
-                                        <div class="flex flex-col items-center gap-1.5 text-center">
-                                            <span class="w-7 h-7 rounded-full clay-blue flex items-center justify-center text-xs font-semibold shrink-0" x-text="i + 1"></span>
-                                            <span class="text-[10px] text-ink-muted max-w-[80px] leading-tight" x-text="step_label"></span>
-                                        </div>
-                                        <div class="flex-1 h-0.5 bg-brand-200 -mt-5" x-show="i < (docs[selectedDoc]?.process || []).length - 1"></div>
-                                    </div>
+                                    <li class="relative flex-1 min-w-0 flex flex-col items-center gap-1.5 px-1 text-center">
+                                        <span aria-hidden="true" class="absolute top-[13px] left-1/2 w-full h-0.5 bg-brand-200" x-show="i < (docs[selectedDoc]?.process || []).length - 1"></span>
+                                        <span class="relative w-7 h-7 rounded-full clay-blue flex items-center justify-center text-xs font-semibold shrink-0" x-text="i + 1"></span>
+                                        <span class="text-[10px] text-ink-muted leading-tight break-words" x-text="step_label"></span>
+                                    </li>
                                 </template>
-                            </div>
+                            </ol>
                         </div>
                         </div>
 
