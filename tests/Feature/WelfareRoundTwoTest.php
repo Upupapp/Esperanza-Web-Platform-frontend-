@@ -169,7 +169,7 @@ class WelfareRoundTwoTest extends TestCase
 
     public function test_apply_uploads_each_requirement_instead_of_ticking_it(): void
     {
-        $apply = $this->shown('resources/views/admin/tulong/apply.blade.php');
+        $apply = $this->shown('resources/views/lazy/tulong-apply.blade.php');
         $js = $this->source('resources/js/welfare-admin.js');
 
         $this->assertStringContainsString('Upload a photo or scan of each document. Documents not uploaded now can be attached to the case later.', $apply);
@@ -253,7 +253,7 @@ class WelfareRoundTwoTest extends TestCase
             $this->assertStringNotContainsString($gone, $js, $gone);
         }
         // Record assistance already given stays in Apply.
-        $this->assertStringContainsString('Record assistance already given', $this->source('resources/views/admin/tulong/apply.blade.php'));
+        $this->assertStringContainsString('Record assistance already given', $this->source('resources/views/lazy/tulong-apply.blade.php'));
     }
 
     public function test_every_tulong_case_has_its_case_notes(): void
@@ -303,14 +303,14 @@ class WelfareRoundTwoTest extends TestCase
 
     public function test_the_tulong_screens_say_tulong_type_not_service(): void
     {
-        $apply = $this->shown('resources/views/admin/tulong/apply.blade.php');
+        $apply = $this->shown('resources/views/lazy/tulong-apply.blade.php');
         $js = $this->source('resources/js/welfare-admin.js');
 
         $this->assertStringContainsString("apSteps: ['Person', 'Tulong Type', 'Form', 'Requirements & consent'],", $js);
         $this->assertStringContainsString("'Which Tulong type?'", $apply);
         $this->assertStringContainsString('aria-label="Search Tulong types" placeholder="Search Tulong types"', $apply);
         $this->assertStringContainsString("if (step === 2) return this.apKey ? '' : 'Choose the Tulong type.';", $js);
-        $this->assertStringContainsString('<label for="sf-service" class="{{ $sdLabel }}">Tulong Type *</label>', $this->source('resources/views/admin/tulong/session-desk.blade.php'));
+        $this->assertStringContainsString('<label for="sf-service" class="{{ $sdLabel }}">Tulong Type *</label>', $this->source('resources/views/lazy/tulong-session-desk.blade.php'));
         $this->assertStringContainsString('<option value="">All Tulong types</option>', $this->source('resources/views/admin/tulong/sessions.blade.php'));
         // The Tulong list and the case window too (live check, 2026-11-02).
         $list = $this->source('resources/views/admin/assistance-requests.blade.php');

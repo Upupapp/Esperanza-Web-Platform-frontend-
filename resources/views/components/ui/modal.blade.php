@@ -18,7 +18,8 @@
     // (scope round 2026-10-15).
     $modalSeq = (int) request()->attributes->get('esperanza_modal_seq', 0) + 1;
     request()->attributes->set('esperanza_modal_seq', $modalSeq);
-    $titleId = 'modal-title-' . $modalSeq;
+    // A lazy partial (lazy-frame.blade.php) counts its own: lp-<name>-title-N.
+    $titleId = (request()->attributes->get('esperanza_modal_id_prefix') ?: 'modal-title-') . $modalSeq;
 @endphp
 
 <template x-teleport="body">

@@ -71,7 +71,7 @@ class FlowsFinalFixesTest extends TestCase
 
     public function test_the_import_history_says_one_resident_and_one_record(): void
     {
-        $modal = $this->source('resources/views/admin/partials/modal-request-import.blade.php');
+        $modal = $this->source('resources/views/admin/partials/modal-request-import-window.blade.php');
         $this->assertStringContainsString("(h.linked === 1 ? ' linked to a resident · ' : ' linked to residents · ')", $modal);
         $this->assertStringContainsString("=== 1 ? ' record archived' : ' records archived')", $modal);
     }

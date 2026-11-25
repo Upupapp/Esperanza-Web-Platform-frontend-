@@ -39,7 +39,8 @@ class OfficePapersTest extends TestCase
         // The date the copy was issued, not the day it is reopened.
         $this->assertStringContainsString('d.issued_on', $cert);
         // The admin preview shows the barangay's own seal.
-        $this->assertStringContainsString('seal="barangayCatalog[selected.barangay]?.seal || null"', $this->source('resources/views/admin/document-requests.blade.php'));
+        // (the Prepared Document window: a lazy partial since 2026-11-25)
+        $this->assertStringContainsString('seal="barangayCatalog[selected.barangay]?.seal || null"', $this->source('resources/views/lazy/dokyu-prepared-document.blade.php'));
     }
 
     public function test_the_certificates_ask_what_their_papers_ask(): void

@@ -138,3 +138,12 @@ Route::view('/admin/sakuna/damage-assessment', 'admin.sakuna', ['tab' => 'damage
 Route::view('/admin/sakuna/bdrrmc-forms', 'admin.sakuna', ['tab' => 'bdrrmc-forms'])->name('admin.sakuna.bdrrmc-forms');
 Route::view('/admin/sakuna/alerts', 'admin.sakuna', ['tab' => 'alerts'])->name('admin.sakuna.alerts');
 Route::view('/admin/sakuna/reports', 'admin.sakuna', ['tab' => 'reports'])->name('admin.sakuna.reports');
+
+// Lazy partials (page budget, 2026-11-25): a window most visits never open,
+// kept out of its page's HTML and served on its own. One address per file in
+// resources/views/lazy/; the export writes each to dist/partials/<name>.html
+// (esperanza_export_partials) and the page's <x-lazy-partial> fetches it.
+foreach (glob(resource_path('views/lazy/*.blade.php')) ?: [] as $lazyPartialFile) {
+    $lazyPartialName = basename($lazyPartialFile, '.blade.php');
+    Route::view('/partials/'.$lazyPartialName.'.html', 'lazy-frame', ['lazyPartialName' => $lazyPartialName]);
+}

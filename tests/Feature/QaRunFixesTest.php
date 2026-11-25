@@ -389,7 +389,7 @@ class QaRunFixesTest extends TestCase
         }
         $this->assertStringContainsString("@include('admin.constituents.tab-occupations')", $this->source('resources/views/admin/constituents.blade.php'));
         $this->assertStringContainsString("key: 'livelihood_code'", $this->source('resources/js/resident-import.js'));
-        $this->assertStringContainsString('livelihood-review-import', $this->source('resources/views/admin/constituents/modal-import.blade.php'));
+        $this->assertStringContainsString('livelihood-review-import', $this->source('resources/views/lazy/constituents-import.blade.php'));
     }
 
     public function test_constituents_export_goes_through_the_server(): void

@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 495, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 500, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -927,3 +927,41 @@ it. Reverted; full suite 46 passed.
 non-interactive session (approval required). The change follows the file's
 existing style but the formatter has not confirmed it. It runs in
 `scripts/gate.sh:63` before any push, so it cannot reach `main` unformatted.
+
+## 2026-11-25 — lazy partials: headroom under the 120 KB page budget
+
+Dokyu (`admin/document-requests`) sat exactly at the 120 KB gz page budget,
+Tulong at 119 KB and the five Constituents pages at 118 KB: the next small
+change to any of them would have failed the gate. Measured first (marginal gz
+cost of each element of the exported page), the weight was windows most
+visits never open.
+
+**One mechanism, not page hacks.** A window's markup moves to
+`resources/views/lazy/<name>.blade.php`; `routes/web.php` serves each file
+there at `/partials/<name>.html` and `export.php` writes it to
+`dist/partials/<name>.html` (`esperanza_export_partials()`; not an
+`index.html`, so the gate's page count and the accessibility run are
+unchanged). In its old place the page keeps
+`<x-lazy-partial name="..." when="<the window's open flag>" />`, a
+`<div class="contents">` placeholder. `resources/js/lazy-partial.js`
+(the `x-lazy-partial` directive) puts the markup back in it once the page has
+loaded and the browser is idle, or at once if the window is asked for first,
+then starts Alpine on it: same place, same scope, same buttons, live updates
+and transitions. Same origin (`connect-src 'self'`), no script in a partial,
+`/partials/*` noindex in `_headers`. `?v=` is the partial's content hash.
+Modal heading ids in a partial are `lp-<name>-title-N`, apart from the page's
+`modal-title-N`. In tests, `Tests\TestCase::get()` returns a page with its
+partials put back (as the browser ends up with it); `rawGet()` returns the
+HTML as served.
+
+| Page (gz) | Before | After | Moved |
+| --- | --- | --- | --- |
+| admin/document-requests | 120 KB | 88 KB | Prepared Document window, Import records window |
+| admin/assistance-requests | 119 KB | 100 KB | Import records, Apply for New Tulong, Group session + Session form |
+| admin/constituents (x5) | 118 KB | 87 KB | Import from a file, New resident / family / household, life event, merge |
+
+Kept inline on purpose: the windows staff open on most visits (Dokyu's and
+Tulong's Process / case window, the resident, family and household details,
+the citizen account review). The heaviest page is now
+`citizen/document-requests` at 113 KB gz, a resident page this round did not
+touch. `LazyPartialsTest` (5 tests) holds the mechanism.

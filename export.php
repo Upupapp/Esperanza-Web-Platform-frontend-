@@ -39,6 +39,9 @@ mt_srand(20260830);
 $kernel->bootstrap();
 
 $routes = esperanza_export_routes($app->make('router')->getRoutes());
+// Plus the lazy partials (windows kept out of their page's HTML), written the
+// same way to dist/partials/<name>.html. See esperanza_export_partials().
+$partials = esperanza_export_partials($app->make('router')->getRoutes());
 
 // Fail loudly rather than publishing an empty site: an exporter that writes
 // nothing still exits 0 and looks like a successful build.
@@ -98,7 +101,7 @@ echo "Dist    : {$distDir}\n\n";
 $ok = 0;
 $fail = 0;
 
-foreach ($routes as $uri => $outputPath) {
+foreach ($routes + $partials as $uri => $outputPath) {
     try {
         // Laravel builds absolute URLs from HTTP_HOST, so a non-default port
         // has to be in the header itself -- SERVER_PORT alone is ignored and the

@@ -82,6 +82,9 @@ if (!function_exists('esperanza_response_headers')) {
             '/admin/*',
             '  X-Robots-Tag: noindex, nofollow',
             '',
+            '/partials/*',
+            '  X-Robots-Tag: noindex, nofollow',
+            '',
             '/build/assets/*',
             '  Cache-Control: public, max-age=31536000, immutable',
             '',
@@ -143,6 +146,9 @@ if (!function_exists('esperanza_export_skip_uris')) {
             if (str_starts_with($uri, '_') || str_starts_with($uri, 'storage/')) {
                 continue;
             }
+            if (str_starts_with($uri, 'partials/')) {  // not a page: esperanza_export_partials()
+                continue;
+            }
 
             $routes['/' . ltrim($uri, '/')] = $uri === '/'
                 ? 'index.html'
@@ -152,5 +158,28 @@ if (!function_exists('esperanza_export_skip_uris')) {
         ksort($routes);
 
         return $routes;
+    }
+
+    /**
+     * The lazy partials (page budget, 2026-11-25): windows kept out of their
+     * page's HTML (resources/views/lazy/, <x-lazy-partial>). URI => the
+     * dist-relative file, written as is (partials/<name>.html) and never as a
+     * page: no index.html, so the gate's page count and the accessibility run
+     * see pages only.
+     */
+    function esperanza_export_partials(iterable $routeCollection): array
+    {
+        $partials = [];
+
+        foreach ($routeCollection as $route) {
+            $uri = $route->uri();
+            if (in_array('GET', $route->methods(), true) && preg_match('#^partials/[a-z0-9-]+\.html$#', $uri)) {
+                $partials['/'.$uri] = $uri;
+            }
+        }
+
+        ksort($partials);
+
+        return $partials;
     }
 }

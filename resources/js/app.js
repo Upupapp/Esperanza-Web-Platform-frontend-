@@ -14,12 +14,15 @@ import focus from '@alpinejs/focus';
 import { createIcons } from 'lucide';
 import icons from './lucide-icons';
 import * as DokyuEditor from './dokyu-editor';
+import { registerLazyPartials } from './lazy-partial';
 
 // x-trap gives modals a real focus trap and, on close, restores focus to the
 // element that opened them. Both are required for a keyboard-only user to get
 // back out of a dialog (TAB 10), and doing it in the plugin rather than by hand
 // keeps Tab/Shift-Tab correct across x-teleport.
 Alpine.plugin(focus);
+// x-lazy-partial: a window kept out of the page's HTML (see lazy-partial.js).
+registerLazyPartials(Alpine);
 
 window.Alpine = Alpine;
 // The one HTTP client (resources/js/api/client.js). Exposed globally for the

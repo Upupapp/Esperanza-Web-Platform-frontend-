@@ -25,7 +25,10 @@ class ExportManifestTest extends TestCase
 
     public function test_every_renderable_route_is_in_the_export_map(): void
     {
-        $exported = esperanza_export_routes(app('router')->getRoutes());
+        // Pages, plus the lazy partials (windows kept out of their page's HTML,
+        // 2026-11-25), which the export writes as files of their own.
+        $exported = esperanza_export_routes(app('router')->getRoutes())
+            + esperanza_export_partials(app('router')->getRoutes());
         $skip = esperanza_export_skip_uris();
 
         $missing = [];

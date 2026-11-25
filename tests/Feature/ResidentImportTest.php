@@ -40,7 +40,8 @@ class ResidentImportTest extends TestCase
      */
     public function test_rows_that_need_fixing_are_corrected_in_the_window(): void
     {
-        $modal = file_get_contents(resource_path('views/admin/constituents/modal-import.blade.php'));
+        // The window itself is a lazy partial since 2026-11-25.
+        $modal = file_get_contents(resource_path('views/admin/constituents/modal-import.blade.php')).file_get_contents(resource_path('views/lazy/constituents-import.blade.php'));
         $ui = file_get_contents(base_path('resources/js/resident-import-ui.js'));
 
         $this->assertMatchesRegularExpression('/x-show="editing!==r\.row" @click="startEdit\(r\)"[^>]*>.*Fix<\/button>/', $modal);

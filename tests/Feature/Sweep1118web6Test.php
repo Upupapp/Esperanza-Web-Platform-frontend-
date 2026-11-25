@@ -192,7 +192,7 @@ class Sweep1118web6Test extends TestCase
         $this->assertStringNotContainsString("if (!batches.length) return;\n", $run);
 
         // The paused panel's buttons are what show it (stoppedAt set).
-        $modal = $this->source('resources/views/admin/constituents/modal-import.blade.php');
+        $modal = $this->source('resources/views/lazy/constituents-import.blade.php');
         $this->assertStringContainsString('x-show="!running && stoppedAt !== null" @click="runImport()"', $modal);
     }
 

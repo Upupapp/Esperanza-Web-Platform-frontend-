@@ -48,7 +48,7 @@ class GuideReview1119Test extends TestCase
         $this->assertStringContainsString('>Registry record</th>', $this->source('resources/views/admin/constituents/tab-citizen-verification.blade.php'));
         $this->assertStringContainsString('cvStatusOf(accountRow)', $this->source('resources/views/admin/constituents/modal-citizen-account.blade.php'));
         $this->assertStringContainsString('label="Profiled, whole town"', $this->source('resources/views/admin/constituents/tab-profiling.blade.php'));
-        $this->assertStringContainsString('Undo archives the residents', $this->source('resources/views/admin/constituents/modal-import.blade.php'));
+        $this->assertStringContainsString('Undo archives the residents', $this->source('resources/views/lazy/constituents-import.blade.php'));
         $this->assertStringContainsString('>Resident ID<', $this->source('resources/views/components/citizen/digital-id-card.blade.php'));
     }
 }

@@ -19,7 +19,7 @@ class VideoRehearsal1121Test extends TestCase
     public function test_a_record_listed_twice_in_an_office_file_is_shown_in_the_review_not_dropped_at_import(): void
     {
         $js = $this->source('resources/js/request-import-ui.js');
-        $modal = $this->source('resources/views/admin/partials/modal-request-import.blade.php');
+        $modal = $this->source('resources/views/admin/partials/modal-request-import-window.blade.php');
 
         // The server's own keys: the service and its control number, or the service, the day and the person.
         $this->assertStringContainsString("r.source_ref ? r.service_key + '|ref|' + String(r.source_ref).trim().toLowerCase() : null,", $js);

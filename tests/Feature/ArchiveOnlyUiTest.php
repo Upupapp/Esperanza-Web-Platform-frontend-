@@ -88,11 +88,11 @@ class ArchiveOnlyUiTest extends TestCase
 
     public function test_session_cases_import_undo_and_step_undo_say_archived(): void
     {
-        $desk = $this->source('resources/views/admin/tulong/session-desk.blade.php');
+        $desk = $this->source('resources/views/lazy/tulong-session-desk.blade.php');
         $this->assertStringContainsString('Yes, take off</button>', $desk);
         $this->assertStringContainsString("' was taken off the session. The case waits for a session again.'", $this->source('resources/js/welfare-admin.js'));
 
-        $import = $this->source('resources/views/admin/partials/modal-request-import.blade.php');
+        $import = $this->source('resources/views/admin/partials/modal-request-import-window.blade.php');
         $this->assertStringContainsString("' records archived'", $import);
         $this->assertStringContainsString('Undo archives every record this import added', $import);
         $this->assertStringNotContainsString('Undo removes every record', $import);

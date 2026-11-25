@@ -19,7 +19,8 @@ class BugsQaFixesTest extends TestCase
     /** Closing the prepared document kept the edits, and they printed. */
     public function test_closing_or_cancelling_an_edit_puts_the_document_back(): void
     {
-        $view = $this->source('resources/views/admin/document-requests.blade.php');
+        // The page and its Prepared Document window (a lazy partial since 2026-11-25).
+        $view = $this->source('resources/views/admin/document-requests.blade.php').$this->source('resources/views/lazy/dokyu-prepared-document.blade.php');
 
         $this->assertStringContainsString('set open(v) { if (!v && editingDocument) cancelDocumentEdits();', $view, 'closing the window while editing cancels');
         $this->assertStringContainsString('const editor = this.$refs.docEditor || this.getDocContentEl();', $view, 'found from the close path too, where $refs does not resolve');
@@ -106,7 +107,8 @@ class BugsQaFixesTest extends TestCase
     /** Owner decision 2026-10-06, option B: an edited prepared document is stored on the request, for staff. */
     public function test_an_edited_document_is_stored_on_the_request_for_staff(): void
     {
-        $view = $this->source('resources/views/admin/document-requests.blade.php');
+        // The page and its Prepared Document window (a lazy partial since 2026-11-25).
+        $view = $this->source('resources/views/admin/document-requests.blade.php').$this->source('resources/views/lazy/dokyu-prepared-document.blade.php');
 
         $this->assertStringContainsString('$api.put(this.apiBase(r.ref) + \'/prepared-document\'', $view, 'Save stores it');
         $this->assertStringContainsString('$api.delete(this.apiBase(r.ref) + \'/prepared-document\')', $view, 'and it can go back to the template');

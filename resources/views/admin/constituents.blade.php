@@ -1236,15 +1236,18 @@
 
     {{-- ── Modals ──────────────────────────────────────────────────── --}}
     <div x-show="showIndividualDetail" x-cloak>@include('admin.constituents.modal-individual-detail')</div>
-    <div x-show="showAddIndividual"    x-cloak>@include('admin.constituents.modal-add-individual')</div>
+    <div x-show="showAddIndividual"    x-cloak><x-lazy-partial name="constituents-add-individual" when="showAddIndividual" /></div>
     <div x-show="showFamilyDetail"     x-cloak>@include('admin.constituents.modal-family-detail')</div>
-    <div x-show="showAddFamily"        x-cloak>@include('admin.constituents.modal-add-family')</div>
+    <div x-show="showAddFamily"        x-cloak><x-lazy-partial name="constituents-add-family" when="showAddFamily" /></div>
     <div x-show="showHouseholdDetail"  x-cloak>@include('admin.constituents.modal-household-detail')</div>
-    <div x-show="showAddHousehold"     x-cloak>@include('admin.constituents.modal-add-household')</div>
-    <div x-show="showLifecycle"        x-cloak>@include('admin.constituents.modal-lifecycle')</div>
-    <div x-show="showMerge"            x-cloak>@include('admin.constituents.modal-merge')</div>
+    <div x-show="showAddHousehold"     x-cloak><x-lazy-partial name="constituents-add-household" when="showAddHousehold" /></div>
+    <div x-show="showLifecycle"        x-cloak><x-lazy-partial name="constituents-lifecycle" when="showLifecycle" /></div>
+    <div x-show="showMerge"            x-cloak><x-lazy-partial name="constituents-merge" when="showMerge" /></div>
     <div x-show="showDQDetail"         x-cloak>@include('admin.constituents.modal-dq-detail')</div>
     <div x-show="showAccountReview"    x-cloak>@include('admin.constituents.modal-citizen-account')</div>
+    {{-- The add, life-event and merge windows above, and the import window's
+         own window, load apart from the page (resources/views/lazy/, page
+         budget 2026-11-25): <x-lazy-partial> puts each back in its place. --}}
     @include('admin.constituents.modal-import')
 
 </div>

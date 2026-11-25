@@ -59,8 +59,9 @@ class StaffManualTestFixesTest extends TestCase
         $this->assertStringContainsString('await Promise.race([saving, timeout]);', $body);
         $this->assertStringContainsString('Unable to download the PDF. Please try Print and choose Save as PDF.', $body);
 
-        // Closing the document, or Escape, also clears it.
-        $src = $this->source($view);
+        // Closing the document, or Escape, also clears it (the Prepared
+        // Document window: a lazy partial since 2026-11-25).
+        $src = $this->source('resources/views/lazy/dokyu-prepared-document.blade.php');
         $this->assertStringContainsString("docPreviewOpen = v; if (!v) { document.body.classList.remove('dp-printing');", $src);
         $this->assertStringContainsString('@keydown.escape.window="document.body.classList.remove(\'dp-printing\')"', $src);
     }
@@ -90,7 +91,7 @@ class StaffManualTestFixesTest extends TestCase
 
     public function test_apply_number_fields_refuse_a_negative(): void
     {
-        $apply = $this->source('resources/views/admin/tulong/apply.blade.php');
+        $apply = $this->source('resources/views/lazy/tulong-apply.blade.php');
         $this->assertStringContainsString(":min=\"f.type === 'number' ? (f.min ?? (String(f.key).endsWith('net_income') ? null : 0)) : null\" :step=\"f.type === 'number' ? (f.step ?? 'any') : null\"", $apply);
         $this->assertStringContainsString(":min=\"col.type === 'number' ? (col.min ?? (String(col.key).endsWith('net_income') ? null : 0)) : null\" :step=\"col.type === 'number' ? (col.step ?? 'any') : null\"", $apply);
         // A projected net income may be a loss, as the server allows (QA 2026-11-06).
@@ -104,7 +105,7 @@ class StaffManualTestFixesTest extends TestCase
 
     public function test_finish_session_opens_its_confirm_once_and_hides_while_it_is_open(): void
     {
-        $desk = $this->source('resources/views/admin/tulong/session-desk.blade.php');
+        $desk = $this->source('resources/views/lazy/tulong-session-desk.blade.php');
 
         $this->assertStringContainsString('<div id="sd-finish-panel" x-show="sdPanel === \'finish\'"', $desk);
         $this->assertStringContainsString("x-show=\"ses && sdScheduled() && sdCan('release') && sdPanel !== 'finish'\"", $desk);
