@@ -2516,16 +2516,19 @@
                 @include('admin.partials.modal-request-import', ['importType' => 'dokyu'])
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
-                    @foreach($tabs as $key => $label)
-                        <button
-                            type="button" @click="tab = '{{ $key }}'"
-                            class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
-                            :class="tab === '{{ $key }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
-                        >{{ $label }}</button>
-                    @endforeach
+                {{-- The status tabs with Assigned to me and Overdue right beside them (owner, 25 Nov). --}}
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
+                        @foreach($tabs as $key => $label)
+                            <button
+                                type="button" @click="tab = '{{ $key }}'"
+                                class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                                :class="tab === '{{ $key }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
+                            >{{ $label }}</button>
+                        @endforeach
+                    </div>
+                    <x-admin.scope.queue-chips />
                 </div>
-                <x-admin.scope.queue-chips />
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' requests'"></p>
                 {{-- The list holds the newest 2,000 (sweep 2026-11-18: it stopped there without a word). --}}
                 <p x-show="requestsTotal > requests.length" x-cloak class="w-full text-[11px] text-amber-800 bg-amber-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
