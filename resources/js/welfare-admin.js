@@ -68,6 +68,7 @@ function ageOn(birth, onDay = manilaToday()) {
 }
 
 const can = (submodule, action) => !!window.Alpine?.store('session')?.canPerm(submodule, action);
+const canStep = (submodule, step) => !!window.Alpine?.store('session')?.canStep?.(submodule, step);
 const icons = () => window.Alpine?.nextTick(() => window.renderIcons?.());
 
 // ----------------------------------------------------------------- Catalog
@@ -382,7 +383,8 @@ export function tulongApply() {
             return ageOn(this.apForm[f.derived_from]);
         },
         apMayRecord() {
-            return !!this.apKey && !this.apSessionRef && can(typePerm(this.apType || { key: this.apKey }), 'release');
+            // Help already given is the import step, as OfficeFiling checks it (bug hunt 25 Nov, A3).
+            return !!this.apKey && !this.apSessionRef && canStep(typePerm(this.apType || { key: this.apKey }), 'import');
         },
         apShowsAmount() {
             return !['registration', 'counseling', 'session', 'referral'].includes(this.apType?.processingKind);

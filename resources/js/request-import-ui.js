@@ -130,6 +130,9 @@ export function requestImport(type, keys = [], barangayList = []) {
         get serviceWord() { return this.type === 'tulong' ? 'Type of assistance' : 'Document'; },
         get allowed() {
             const s = this.$store.session;
+            // The import step, as the server checks it (RequestImportService):
+            // Staff hold release by the release step with the import off (bug hunt 25 Nov, A2).
+            if (s?.canStep) return this.keys.some((k) => s.canStep(k, 'import'));
             return !!s?.canPerm && this.keys.some((k) => s.canPerm(k, 'release'));
         },
         get scope() {

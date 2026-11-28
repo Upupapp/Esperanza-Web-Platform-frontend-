@@ -879,6 +879,10 @@ document.addEventListener('alpine:init', () => {
                 status: raw.status,
                 moduleKeys: raw.moduleKeys || [],
                 permissions: permissionMap(raw.permissions),
+                // The work steps per submodule (screen, assess, release,
+                // import) from /auth/me: Staff hold release without the import
+                // step (bug hunt 25 Nov, A2/A3). Null from an older server.
+                steps: raw.steps || null,
                 // A password an administrator set: My Profile opens by itself and
                 // asks for the officer's own before anything else (PR-8).
                 mustChangePassword: !!raw.must_change_password,
@@ -973,6 +977,16 @@ document.addEventListener('alpine:init', () => {
             const perms = (this.account.permissions || {})[submoduleKey];
             if (!perms) return false;
             return Array.isArray(perms) ? perms.includes(permission) : perms === '*';
+        },
+        // One step of the work (StaffAccess::STEPS), as the server decides it
+        // (Authorizer::canStep). Without the server's list, the step's own
+        // action: screen and assess are review, release and import release.
+        canStep(submoduleKey, step) {
+            if (!this.account) return false;
+            if (this.account.roleKey === 'super_admin') return true;
+            const steps = this.account.steps;
+            if (steps && typeof steps === 'object' && !Array.isArray(steps)) return (steps[submoduleKey] || []).includes(step);
+            return this.canPerm(submoduleKey, ['screen', 'assess'].includes(step) ? 'review' : 'release');
         },
         inScope(barangay) {
             if (!this.account) return false;

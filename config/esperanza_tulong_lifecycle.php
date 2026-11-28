@@ -100,16 +100,17 @@ return [
 
     // Section 10 — whole-case transitions, as `from => [to, ...]`. A status
     // absent as a key is terminal. Reject and Cancel always require a typed
-    // reason; so does Return for Reassessment.
+    // reason; so does Return for Reassessment. Cancel from every open stage
+    // (owner-delegated decision, 25 Nov 2026): after approval, the Head's.
     'transitions' => [
         'Submitted' => ['Initial Screening', 'Cancelled'],
         'Initial Screening' => ['Assessment', 'Needs Requirements', 'Rejected', 'Cancelled'],
         'Needs Requirements' => ['Initial Screening', 'Cancelled'],
         'Assessment' => ['For Approval', 'Rejected', 'Cancelled'],
-        'For Approval' => ['Assistance Processing', 'Returned for Reassessment', 'Rejected'],
-        'Returned for Reassessment' => ['Assessment'],
-        'Assistance Processing' => ['Ready for Release'],
-        'Ready for Release' => ['Completed'],
+        'For Approval' => ['Assistance Processing', 'Returned for Reassessment', 'Rejected', 'Cancelled'],
+        'Returned for Reassessment' => ['Assessment', 'Rejected', 'Cancelled'],
+        'Assistance Processing' => ['Ready for Release', 'Cancelled'],
+        'Ready for Release' => ['Completed', 'Cancelled'],
     ],
 
     // Transitions that cannot be taken without an operator-typed reason.

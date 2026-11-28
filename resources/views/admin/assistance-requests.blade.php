@@ -545,7 +545,7 @@
                 // The program's steps and which are done (2026-10-17).
                 r.workflow = d.workflow || null;
                 r.payment = d.payment || null;
-                r.history = (d.history || []).map((h) => ({ stage: h.to, from: h.from, date: this.formatDay(h.at), by: h.actor_name || '—', note: window.historyNote(h.trigger) }));
+                r.history = (d.history || []).map((h) => ({ stage: h.to, from: h.from, date: this.formatDay(h.at), by: h.actor_name || '—', note: window.historyNote(h.trigger), remark: h.remark || null }));
                 const proof = d.proof_of_release || {};
                 r.proofNote = proof.note || null;
                 if (proof.captured) {
@@ -572,6 +572,18 @@
             // after a document decision never overwrites what was typed.
             prefillCaseForms(r) {
                 const c = r.case || {};
+                // A returned case reopens on its earlier assessment, to revise
+                // rather than retype (bug hunt 25 Nov, A4): the server lays what
+                // is sent over the saved intake sheet, so nothing is erased.
+                if (['Assessment', 'Returned for Reassessment'].includes(r.status)) {
+                    if (this.assessNotes === '' && c.assessment_notes) this.assessNotes = c.assessment_notes;
+                    if (this.assessAmount === '' && c.recommended_amount !== null && c.recommended_amount !== undefined) this.assessAmount = String(Number(c.recommended_amount));
+                    const saved = c.intake || {};
+                    Object.keys(this.intake).forEach((k) => {
+                        const empty = Array.isArray(this.intake[k]) ? this.intake[k].length === 0 : this.intake[k] === '';
+                        if (empty && saved[k] !== undefined && saved[k] !== null) this.intake[k] = Array.isArray(this.intake[k]) ? [].concat(saved[k]) : saved[k];
+                    });
+                }
                 if (this.approveAmount === '' && c.recommended_amount !== null && c.recommended_amount !== undefined) this.approveAmount = String(Number(c.recommended_amount));
                 if (this.releaseTo === '' && r.status === 'Ready for Release' && r.citizen && r.citizen !== '—') this.releaseTo = r.citizen;
                 if (this.releaseAmount === '' && c.approved_amount !== null && c.approved_amount !== undefined) this.releaseAmount = String(Number(c.approved_amount));
@@ -1533,8 +1545,9 @@
                                         <span x-show="!mayAccept(req)" class="text-[11px] text-ink-muted">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for replacement</button>
-                                        <span class="text-slate-200">·</span>
-                                        <button type="button" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
+                                        {{-- Reject is the Head's (staff access, 2026-11-20): shown only when the server allows it (bug hunt 25 Nov, A1). --}}
+                                        <span class="text-slate-200" x-show="may('reject')">·</span>
+                                        <button type="button" x-show="may('reject')" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
                                     </div>
 
                                     <div x-show="req._decidingOutcome" x-cloak class="mt-2.5 pt-2.5 border-t border-brand-600/10 space-y-2">
@@ -1602,6 +1615,8 @@
                     <div class="rounded-xl border border-indigo-200 bg-indigo-50/30 p-3.5 mt-3" x-show="selected.status === 'Assessment' && !detailLoading && processingKind !== 'session'" x-cloak>
                         <p class="text-xs font-semibold text-indigo-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="clipboard-pen" class="w-3.5 h-3.5"></i> Eligibility Assessment</p>
                         <p class="text-[11px] text-ink-muted mt-1">What you found and what you recommend. The approver reads this; the resident does not.</p>
+                        {{-- Still on screen while the assessment is rewritten (bug hunt 25 Nov, A5). --}}
+                        <p class="mt-2 rounded-lg border border-orange-200 bg-orange-50/60 px-2.5 py-1.5 text-[11px] text-orange-700" x-show="selected.returnReason" x-cloak data-return-reason><span class="font-semibold">Returned by the Head:</span> <span x-text="selected.returnReason"></span></p>
                         <label for="tulong-assess-notes" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Findings <span class="text-rose-600">*</span></label>
                         <textarea id="tulong-assess-notes" x-model="assessNotes" rows="3" maxlength="4000" placeholder="e.g. Enrolled for SY 2026-2027; household income is below the program threshold."
                             class="w-full rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none border-0 surface-pressed-sm"></textarea>
@@ -1783,6 +1798,8 @@
                             <template x-for="(h, hi) in (selected.history || []).slice().reverse()" :key="hi">
                                 <li class="text-xs border-l-2 border-slate-200 pl-2.5">
                                     <p class="font-medium text-ink" x-text="h.stage + (h.note ? ' — ' + h.note : '')"></p>
+                                    {{-- The return reason, or what was recommended, on its own row (bug hunt 25 Nov, A5/A6). --}}
+                                    <p class="text-[11px] text-slate-600 whitespace-pre-line" x-show="h.remark" x-text="h.remark" data-history-remark></p>
                                     <p class="text-[11px] text-ink-muted" x-text="h.date + (h.by ? ' · ' + h.by : '')"></p>
                                 </li>
                             </template>
