@@ -44,7 +44,7 @@
         <div class="flex items-center gap-2 pl-4 pr-2 pt-2.5 pb-2">
             <p class="flex-1 text-sm font-bold text-ink">{{ $t('Notifications', 'Mga Abiso') }}</p>
             <button type="button" x-show="{{ $S }}.unreadCount" @click="{{ $S }}.markAllRead()" class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-xl text-xs font-semibold text-brand-600 hover:bg-white/70 transition-colors">
-                <i data-lucide="check-check" class="w-3.5 h-3.5"></i>{{ $t('Mark all as read', 'Markahan lahat na nabasa') }}
+                <i data-lucide="check-check" class="w-3.5 h-3.5"></i>{{ $t('Mark all as read', 'Markahang nabasa lahat') }}
             </button>
             <button type="button" @click="close()" @if($citizen) :aria-label="$store.lang.current === 'en' ? 'Close' : 'Isara'" @else aria-label="Close" @endif class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-white/70 transition-colors">
                 <i data-lucide="x" class="w-4 h-4"></i>
@@ -58,7 +58,7 @@
                     {{ $t('All', 'Lahat') }} <span class="tabular-nums text-ink-faint" x-text="{{ $S }}.allCount"></span>
                 </button>
                 <button type="button" @click="{{ $S }}.setBell('unread')" :aria-pressed="{{ $S }}.bellTab === 'unread'" class="px-2.5 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="{{ $S }}.bellTab === 'unread' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-ink'">
-                    {{ $t('Unread', 'Hindi pa nababasa') }} <span class="tabular-nums" :class="{{ $S }}.unreadCount ? 'text-brand-600 font-semibold' : 'text-ink-faint'" x-text="{{ $S }}.unreadCount"></span>
+                    {{ $t('Unread', 'Di pa nabasa') }} <span class="tabular-nums" :class="{{ $S }}.unreadCount ? 'text-brand-600 font-semibold' : 'text-ink-faint'" x-text="{{ $S }}.unreadCount"></span>
                 </button>
             </div>
             <div class="relative min-w-0 flex-1">
@@ -74,7 +74,7 @@
             </div>
         </div>
 
-        <div class="max-h-[min(26rem,60vh)] overflow-y-auto scrollbar-thin divide-y divide-brand-600/10">
+        <div class="max-h-[min(26rem,60vh)] overflow-y-auto scrollbar-thin divide-y divide-brand-600/10 bg-white/75">
             <template x-for="n in {{ $S }}.bellItems.slice(0, 15)" :key="n.id">
                 <x-notifications.row :portal="$portal" dense />
             </template>
@@ -86,7 +86,7 @@
                 <p class="text-xs text-ink-muted" x-show="!{{ $S }}.bellFiltered">{{ $t('No notifications yet.', 'Wala pang abiso.') }}</p>
             </div>
         </div>
-        <a href="{{ $page }}" class="block text-center text-sm font-semibold text-brand-600 py-3 border-t border-brand-600/10 hover:bg-white/60 transition-colors">
+        <a href="{{ $page }}" class="block text-center text-sm font-semibold text-brand-600 py-3 border-t border-brand-600/10 bg-white/75 hover:bg-white transition-colors">
             {{ $t('See all notifications', 'Tingnan lahat ng abiso') }}
         </a>
     </div>

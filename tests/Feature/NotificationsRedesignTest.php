@@ -25,7 +25,7 @@ class NotificationsRedesignTest extends TestCase
         $bell = $this->source('resources/views/components/notifications/bell.blade.php');
 
         $this->assertStringContainsString('@click.outside="close" @keydown.escape.window="open && close()"', $bell, 'a click outside or Esc closes it');
-        $this->assertStringContainsString("{{ \$t('Mark all as read', 'Markahan lahat na nabasa') }}", $bell);
+        $this->assertStringContainsString("{{ \$t('Mark all as read', 'Markahang nabasa lahat') }}", $bell);
         $this->assertStringContainsString('<button type="button" @click="close()"', $bell, 'an X at the top');
         $this->assertStringContainsString("@click=\"{{ \$S }}.setBell('all')\"", $bell);
         $this->assertStringContainsString("@click=\"{{ \$S }}.setBell('unread')\"", $bell);
@@ -47,7 +47,7 @@ class NotificationsRedesignTest extends TestCase
     {
         $row = $this->source('resources/views/components/notifications/row.blade.php');
 
-        $this->assertStringContainsString(":class=\"n.unread ? 'bg-brand-50/80 hover:bg-brand-100/60' : 'hover:bg-white/60'\"", $row);
+        $this->assertStringContainsString(":class=\"n.unread ? 'bg-brand-100/70 hover:bg-brand-100' : 'hover:bg-white/80'\"", $row);
         $this->assertStringContainsString(":class=\"n.unread ? 'font-bold' : 'font-medium'\" x-text=\"n.title\"", $row);
         $this->assertStringContainsString('<button type="button" x-show="n.unread" @click.stop="{{ $S }}.markRead(n.id)"', $row);
         $this->assertStringContainsString('<span class="w-2.5 h-2.5 rounded-full bg-brand-600" aria-hidden="true"></span>', $row);

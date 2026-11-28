@@ -37,14 +37,19 @@
                     {{ $t('All', 'Lahat') }}<span class="tabular-nums text-ink-faint" x-text="{{ $S }}.allCount"></span>
                 </button>
                 <button type="button" role="tab" :aria-selected="tab === 'unread'" @click="setTab('unread')" class="{{ $tab }}" :class="tab === 'unread' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-ink'">
-                    {{ $t('Unread', 'Hindi pa nababasa') }}<span class="text-[10px] font-semibold rounded-full px-1.5 py-0.5 tabular-nums" :class="{{ $S }}.unreadCount ? 'bg-brand-100 text-brand-700' : 'text-ink-faint'" x-text="{{ $S }}.unreadCount"></span>
+                    {{ $t('Unread', 'Di pa nabasa') }}<span class="text-[10px] font-semibold rounded-full px-1.5 py-0.5 tabular-nums" :class="{{ $S }}.unreadCount ? 'bg-brand-100 text-brand-700' : 'text-ink-faint'" x-text="{{ $S }}.unreadCount"></span>
                 </button>
             </div>
+            <div class="flex items-center gap-1 ml-auto">
+            <button type="button" x-show="filtered" x-cloak @click="clearFilters()" class="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-xl text-xs font-semibold text-ink-muted hover:text-ink hover:bg-white/70 transition-colors">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>{{ $t('Clear filters', 'I-clear ang filters') }}
+            </button>
             <button type="button" x-show="{{ $S }}.unreadCount" @click="markAllRead()" :disabled="markingAll"
                     class="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-xl text-xs font-semibold text-brand-600 hover:bg-white/70 disabled:opacity-50 transition-colors">
                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="markingAll" x-cloak></i>
-                <i data-lucide="check-check" class="w-3.5 h-3.5" x-show="!markingAll"></i>{{ $t('Mark all as read', 'Markahan lahat na nabasa') }}
+                <i data-lucide="check-check" class="w-3.5 h-3.5" x-show="!markingAll"></i>{{ $t('Mark all as read', 'Markahang nabasa lahat') }}
             </button>
+            </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -78,9 +83,6 @@
             <input type="date" x-ref="date" x-show="when === 'on'" x-cloak x-model="date" @change="apply()" :max="today"
                    @if($citizen) :aria-label="$store.lang.current === 'en' ? 'Date' : 'Petsa'" @else aria-label="Date" @endif
                    class="w-full sm:w-auto px-3 text-ink-body {{ $field }}">
-            <button type="button" x-show="filtered" x-cloak @click="clearFilters()" class="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-xl text-xs font-semibold text-ink-muted hover:text-ink hover:bg-white/70 transition-colors">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>{{ $t('Clear filters', 'I-clear ang filters') }}
-            </button>
         </div>
     </div>
 
