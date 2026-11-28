@@ -81,8 +81,9 @@ class RoleDashboardsUiTest extends TestCase
         $this->assertStringContainsString("const res = await api.get('/admin/dashboard/inbox');", $js);
         $this->assertStringContainsString("this.\$store.live.on(this.\$el, 'any', () => this.loadInbox(true));", $js);
         $this->assertStringContainsString('<template x-for="(item, i) in shownInbox" :key="item.key">', $list);
-        // A tab that is not the account's home lists that area's items only.
-        $this->assertStringContainsString('return this.isHome || !keys ? this.inbox : this.inbox.filter((i) => keys.includes(i.key));', $js);
+        // A tab that is not the account's home lists that area's items only,
+        // a request item split by kind by its group (bug hunt 25 Nov).
+        $this->assertStringContainsString('return this.isHome || !keys ? this.inbox : this.inbox.filter((i) => keys.includes(i.group || i.key));', $js);
         $this->assertStringContainsString('<a :href="item.href"', $list);
         $this->assertStringContainsString('Nothing waiting on you.', $list);
 

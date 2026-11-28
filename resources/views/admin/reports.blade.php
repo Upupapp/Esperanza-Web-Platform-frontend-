@@ -150,14 +150,17 @@
                 const want = Object.keys(got).filter((k) => this.reports.some((r) => r.key === k));
                 return want.length > 0 && want.every((k) => got[k]);
             },
-            // Weighted by how many each kind released (2026-11-03: the plain mean
-            // of the two means overweighted the smaller one).
+            // Weighted by how many cases each average is taken over (2026-11-03:
+            // the plain mean of the two means overweighted the smaller one; bug
+            // hunt 25 Nov, B8: released counts imported records, which the
+            // average leaves out). An older server sends no count: released.
             get avgResolutionDays() {
                 if (!this.requestReportsIn) return null;
+                const weight = (t) => Number(t.avg_days_count ?? t.released) || 0;
                 const parts = [this.docSummary?.totals, this.assistSummary?.totals]
-                    .filter((t) => t && t.avg_days_to_release !== null && t.avg_days_to_release !== undefined && t.released > 0);
-                const released = parts.reduce((n, t) => n + t.released, 0);
-                return released ? parts.reduce((sum, t) => sum + t.avg_days_to_release * t.released, 0) / released : null;
+                    .filter((t) => t && t.avg_days_to_release !== null && t.avg_days_to_release !== undefined && weight(t) > 0);
+                const cases = parts.reduce((n, t) => n + weight(t), 0);
+                return cases ? parts.reduce((sum, t) => sum + t.avg_days_to_release * weight(t), 0) / cases : null;
             },
             // 0.0 days read as a fault: under half a working day is the same day.
             get avgResolutionText() {

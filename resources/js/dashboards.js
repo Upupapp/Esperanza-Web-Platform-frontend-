@@ -328,13 +328,15 @@ export function dashboardHost() {
                 }
             }
         },
-        inboxIcon(item) { return INBOX_ICONS[item.key] || 'circle-dot'; },
+        // A request item split by kind (waiting_on_staff_tulong...) keeps its
+        // group's icon and area (bug hunt 25 Nov, B3/B4).
+        inboxIcon(item) { return INBOX_ICONS[item.group || item.key] || INBOX_ICONS[item.key] || 'circle-dot'; },
         inboxTone(item) { return INBOX_TONES[item.tone] || INBOX_TONES.brand; },
         /** One item's count (0 when absent), for a tile that shows it. */
-        inboxCount(key) { return this.inbox.find((i) => i.key === key)?.count || 0; },
+        inboxCount(key) { return this.inbox.filter((i) => (i.group || i.key) === key).reduce((n, i) => n + (Number(i.count) || 0), 0); },
         get shownInbox() {
             const keys = AREA_INBOX[this.view];
-            return this.isHome || !keys ? this.inbox : this.inbox.filter((i) => keys.includes(i.key));
+            return this.isHome || !keys ? this.inbox : this.inbox.filter((i) => keys.includes(i.group || i.key));
         },
         get inboxTotal() { return this.shownInbox.reduce((n, i) => n + (Number(i.count) || 0), 0); },
         /** The printable reports of one kind this account may open. */

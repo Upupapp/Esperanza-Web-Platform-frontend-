@@ -50,4 +50,13 @@ class TulongBugHunt1125Test extends TestCase
         $this->assertContains('Rejected', $transitions['Returned for Reassessment']);
         $this->assertNotContains('Rejected', $transitions['Assistance Processing']);
     }
+
+    public function test_reports_split_the_inbox_by_kind_count_clients_and_weigh_the_average_by_its_cases(): void
+    {
+        $dash = $this->source('resources/js/dashboards.js');
+        $this->assertStringContainsString('INBOX_ICONS[item.group || item.key]', $dash);
+        $this->assertStringContainsString('keys.includes(i.group || i.key)', $dash);
+        $this->assertStringContainsString('valueBind="num(k.served_tulong ?? k.served)"', $this->source('resources/views/components/admin/dashboards/department.blade.php'));
+        $this->assertStringContainsString('const weight = (t) => Number(t.avg_days_count ?? t.released) || 0;', $this->source('resources/views/admin/reports.blade.php'));
+    }
 }
