@@ -21,8 +21,9 @@
             <i :data-lucide="n.icon" class="w-4 h-4"></i>
         </span>
         <span class="min-w-0 flex-1">
-            <span class="block text-sm leading-snug text-ink {{ $dense ? 'line-clamp-2' : '' }}" :class="n.unread ? 'font-bold' : 'font-medium'" x-text="n.title"></span>
-            <span class="block text-xs text-ink-muted mt-0.5 {{ $dense ? 'line-clamp-1' : 'line-clamp-3' }}" x-text="n.body"></span>
+            {{-- No `block` beside a line-clamp: .block comes later in the CSS and undid the clamp (review, 28 Nov). --}}
+            <span class="text-sm leading-snug text-ink {{ $dense ? 'line-clamp-2' : 'block' }}" :class="n.unread ? 'font-bold' : 'font-medium'" x-text="n.title"></span>
+            <span class="text-xs text-ink-muted mt-0.5 {{ $dense ? 'line-clamp-1' : 'line-clamp-3' }}" x-text="n.body"></span>
             <span class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11.5px] leading-5">
                 <span :class="n.unread ? 'font-semibold text-brand-700' : 'text-ink-faint'" x-text="{{ $S }}.ago(n)"></span>
                 <span class="text-ink-faint" aria-hidden="true">·</span>
