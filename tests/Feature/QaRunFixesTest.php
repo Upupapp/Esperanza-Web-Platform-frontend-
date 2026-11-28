@@ -155,7 +155,7 @@ class QaRunFixesTest extends TestCase
     /** Notifications only loaded with the page, a Sakuna alert opened nowhere, and the settings promised what nothing did. */
     public function test_notifications_arrive_without_a_reload_and_alerts_open_on_any_page(): void
     {
-        $js = $this->source('resources/js/notifications.js');
+        $js = $this->source('resources/js/app.js');
         $this->assertStringContainsString('poll(ms = 60000)', $js);
         $this->assertStringContainsString('get pendingAlert()', $js);
         $this->assertStringContainsString('$store.adminNotifications.poll()', $this->source('resources/views/components/admin/topbar.blade.php'));
