@@ -17,6 +17,23 @@
             // A failed quiet (live) reload keeps what is on screen.
             failed: { requests: false, balita: false, events: false, alerts: false },
 
+            // A Tulong case's statuses, coloured as on the Tulong page (bug hunt
+            // 25 Nov, C1): the universal badge knows the request statuses only,
+            // so seven of them showed as an unknown grey chip.
+            tulongStatusStyles: {
+                'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
+                'Initial Screening': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
+                'Needs Requirements': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
+                'Assessment': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
+                'For Approval': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
+                'Returned for Reassessment': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Assistance Processing': ['bg-purple-50 text-purple-700 ring-purple-200', 'bg-purple-500'],
+                'Ready for Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
+                'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
+                'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
+                'Cancelled': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
+            },
+            tulongStyle(status) { return this.tulongStatusStyles[status] || ['bg-white text-slate-500 ring-slate-300 border-dashed', 'bg-slate-300']; },
             async init() {
                 // Live updates (2026-11-15): each part reloads quietly when its
                 // kind of data changes (events are Balita on the server), and
@@ -38,12 +55,15 @@
                     const result = await $api.getAll('/citizen/requests', { params: { sort: '-submitted_at' } });
                     const all = result.data || [];
                     this.requests = all.slice(0, 5);
-                    const thisMonth = new Date().toISOString().slice(0, 7);
+                    // Esperanza's month, not UTC's (bug hunt 25 Nov, C15).
+                    const manilaMonth = (d) => new Date(d).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).slice(0, 7);
+                    const thisMonth = manilaMonth(Date.now());
                     this.kpi.dokyu = all.filter((r) => r.type === 'dokyu').length;
                     this.kpi.dokyuReady = all.filter((r) => r.type === 'dokyu' && r.status === 'Mark to Release').length;
                     this.kpi.tulong = all.filter((r) => r.type === 'tulong').length;
                     // A Tulong case is approved once it reaches Assistance Processing.
-                    this.kpi.tulongApproved = all.filter((r) => r.type === 'tulong' && ['Assistance Processing', 'Ready for Release', 'Completed'].includes(r.status) && (r.submitted || '').startsWith(thisMonth)).length;
+                    // Approved this month: by the day it was approved, not the day it was filed (C15).
+                    this.kpi.tulongApproved = all.filter((r) => r.type === 'tulong' && ['Assistance Processing', 'Ready for Release', 'Completed'].includes(r.status) && r.approved && manilaMonth(r.approved) === thisMonth).length;
                     loaded = true;
                 } catch { if (!quiet) this.requests = []; }
                 finally { if (loaded || !quiet) this.failed.requests = !loaded; }
@@ -418,7 +438,12 @@
                                         <span x-text="req.submitted ? new Date(req.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></span>
                                     </p>
                                 </div>
-                                <x-ui.badge status-bind="req.status" class="shrink-0" />
+                                <template x-if="req.type !== 'tulong'"><x-ui.badge status-bind="req.status" class="shrink-0" /></template>
+                                <template x-if="req.type === 'tulong'">
+                                    <span class="shrink-0 inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap" :class="tulongStyle(req.status)[0]" data-tulong-status>
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="tulongStyle(req.status)[1]"></span><span x-text="req.status"></span>
+                                    </span>
+                                </template>
                             </a>
                         </template>
 

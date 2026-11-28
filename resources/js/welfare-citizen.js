@@ -39,6 +39,19 @@ export function citizenWelfare() {
                 this.certificatesLoading = false;
                 window.Alpine?.nextTick(() => window.renderIcons?.());
             }
+            this.openLinked();
+        },
+        // The "certificate ready" notice links ?certificate=<control number>
+        // (Sessions::tell); the app read it, the website did not (bug hunt 25
+        // Nov, C9): it opens that certificate here.
+        openLinked() {
+            let want = null;
+            try { want = new URLSearchParams(window.location.search).get('certificate'); } catch { want = null; }
+            if (!want) return;
+            const c = this.certificates.find((x) => x.control_number === want);
+            if (!c) return;
+            document.getElementById('my-certificates')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            this.openCertificate(c);
         },
         // GET /citizen/certificates carries the certificates of the events the
         // resident attended too (round 2, 2026-10-30): source event, with the

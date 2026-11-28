@@ -84,7 +84,8 @@ class BugsQaFixesTest extends TestCase
         foreach (['resources/views/citizen/document-requests.blade.php', 'resources/views/citizen/assistance-requests.blade.php'] as $path) {
             $view = $this->source($path);
             $this->assertSame(2, substr_count($view, 'x-text="reqKindLabel('), "{$path}: the form and Track Request both label it");
-            $this->assertStringContainsString("'Accepted' : 'Tinanggap'", $view, "{$path}: an accepted one says so");
+            // The Tulong page says it through reqStatusText (bug hunt 25 Nov).
+            $this->assertMatchesRegularExpression("/'Accepted'(?: :|,) 'Tinanggap'/", $view, "{$path}: an accepted one says so");
             $this->assertStringContainsString("reqKind(req.name) !== 'office'", $view, "{$path}: no Attach on a step the office does");
             // Of the documents these answers call for (MSWDO forms, 2026-10-26).
             $this->assertStringContainsString("this.shownReqs.filter((r) => reqKind(r.label) === 'required' && !this.attachments[r.i])", $view, "{$path}: the wizard names the documents still owed, not office steps");

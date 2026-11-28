@@ -59,4 +59,35 @@ class TulongBugHunt1125Test extends TestCase
         $this->assertStringContainsString('valueBind="num(k.served_tulong ?? k.served)"', $this->source('resources/views/components/admin/dashboards/department.blade.php'));
         $this->assertStringContainsString('const weight = (t) => Number(t.avg_days_count ?? t.released) || 0;', $this->source('resources/views/admin/reports.blade.php'));
     }
+
+    public function test_the_residents_dashboard_styles_every_tulong_status_and_counts_approvals_by_their_date(): void
+    {
+        $dashboard = $this->source('resources/views/citizen/dashboard.blade.php');
+        foreach (config('esperanza_tulong_lifecycle.all') as $status) {
+            $this->assertStringContainsString("'{$status}': ['", $dashboard, $status);
+        }
+        $this->assertStringContainsString(':class="tulongStyle(req.status)[0]" data-tulong-status', $dashboard);
+        $this->assertStringContainsString('r.approved && manilaMonth(r.approved) === thisMonth', $dashboard);
+    }
+
+    public function test_the_residents_tulong_page_reads_in_their_language_and_says_what_happened(): void
+    {
+        $page = $this->source('resources/views/citizen/assistance-requests.blade.php');
+        // C2 withdrawn, C6 presented, C7 toast, C10 Other, C11 every document, C13 chips, C14 label.
+        $this->assertStringContainsString('en="You withdrew this request"', $page);
+        $this->assertStringContainsString("this.lang('Presented at the office', 'Ipinakita sa opisina')", $page);
+        $this->assertStringContainsString('Pindutin ang Isumite muli para maipadala sa opisina.', $page);
+        $this->assertStringNotContainsString("hinihintay ang pagsusuri.') : this.lang('Document attached.'", $page);
+        $this->assertStringContainsString("f.allowOther && /^others?$/i.test(String(v ?? ''))", $page);
+        $this->assertStringContainsString('r.purpose = d.purpose ||', $page);
+        $this->assertStringContainsString('$api.getAll(\'/citizen/papeles\')', $page);
+        $this->assertStringContainsString("'Flagged for Replacement': this.lang('Needs a replacement', 'Kailangang palitan')", $page);
+        $this->assertStringNotContainsString(': req.status)"', $page);
+        $this->assertStringContainsString("lang('Received on ', 'Natanggap noong ')", $page);
+
+        $scope = $this->source('resources/js/scope-citizen.js');
+        $this->assertStringContainsString("!['session', 'counseling', 'referral'].includes(this.r?.assistance?.processing_kind)", $scope);
+        $this->assertStringContainsString("window.reqKind?.(q.name) !== 'office'", $scope);
+        $this->assertStringContainsString(".get('certificate')", $this->source('resources/js/welfare-citizen.js'));
+    }
 }

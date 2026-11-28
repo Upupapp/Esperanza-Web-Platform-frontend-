@@ -1400,7 +1400,12 @@ function requestExtras(kind, links = {}) {
         get canBook() { return !!this.r && !['Rejected', 'Cancelled', 'Released', 'Completed', 'Archived'].includes(this.status); },
         get bookHref() { return this.links.appointments + '?request=' + encodeURIComponent(this.r?.ref || ''); },
         get issued() { return this.r?.issuedDocuments || []; },
-        get noticeReady() { return this.kind === 'tulong' && ['Assistance Processing', 'Ready for Release', 'Completed'].includes(this.status); },
+        // No approval notice for a session, counseling or referral: nothing is
+        // "released to the applicant" (bug hunt 25 Nov, C5).
+        get noticeReady() {
+            return this.kind === 'tulong' && ['Assistance Processing', 'Ready for Release', 'Completed'].includes(this.status)
+                && !['session', 'counseling', 'referral'].includes(this.r?.assistance?.processing_kind);
+        },
         docState(d) {
             if (d.revoked) return 'revoked';
             return d.valid_until && String(d.valid_until) < manilaDay(0) ? 'expired' : 'valid';
@@ -1425,7 +1430,8 @@ function requestExtras(kind, links = {}) {
                 ? this.t('This notice, or your reference number', 'Ang abisong ito, o ang iyong reference number')
                 : this.t('This slip, or your reference number', 'Ang slip na ito, o ang iyong reference number'));
             const reqs = r.requirements || [];
-            reqs.filter((q) => q.status === 'Not submitted').forEach((q) => list.push(q.name));
+            // Not the office's own steps (an interview, a case study): bug hunt 25 Nov, C12.
+            reqs.filter((q) => q.status === 'Not submitted' && window.reqKind?.(q.name) !== 'office').forEach((q) => list.push(q.name));
             if (reqs.some((q) => q.file)) list.push(this.t('The originals of the documents you uploaded, in case the office asks to see them', 'Ang orihinal ng mga in-upload mong dokumento, kung sakaling hingin ng opisina'));
             const pay = r.payment;
             if (pay && Number(pay.amount) > 0 && pay.status !== 'Approved') list.push(this.t('The fee of ' + peso(pay.amount) + ', paid at the office', 'Ang bayaring ' + peso(pay.amount) + ', babayaran sa opisina'));

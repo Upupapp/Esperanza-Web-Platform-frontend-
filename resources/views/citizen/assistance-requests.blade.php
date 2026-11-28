@@ -121,6 +121,22 @@
             withdrawReason: '',
             withdrawing: false,
             lang(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+            // A document's status in the resident's language (bug hunt 25 Nov,
+            // C13: Flagged for Replacement, Resubmitted and Submitted stayed
+            // English beside Tinanggap). Everyday Taglish (owner, 19 Nov).
+            reqStatusText(req) {
+                const s = req?.status;
+                // Accepted at the counter with no file: shown, not uploaded (C6).
+                if (s === 'Approved' && !req.file) return this.lang('Presented at the office', 'Ipinakita sa opisina');
+                return ({
+                    'Approved': this.lang('Accepted', 'Tinanggap'),
+                    'Rejected': this.lang('Not accepted', 'Hindi tinanggap'),
+                    'Flagged for Replacement': this.lang('Needs a replacement', 'Kailangang palitan'),
+                    'Resubmitted': this.lang('Replacement sent', 'Na-submit na ang kapalit'),
+                    'Submitted': this.lang('Sent', 'Na-submit na'),
+                    'Not submitted': this.lang('Not submitted', 'Wala pa'),
+                })[s] || s;
+            },
             apiMessage(err, fallback) { return err && err.localised ? err.localised(this.$store.lang.current) : fallback; },
             formatDay(iso) {
                 if (!iso) return '';
@@ -158,7 +174,8 @@
             },
             async loadPapeles() {
                 try {
-                    const res = await $api.get('/citizen/papeles');
+                    // Every document, not the first page of 25 (bug hunt 25 Nov, C11).
+                    const res = await $api.getAll('/citizen/papeles');
                     this.papeles = res.data || [];
                 } catch { this.papeles = []; }
             },
@@ -166,8 +183,11 @@
                 r.status = d.status;
                 r.office = d.office || r.office;
                 r.remarks = d.decision_remarks || null;
-                r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose;
+                // The server's own text: "Other: <what was typed>" (bug hunt 25 Nov, C10).
+                r.purpose = d.purpose || ((d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose);
                 r.canResubmit = !!d.can_resubmit;
+                // The resident withdrew it themselves (C2).
+                r.withdrawn = !!d.withdrawn;
                 r.canWithdraw = !!d.can_withdraw;
                 // Required documents not uploaded yet hold the resubmit back (QA run 2026-10-05).
                 r.missingRequired = d.missing_required || [];
@@ -241,7 +261,10 @@
                 try {
                     const res = await $api.post('/citizen/requests/' + encodeURIComponent(r.ref) + '/requirements/' + encodeURIComponent(req.key) + '/' + action, form);
                     this.applyDetail(r, res.data);
-                    this.$dispatch('toast', { message: action === 'replace' ? this.lang('Replacement uploaded — awaiting review.', 'Na-upload ang kapalit — hinihintay ang pagsusuri.') : this.lang('Document attached.', 'Naikabit ang dokumento.'), variant: 'success' });
+                    this.$dispatch('toast', { message: action === 'replace' ? (r.status === 'Needs Requirements'
+                        // Nothing reaches the office until Isumite muli (bug hunt 25 Nov, C7).
+                        ? this.lang('Replacement uploaded. Press Resubmit to send it to the office.', 'Na-upload ang kapalit. Pindutin ang Isumite muli para maipadala sa opisina.')
+                        : this.lang('Replacement uploaded — the office will review it.', 'Na-upload ang kapalit — titingnan ito ng opisina.')) : this.lang('Document attached.', 'Naikabit ang dokumento.'), variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: this.apiMessage(err, this.lang('Could not upload the file.', 'Hindi ma-upload ang file.')), variant: 'error' });
                 } finally { req._busy = false; this.$nextTick(() => window.renderIcons?.()); }
@@ -558,6 +581,8 @@
                         return (this.types[this.selectedType]?.fields || []).filter((f) => {
                             if (!f.required || f.type === 'derived_age' || !this.fieldShown(f)) return false;
                             const v = this.formData[f.key];
+                            // "Other" needs what it is (bug hunt 25 Nov, C10).
+                            if (f.allowOther && /^others?$/i.test(String(v ?? '')) && String(this.formData[f.key + '_other'] ?? '').trim() === '') return true;
                             return Array.isArray(v) ? v.length === 0 : String(v ?? '').trim() === '';
                         }).map((f) => f.label);
                     },
@@ -1388,7 +1413,9 @@
                             <div class="flex items-start gap-2.5">
                                 <i data-lucide="ban" class="w-4 h-4 text-ink-muted shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-slate-600"><x-ui.t fil="Kinansela ang kahilingang ito" en="This request was cancelled" /></p>
+                                    {{-- The resident's own withdrawal reads as theirs (bug hunt 25 Nov, C2). --}}
+                                    <p class="text-xs font-semibold text-slate-600" x-show="!selectedRequest.withdrawn"><x-ui.t fil="Kinansela ang kahilingang ito" en="This request was cancelled" /></p>
+                                    <p class="text-xs font-semibold text-slate-600" x-show="selectedRequest.withdrawn" x-cloak><x-ui.t fil="Binawi mo ang kahilingang ito" en="You withdrew this request" /></p>
                                     <p class="text-xs text-slate-600 mt-0.5" x-show="selectedRequest.remarks" x-text="selectedRequest.remarks"></p>
                                 </div>
                             </div>
@@ -1403,7 +1430,7 @@
                                     <div class="flex items-center justify-between gap-3 rounded-xl border border-brand-600/10 p-2.5">
                                         <div class="min-w-0">
                                             <p class="text-xs font-medium text-slate-700 truncate"><span x-text="req.name"></span> <span x-show="req.status !== 'Approved'" class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req.name)" x-text="reqKindLabel(req.name)"></span></p>
-                                            <p class="text-[11px] truncate" :class="req.file ? 'text-ink-muted' : 'text-amber-600'" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Nothing to upload: the office does this with you' : 'Walang ia-upload: gagawin ito ng opisina kasama ka') : ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file'))"></p>
+                                            <p class="text-[11px] truncate" :class="req.file || req.status === 'Approved' ? 'text-ink-muted' : 'text-amber-600'" x-text="req.file || (req.status === 'Approved' ? reqStatusText(req) : null) || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Nothing to upload: the office does this with you' : 'Walang ia-upload: gagawin ito ng opisina kasama ka') : ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file'))"></p>
                                             {{-- A rejected document says why, and takes a replacement below. --}}
                                             <p x-show="req.status === 'Rejected' && (req.reject_reason || req.remarks)" class="text-[11px] text-rose-600 whitespace-normal" x-text="($store.lang.current === 'en' ? 'Reason: ' : 'Dahilan: ') + [req.reject_reason, req.remarks].filter((v, i, a) => v && a.indexOf(v) === i).join(' — ')"></p>
                                         </div>
@@ -1415,7 +1442,7 @@
                                             <span x-text="req._busy ? '…' : ($store.lang.current === 'en' ? 'Upload replacement' : 'Mag-upload ng kapalit')"></span>
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="replaceRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
                                         </label>
-                                        <span x-show="!req.attachable && !(req.replaceable && req.status === 'Rejected')" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : (req.status === 'Rejected' ? 'text-rose-600 font-semibold' : 'text-ink-muted')" x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : (req.status === 'Rejected' ? ($store.lang.current === 'en' ? 'Not accepted' : 'Hindi tinanggap') : req.status)"></span>
+                                        <span x-show="!req.attachable && !(req.replaceable && req.status === 'Rejected')" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : (req.status === 'Rejected' ? 'text-rose-600 font-semibold' : 'text-ink-muted')" x-text="reqStatusText(req)"></span>
                                     </div>
                                 </template>
                             </div>
@@ -1464,7 +1491,7 @@
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
                                                 :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted', 'bg-slate-100 text-slate-600 ring-slate-200': req.status === 'Not submitted' }"
-                                            ><span x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : (req.status === 'Not submitted' ? ($store.lang.current === 'en' ? 'Not submitted' : 'Wala pa') : req.status)"></span></span>
+                                            ><span x-text="reqStatusText(req)"></span></span>
                                         </div>
 
                                         <div x-show="req.status === 'Flagged for Replacement'" class="mt-2 pt-2 border-t border-amber-100 text-[11px]">
@@ -1526,7 +1553,8 @@
                                     <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.release_reference">
                                         <x-ui.t fil="Reference:" en="Reference:" /> <span class="font-mono" x-text="selectedRequest.assistance?.release_reference"></span>
                                     </p>
-                                    <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.released_at" x-text="formatDay(selectedRequest.assistance?.released_at)"></p>
+                                    {{-- Labelled (bug hunt 25 Nov, C14): a session's date is when it finished. --}}
+                                    <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.released_at" x-text="(['session', 'counseling', 'referral'].includes(kindOf(selectedRequest)) ? lang('Completed on ', 'Natapos noong ') : lang('Received on ', 'Natanggap noong ')) + formatDay(selectedRequest.assistance?.released_at)"></p>
                                 </div>
                             </div>
                         </div>
