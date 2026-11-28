@@ -179,7 +179,9 @@ class FullQaRunFixesTest extends TestCase
 
         $this->assertSame([], $unnamed);
         foreach (['admin', 'citizen'] as $portal) {
-            $this->assertStringContainsString('aria-label="Notifications"', $this->source("resources/views/components/{$portal}/topbar.blade.php"));
+            $this->assertStringContainsString('<x-notifications.bell portal="'.$portal.'" />', $this->source("resources/views/components/{$portal}/topbar.blade.php"));
         }
+        // The bell itself (x-notifications.bell since 28 Nov 2026).
+        $this->assertStringContainsString('<button @click="toggle" aria-label="Notifications"', $this->source('resources/views/components/notifications/bell.blade.php'));
     }
 }

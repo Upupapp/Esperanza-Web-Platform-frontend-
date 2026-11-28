@@ -54,6 +54,8 @@ Route::view('/citizen/legal/terms', 'citizen.legal', ['tab' => 'terms'])->name('
 
 // Administrative Portal
 Route::view('/admin/dashboard', 'admin.dashboard')->name('admin.dashboard');
+// Notifications: the bell's "See all notifications" (28 Nov 2026); no sidebar entry.
+Route::view('/admin/notifications', 'admin.notifications')->name('admin.notifications');
 // Appointments: bookings, schedules and closed days, with their own sidebar
 // entry (owner, 2026-10-15; first a Dashboard tab, whose address still opens it).
 Route::view('/admin/appointments', 'admin.appointments')->name('admin.appointments');

@@ -80,54 +80,8 @@
             <i data-lucide="scan-qr-code" class="w-5 h-5"></i>
         </button>
 
-        {{-- Below sm the panel hangs from the header's right edge, not the
-             bell's (sweep 2026-11-18): the profile chip sits right of the bell,
-             so a 22rem panel ended about 44px past a 390px phone's left edge and
-             the shell cut off its icons. The width never passes the header's. --}}
-        <div class="sm:relative" x-data="dropdown" @click.outside="close">
-            <button @click="toggle" aria-label="Notifications" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
-                <i data-lucide="bell" class="w-5 h-5"></i>
-                <span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-gold-400 ring-2 ring-white" x-show="$store.adminNotifications.unreadCount"></span>
-            </button>
-
-            <div
-                x-show="open"
-                x-transition:enter="transition duration-[200ms] ease-emphasized"
-                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                x-cloak
-                class="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
-            >
-                <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
-                    <p class="text-sm font-bold text-ink">Notifications</p>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded-full clay-gold-light" x-show="$store.adminNotifications.unreadCount" x-text="$store.adminNotifications.unreadCount + ' new'"></span>
-                </div>
-                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-brand-600/10">
-                    <template x-for="n in $store.adminNotifications.visible" :key="n.id">
-                        <a
-                            :href="n.link || ((n.portal === 'tulong' ? '{{ route('admin.assistance-requests') }}' : '{{ route('admin.document-requests') }}') + '?ref=' + encodeURIComponent(n.ref || ''))"
-                            @click="$store.adminNotifications.markRead(n.id)"
-                            class="flex items-start gap-3 px-4 py-3 hover:bg-white/60 transition-colors"
-                            :class="n.unread && 'bg-brand-50/50'"
-                        >
-                            <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" :class="{ brand: 'text-brand-600 bg-brand-50', sky: 'text-sky-600 bg-sky-50', amber: 'text-amber-600 bg-amber-50', rose: 'text-rose-600 bg-rose-50', emerald: 'text-emerald-600 bg-emerald-50', indigo: 'text-indigo-600 bg-indigo-50', purple: 'text-purple-600 bg-purple-50', teal: 'text-teal-600 bg-teal-50' }[n.color] || 'text-brand-600 bg-brand-50'">
-                                <i :data-lucide="n.icon" class="w-4 h-4"></i>
-                            </span>
-                            <span class="min-w-0">
-                                <span class="block text-sm font-semibold text-ink truncate" x-text="n.title"></span>
-                                <span class="block text-xs text-ink-muted mt-0.5 line-clamp-2" x-text="n.body"></span>
-                                <span class="block text-[11px] text-ink-faint mt-1" x-text="n.createdAt ? (new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(n.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })) : ''"></span>
-                            </span>
-                        </a>
-                    </template>
-                    <p class="px-4 py-8 text-center text-sm text-ink-muted" x-show="$store.adminNotifications.loading">Loading…</p>
-                    <p class="px-4 py-8 text-center text-sm text-ink-muted" x-show="!$store.adminNotifications.loading && !$store.adminNotifications.visible.length">No notifications yet.</p>
-                </div>
-                <button type="button" @click="$store.adminNotifications.markAllRead()" x-show="$store.adminNotifications.unreadCount" class="block w-full text-center text-sm font-semibold text-brand-600 py-3 border-t border-brand-600/10 hover:bg-white/60 transition-colors">
-                    Mark all as read
-                </button>
-            </div>
-        </div>
+        {{-- The bell (x-notifications.bell): filters, Mark all as read, See all notifications (28 Nov 2026). --}}
+        <x-notifications.bell portal="admin" />
 
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" class="h-[52px] pl-1.5 pr-1.5 lg:pr-3.5 flex items-center gap-2.5 rounded-[20px] surface-glass-sm hover:bg-white/80 transition-colors">

@@ -22,13 +22,14 @@ class DocumentReviewQaTest extends TestCase
     /** The bell showed a dot, not how many; Mark all as read sent one call per notification. */
     public function test_the_bell_counts_unread_and_mark_all_is_one_call(): void
     {
-        $app = $this->source('resources/js/app.js');
+        // The store: resources/js/notifications.js since 28 Nov 2026; the bell: x-notifications.bell.
+        $app = $this->source('resources/js/notifications.js');
         $this->assertStringContainsString('this.serverUnread = Number.isInteger(result.meta?.unread) ? result.meta.unread : null;', $app, 'the count is the server\'s, every page');
         $this->assertStringContainsString('get unreadCount() { return this.serverUnread ?? this.visible.filter((n) => n.unread).length; }', $app);
         $this->assertStringContainsString('await api.post(`${path}/read-all`);', $app, 'one call, so it holds after a refresh');
         $this->assertStringNotContainsString('Promise.all(this.visible.filter((n) => n.unread).map((n) => this.markRead(n.id)))', $app);
 
-        $bell = $this->source('resources/views/components/citizen/topbar.blade.php');
+        $bell = $this->source('resources/views/components/notifications/bell.blade.php');
         $this->assertStringContainsString('x-show="$store.citizenNotifications.unreadCount > 0"', $bell, 'no badge at zero');
         $this->assertStringContainsString("x-text=\"\$store.citizenNotifications.unreadCount > 99 ? '99+' : \$store.citizenNotifications.unreadCount\"", $bell, 'the number itself');
     }

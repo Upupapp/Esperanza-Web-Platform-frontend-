@@ -53,6 +53,6 @@ class QaFollowUpTest extends TestCase
         $this->assertStringContainsString(":id=\"'post-' + post.key\"", $view);
         $this->assertStringContainsString("document.getElementById('post-' + key)?.scrollIntoView(", $js);
         $this->assertStringContainsString('await this.openLinked();', $js);
-        $this->assertStringContainsString("community: ['megaphone', 'teal']", $this->source('resources/js/app.js'), 'the notification has its own icon');
+        $this->assertStringContainsString("community: ['megaphone', 'teal']", $this->source('resources/js/notifications.js'), 'the notification has its own icon');
     }
 }

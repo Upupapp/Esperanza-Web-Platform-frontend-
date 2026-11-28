@@ -17,7 +17,8 @@ class FlowGuideFixesTest extends TestCase
 
     public function test_a_request_notice_opens_the_request_on_this_site(): void
     {
-        $app = $this->source('resources/js/app.js');
+        // The notifications' store left app.js on 28 Nov 2026.
+        $app = $this->source('resources/js/notifications.js');
 
         // The server links /citizen/document-requests/{ref}; this site opens ?ref=.
         $this->assertStringContainsString('function siteLink(link)', $app);

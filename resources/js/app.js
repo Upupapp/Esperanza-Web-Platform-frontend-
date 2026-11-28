@@ -15,6 +15,7 @@ import { createIcons } from 'lucide';
 import icons from './lucide-icons';
 import * as DokyuEditor from './dokyu-editor';
 import { registerLazyPartials } from './lazy-partial';
+import { registerNotifications } from './notifications';
 
 // x-trap gives modals a real focus trap and, on close, restores focus to the
 // element that opened them. Both are required for a keyboard-only user to get
@@ -1132,15 +1133,6 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
-    // Notification centers, real for both portals (production-readiness
-    // programme, 2026-09-25). GET {citizen|admin}/notifications and
-    // POST .../notifications/{id}/read are the same ModuleController on the
-    // backend; category IS the request type ('dokyu' | 'tulong') for a
-    // Dokyu/Tulong lifecycle notification, so it doubles as the existing
-    // 'portal' badge with no extra mapping. `dismiss` below is
-    // session-only — there is no backend endpoint to delete a notification,
-    // only to mark one read, so hiding one from view does not survive a
-    // reload; that is a real, intentional gap (see PRODUCTION_READINESS.md).
     // Settings → Branding, applied to both portals. Tailwind 4 compiles the
     // brand colours to --color-brand-* variables, so a theme is a set of those.
     // The last branding seen is kept so the next page opens in it at once.
@@ -1172,193 +1164,8 @@ document.addEventListener('alpine:init', () => {
         try { applyBranding(JSON.parse(localStorage.getItem('esperanza_branding') || 'null')); } catch { /* nothing remembered */ }
     });
 
-    const notificationStyle = {
-        dokyu: ['file-text', 'brand'], tulong: ['hand-heart', 'purple'],
-        account: ['user-round', 'indigo'], community: ['megaphone', 'teal'],
-        events: ['calendar', 'amber'], sakuna: ['shield-alert', 'rose'],
-        summary: ['calendar-range', 'indigo'],
-    };
-
-    // The server links a request's notice as /citizen/document-requests/{ref}
-    // (the app's form); this site has no page there - it opens a request from
-    // its list with ?ref= - so a tapped notice ended on "page not found"
-    // (2026-11-13). The same address, the way this site opens it.
-    function siteLink(link) {
-        const m = typeof link === 'string' && link.match(/^\/citizen\/(document-requests|assistance-requests)\/([^/?#]+)\/?$/);
-        return m ? '/citizen/' + m[1] + '?ref=' + m[2] : link;
-    }
-
-    function notificationItem(n) {
-        const [icon, color] = notificationStyle[n.category] || ['bell', 'brand'];
-        const lang = window.Alpine?.store('lang')?.current || 'fil';
-
-        return {
-            id: n.id,
-            portal: n.category,
-            icon, color,
-            title: n.title?.[lang] || n.title?.en || '',
-            titleFil: n.title?.fil, titleEn: n.title?.en,
-            body: n.body?.[lang] || n.body?.en || '',
-            bodyFil: n.body?.fil, bodyEn: n.body?.en,
-            pill: n.pill, ref: n.ref, link: siteLink(n.link),
-            pinned: n.pinned, unread: n.unread,
-            popup: n.popup === true,
-            createdAt: n.time,
-        };
-    }
-
-    // The server pages notifications 25 at a time unless asked; the page only
-    // ever showed the newest 25. It now asks for 100 (the server's most) and
-    // "Load more" fetches the next page while meta.last_page allows
-    // (parity check, 2026-10-26). Residents only: the staff bell draws every
-    // row it holds, so it keeps the server's 25.
-    const NOTIFICATIONS_PER_PAGE = 100;
-
-    function makeNotificationStore(path, perPage = null) {
-        const pageParams = (page = null) => ({ ...(perPage ? { per_page: perPage } : {}), ...(page ? { page } : {}) });
-        return {
-            items: [],
-            state: 'idle',
-            error: null,
-            dismissed: [],
-            // The server's count of every unread notification (meta.unread),
-            // not just the page loaded here: the number on the bell.
-            serverUnread: null,
-            page: 1,
-            lastPage: 1,
-            loadingMore: false,
-            moreFailed: false,
-
-            get loading() { return this.state === 'loading'; },
-            get failed() { return this.state === 'error'; },
-            get visible() { return this.items.filter((n) => !this.dismissed.includes(n.id)); },
-            get unreadCount() { return this.serverUnread ?? this.visible.filter((n) => n.unread).length; },
-            get hasMore() { return this.state === 'loaded' && this.page < this.lastPage; },
-
-            // quiet: a background refresh keeps what is on screen until the answer comes.
-            async load(quiet = false) {
-                if (!quiet) this.state = 'loading';
-                this.error = null;
-                try {
-                    const result = await api.get(path, { params: pageParams() });
-                    this.serverUnread = Number.isInteger(result.meta?.unread) ? result.meta.unread : null;
-                    const fresh = (result.data || []).map(notificationItem);
-                    if (quiet && this.page > 1) {
-                        // The bell's minute refresh keeps the older pages the
-                        // resident already opened with "Load more".
-                        const ids = new Set(fresh.map((n) => n.id));
-                        this.items = [...fresh, ...this.items.filter((n) => !ids.has(n.id))];
-                    } else {
-                        this.items = fresh;
-                        this.page = 1;
-                    }
-                    this.lastPage = Math.max(this.page, Number(result.meta?.last_page) || 1);
-                    this.state = 'loaded';
-                    // The rows' <i data-lucide> placeholders only become icons
-                    // when Lucide runs after Alpine has drawn them.
-                    window.Alpine?.nextTick(() => window.renderIcons?.());
-                } catch (err) {
-                    this.error = err;
-                    this.state = 'error';
-                }
-            },
-
-            // The next page, added under what is shown. A row already shown
-            // (new ones arriving shift the pages down) is not repeated.
-            async loadMore() {
-                if (this.loadingMore || !this.hasMore) return;
-                this.loadingMore = true;
-                this.moreFailed = false;
-                try {
-                    const next = this.page + 1;
-                    const result = await api.get(path, { params: pageParams(next) });
-                    const ids = new Set(this.items.map((n) => n.id));
-                    this.items = [...this.items, ...(result.data || []).map(notificationItem).filter((n) => !ids.has(n.id))];
-                    this.page = next;
-                    this.lastPage = Math.max(next, Number(result.meta?.last_page) || next);
-                    if (Number.isInteger(result.meta?.unread)) this.serverUnread = result.meta.unread;
-                    window.Alpine?.nextTick(() => window.renderIcons?.());
-                } catch {
-                    this.moreFailed = true;
-                } finally {
-                    this.loadingMore = false;
-                }
-            },
-
-            async markRead(id) {
-                const n = this.items.find((i) => i.id === id);
-                if (!n || !n.unread) return;
-                n.unread = false;
-                if (this.serverUnread) this.serverUnread--;
-                try {
-                    await api.post(`${path}/${id}/read`);
-                } catch {
-                    n.unread = true; // the server did not accept it — undo the optimistic flip
-                    if (this.serverUnread !== null) this.serverUnread++;
-                }
-            },
-
-            // One call clears every unread notification, including ones on
-            // pages not loaded here, and it holds after a refresh.
-            // True once the server took it; false when it refused, after the
-            // unread marks are put back, so a caller can tell the two apart
-            // (QA 2026-11-18) rather than guess from the count.
-            async markAllRead() {
-                const before = this.items.filter((n) => n.unread).map((n) => n.id);
-                const count = this.serverUnread;
-                this.items.forEach((n) => { n.unread = false; });
-                this.serverUnread = 0;
-                try {
-                    await api.post(`${path}/read-all`);
-                    return true;
-                } catch {
-                    this.items.forEach((n) => { if (before.includes(n.id)) n.unread = true; });
-                    this.serverUnread = count;
-                    return false;
-                }
-            },
-
-            // New notifications arrive without a reload: every minute while the
-            // tab is in view. The bell only loaded once per page before.
-            // Live updates (2026-11-15): and within a second or two of one
-            // being written anywhere (live:notifications); the minute poll
-            // stays as the safety net.
-            poll(ms = 60000) {
-                if (this.timer) return;
-                this.timer = setInterval(() => {
-                    if (document.visibilityState === 'visible' && this.state !== 'loading') this.load(true);
-                }, ms);
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible' && this.state !== 'loading') this.load(true);
-                });
-                Alpine.store('live').on(null, 'notifications', () => (this.state !== 'loading' ? this.load(true) : null), { dialogs: false, typing: false });
-            },
-
-            // A Sakuna alert the resident has not seen yet opens as a pop-up once.
-            shownAlerts: (() => { try { return JSON.parse(localStorage.getItem('esperanza_shown_alerts') || '[]'); } catch { return []; } })(),
-            get pendingAlert() {
-                return this.visible.find((n) => n.portal === 'sakuna' && n.popup && n.unread && !this.shownAlerts.includes(n.id)) || null;
-            },
-            // The notice that the account is verified opens once as a welcome
-            // (live test 2026-10-07, UX-9): it was only a red dot on the bell
-            // while Dokyu and Tulong still said to wait for approval.
-            get pendingWelcome() {
-                return this.visible.find((n) => n.portal === 'account' && n.pill === 'Verified' && n.unread && !this.shownAlerts.includes(n.id)) || null;
-            },
-            alertShown(id) {
-                this.shownAlerts = [...this.shownAlerts, id].slice(-50);
-                try { localStorage.setItem('esperanza_shown_alerts', JSON.stringify(this.shownAlerts)); } catch { /* the pop-up just may show again */ }
-                this.markRead(id);
-            },
-
-            dismiss(id) {
-                this.dismissed = [...this.dismissed, id];
-            },
-        };
-    }
-
-    Alpine.store('citizenNotifications', makeNotificationStore('/citizen/notifications', NOTIFICATIONS_PER_PAGE));
-    Alpine.store('adminNotifications', makeNotificationStore('/admin/notifications'));
+    // The bell, the pop-ups and the Notifications pages: resources/js/notifications.js.
+    registerNotifications(Alpine);
 
     // Live updates (owner, 2026-11-15: "auto refreshing every second ... like
     // the data changes real time"). The API keeps one small public file,
@@ -2236,6 +2043,8 @@ area(/^\/admin\/assistance-requests(\/|$)/.test(areaPath), () => import('./welfa
 area(/^\/admin\/(communications|announcements)(\/|$)/.test(areaPath), () => import('./event-desk'));
 // Registering for an event, and its certificate, on the resident's Events page.
 area(/^\/citizen\/events(\/|$)/.test(areaPath), () => import('./citizen-events'));
+// The Notifications page, both portals (28 Nov 2026).
+area(/^\/(admin|citizen)\/notifications(\/|$)/.test(areaPath), () => import('./notifications-page'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 

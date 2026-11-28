@@ -221,62 +221,10 @@
 
         {{-- Real, request- and account-driven notifications from
              $store.citizenNotifications (production-readiness programme,
-             2026-09-25). Loaded once on the shell's own init below, so this
-             dropdown and the dedicated Notifications page share one fetch. --}}
-        <div class="relative" x-data="dropdown" @click.outside="close">
-            {{-- How many are unread, not just whether (Esperanza QA, 2026-10-07);
-                 nothing at all when every notification is read. --}}
-            <button @click="toggle" aria-label="Notifications" :aria-label="$store.citizenNotifications.unreadCount ? 'Notifications, ' + $store.citizenNotifications.unreadCount + ' unread' : 'Notifications'" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
-                <i data-lucide="bell" class="w-5 h-5"></i>
-                <span class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 inline-flex items-center justify-center rounded-full clay-gold ring-2 ring-white text-[10.5px] font-extrabold leading-none"
-                      x-show="$store.citizenNotifications.unreadCount > 0"
-                      x-text="$store.citizenNotifications.unreadCount > 99 ? '99+' : $store.citizenNotifications.unreadCount"></span>
-            </button>
-
-            <div
-                x-show="open"
-                x-transition:enter="transition duration-[200ms] ease-emphasized"
-                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                x-cloak
-                class="absolute right-0 mt-2 w-[22rem] max-sm:fixed max-sm:inset-x-3 max-sm:top-20 max-sm:right-3 max-sm:mt-0 max-sm:w-auto surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
-            >
-                <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
-                    <p class="text-sm font-bold text-ink" x-text="$store.lang.current === 'en' ? 'Notifications' : 'Mga Abiso'"></p>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded-full clay-gold-light" x-show="$store.citizenNotifications.unreadCount" x-text="$store.citizenNotifications.unreadCount + ($store.lang.current === 'en' ? ' new' : ' bago')"></span>
-                </div>
-                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-brand-600/10">
-                    <template x-for="n in $store.citizenNotifications.visible.slice(0, 8)" :key="n.id">
-                        <div class="group relative flex items-start gap-3 px-4 py-3 hover:bg-white/60 transition-colors">
-                            <a
-                                :href="n.link || '{{ route('citizen.notifications') }}'"
-                                @click="$store.citizenNotifications.markRead(n.id); close()"
-                                class="flex items-start gap-3 flex-1 min-w-0"
-                            >
-                                <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" :class="{ brand: 'text-brand-600 bg-brand-50', purple: 'text-purple-600 bg-purple-50', indigo: 'text-indigo-600 bg-indigo-50', teal: 'text-teal-600 bg-teal-50', amber: 'text-amber-600 bg-amber-50', rose: 'text-rose-600 bg-rose-50' }[n.color] || 'text-brand-600 bg-brand-50'">
-                                    <i :data-lucide="n.icon" class="w-4 h-4"></i>
-                                </span>
-                                <span class="min-w-0">
-                                    <span class="block text-sm font-semibold text-ink truncate" x-text="n.title"></span>
-                                    <span class="block text-xs text-ink-muted mt-0.5 line-clamp-2" x-text="n.body"></span>
-                                </span>
-                            </a>
-                            <button aria-label="Close"
-                                type="button" x-show="!n.pinned"
-                                @click.prevent.stop="$store.citizenNotifications.dismiss(n.id)"
-                                class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
-                            ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                        </div>
-                    </template>
-                    <p class="px-4 py-8 text-center text-sm text-slate-500" x-show="!$store.citizenNotifications.loading && !$store.citizenNotifications.visible.length">
-                        <x-ui.t fil="Wala pang abiso." en="No notifications yet." />
-                    </p>
-                </div>
-                <a href="{{ route('citizen.notifications') }}" class="block text-center text-sm font-semibold text-brand-600 py-3 border-t border-brand-600/10 hover:bg-white/60 transition-colors">
-                    <x-ui.t fil="Tingnan lahat ng abiso" en="View all notifications" />
-                </a>
-            </div>
-        </div>
+             2026-09-25), loaded once on the shell's own init above, so the bell
+             and the Notifications page share it. The bell: x-notifications.bell
+             (filters, Mark all as read, See all notifications; 28 Nov 2026). --}}
+        <x-notifications.bell portal="citizen" />
 
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" class="h-[52px] pl-1.5 pr-1.5 lg:pr-3.5 flex items-center gap-2.5 rounded-[20px] surface-glass-sm hover:bg-white/80 transition-colors">

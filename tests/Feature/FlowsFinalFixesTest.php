@@ -84,7 +84,8 @@ class FlowsFinalFixesTest extends TestCase
             $this->assertStringNotContainsString('Itinala', $this->source($path), $path);
         }
 
-        $notifications = $this->source('resources/views/citizen/notifications.blade.php');
+        // The Notifications page's time ago is the store's since 28 Nov 2026.
+        $notifications = $this->source('resources/js/notifications.js');
         $this->assertStringContainsString("hrs + ' oras ang nakalipas'", $notifications);
 
         // Short month names are English in both languages, as in the app.

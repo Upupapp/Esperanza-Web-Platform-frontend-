@@ -41,10 +41,12 @@ class Sweep1118web7Test extends TestCase
     public function test_the_staff_notifications_panel_stays_on_a_phone_screen(): void
     {
         $topbar = $this->source('resources/views/components/admin/topbar.blade.php');
+        // The bell is x-notifications.bell since 28 Nov 2026 (24rem wide, for its filter row).
+        $bell = $this->source('resources/views/components/notifications/bell.blade.php');
 
-        $this->assertStringContainsString("<div class=\"sm:relative\" x-data=\"dropdown\" @click.outside=\"close\">\n            <button @click=\"toggle\" aria-label=\"Notifications\"", $topbar);
-        $this->assertStringContainsString('class="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] surface-glass', $topbar);
-        $this->assertStringNotContainsString('w-[22rem]', $topbar);
+        $this->assertStringContainsString('<x-notifications.bell portal="admin" />', $topbar);
+        $this->assertStringContainsString("<div class=\"{{ \$citizen ? 'relative' : 'sm:relative' }}\" x-data=\"dropdown\" @click.outside=\"close\"", $bell);
+        $this->assertStringContainsString(": 'absolute right-0 mt-2 w-[min(24rem,calc(100vw-2rem))]' }} surface-glass", $bell);
         // The header the panel hangs from below sm is positioned.
         $this->assertStringContainsString('class="relative z-30 flex items-center gap-4 flex-wrap px-1', $topbar);
     }
@@ -90,13 +92,14 @@ class Sweep1118web7Test extends TestCase
     /** The success toast showed in .finally(), so a refused Mark all as read still said it worked. */
     public function test_mark_all_as_read_says_so_only_when_it_worked(): void
     {
-        $page = $this->source('resources/views/citizen/notifications.blade.php');
+        // The Notifications page's component, both portals, since 28 Nov 2026.
+        $page = $this->source('resources/js/notifications-page.js');
 
         // The store answers true or false (it no longer has to be guessed from
         // the unread count, which a live update can change meanwhile).
-        $this->assertStringContainsString('this.$store.citizenNotifications.markAllRead().then((ok) => {', $page);
-        $this->assertStringContainsString("this.\$dispatch('toast', ok === false", $page);
-        $app = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('this.store.markAllRead().then((ok) => {', $page);
+        $this->assertStringContainsString("window.dispatchEvent(new CustomEvent('toast', {\n                    detail: ok === false", $page);
+        $app = $this->source('resources/js/notifications.js');
         $this->assertMatchesRegularExpression('/async markAllRead\(\) \{.*?return true;.*?return false;/s', $app);
         $this->assertStringContainsString("variant: 'error' }", $page);
         $this->assertStringContainsString('}).finally(() => { this.markingAll = false; });', $page);

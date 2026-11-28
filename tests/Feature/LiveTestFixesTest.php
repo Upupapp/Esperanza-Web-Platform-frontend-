@@ -122,7 +122,7 @@ class LiveTestFixesTest extends TestCase
     public function test_resident_site_says_what_is_true(): void
     {
         $this->assertStringContainsString('this.smsAvailable = result.data?.sms_available !== false;', $this->source('resources/views/citizen/settings.blade.php'));
-        $this->assertStringContainsString('get pendingWelcome()', $this->source('resources/js/app.js'));
+        $this->assertStringContainsString('get pendingWelcome()', $this->source('resources/js/notifications.js'));
         $this->assertStringContainsString('<x-citizen.verified-popup />', $this->source('resources/views/components/layouts/citizen.blade.php'));
         $this->assertStringContainsString("x-text=\"faqText(faq, 'q')\"", $this->source('resources/views/citizen/help.blade.php'));
         $this->assertStringNotContainsString('walang aktwal na video na naka-play', $this->source('resources/views/citizen/help.blade.php'));

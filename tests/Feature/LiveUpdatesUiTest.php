@@ -76,7 +76,11 @@ class LiveUpdatesUiTest extends TestCase
         $this->assertStringContainsString('$store.adminNotifications.load(); $store.adminNotifications.poll(); $store.live.start()"', $this->source('resources/views/components/admin/topbar.blade.php'));
         $this->assertStringContainsString('if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll(); $store.live.start() }"', $this->source('resources/views/components/citizen/topbar.blade.php'));
 
-        $this->assertStringContainsString("Alpine.store('live').on(null, 'notifications', () => (this.state !== 'loading' ? this.load(true) : null), { dialogs: false, typing: false });", $app);
+        // The bell's store (resources/js/notifications.js since 28 Nov 2026) reloads, a filtered bell too, and so does a Notifications page.
+        $notifications = $this->source('resources/js/notifications.js');
+        $this->assertStringContainsString("window.Alpine.store('live').on(null, 'notifications', () => refresh(), { dialogs: false, typing: false });", $notifications);
+        $this->assertStringContainsString("if (this.bellFiltered && this.bell.state !== 'loading') this.bell.load(true);", $notifications);
+        $this->assertStringContainsString("Alpine.store('live').on(this.\$el, 'notifications', () => this.feed.load(true), { dialogs: false });", $this->source('resources/js/notifications-page.js'));
         $this->assertStringContainsString("Alpine.store('live').on(null, ['requests', 'appointments'], () => this.recount(side, needsAction, true), { dialogs: false, typing: false });", $app);
         $this->assertStringContainsString('.catch(failed(type))', $app);
     }

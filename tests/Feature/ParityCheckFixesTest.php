@@ -22,30 +22,32 @@ class ParityCheckFixesTest extends TestCase
 
     public function test_notifications_load_100_and_reach_older_pages_with_load_more(): void
     {
-        $js = $this->source('resources/js/app.js');
-        $page = $this->source('resources/views/citizen/notifications.blade.php');
+        // The stores and the lists moved to their own module (28 Nov 2026).
+        $js = $this->source('resources/js/notifications.js');
+        $page = $this->source('resources/views/components/notifications/page.blade.php');
 
-        // 100 a page (the server's most) for residents, not its default 25; the staff bell keeps 25.
-        $this->assertStringContainsString('const NOTIFICATIONS_PER_PAGE = 100;', $js);
+        // 100 a page (the server's most) for residents and both Notifications pages, not its default 25; the staff bell keeps 25.
+        $this->assertStringContainsString('export const NOTIFICATIONS_PER_PAGE = 100;', $js);
         $this->assertStringContainsString("Alpine.store('citizenNotifications', makeNotificationStore('/citizen/notifications', NOTIFICATIONS_PER_PAGE));", $js);
         $this->assertStringContainsString("Alpine.store('adminNotifications', makeNotificationStore('/admin/notifications'));", $js);
+        $this->assertStringContainsString('newFeed() { return makeFeed(path, NOTIFICATIONS_PER_PAGE); },', $js);
         $this->assertStringContainsString('const pageParams = (page = null) => ({ ...(perPage ? { per_page: perPage } : {}), ...(page ? { page } : {}) });', $js);
-        $this->assertStringContainsString('await api.get(path, { params: pageParams() });', $js);
+        $this->assertStringContainsString('await api.get(path, { params: this.params() });', $js);
 
         // The next page while meta.last_page allows, added under what is shown, without repeats.
         $this->assertStringContainsString('get hasMore() { return this.state === \'loaded\' && this.page < this.lastPage; },', $js);
-        $this->assertStringContainsString('await api.get(path, { params: pageParams(next) });', $js);
+        $this->assertStringContainsString('await api.get(path, { params: this.params(next) });', $js);
         $this->assertStringContainsString('this.lastPage = Math.max(this.page, Number(result.meta?.last_page) || 1);', $js);
         $this->assertStringContainsString('...(result.data || []).map(notificationItem).filter((n) => !ids.has(n.id))', $js);
 
-        // The bell's quiet refresh keeps the pages already opened; the unread count stays the server's.
+        // The quiet refresh keeps the pages already opened; the unread count stays the server's.
         $this->assertStringContainsString('if (quiet && this.page > 1) {', $js);
         $this->assertStringContainsString('this.serverUnread = Number.isInteger(result.meta?.unread) ? result.meta.unread : null;', $js);
 
-        // A bilingual Load more on the page, shown only while there is more.
-        $this->assertStringContainsString('x-show="$store.citizenNotifications.hasMore"', $page);
-        $this->assertStringContainsString('@click="$store.citizenNotifications.loadMore()"', $page);
-        $this->assertStringContainsString('<x-ui.t fil="Mag-load pa" en="Load more" />', $page);
+        // A Load more on the page (both languages on the resident site), shown only while there is more.
+        $this->assertStringContainsString('x-show="feed && feed.hasMore"', $page);
+        $this->assertStringContainsString('@click="feed.loadMore()"', $page);
+        $this->assertStringContainsString("{{ \$t('Load more', 'Mag-load pa') }}", $page);
     }
 
     public function test_dokyu_lists_only_what_the_server_catalogue_offers(): void
