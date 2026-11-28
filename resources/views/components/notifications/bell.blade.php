@@ -63,9 +63,9 @@
             </div>
             <div class="relative min-w-0 flex-1">
                 <select x-model="{{ $S }}.bellCategory" @change="{{ $S }}.setBell({{ $S }}.bellTab, $event.target.value)"
-                        @if($citizen) :aria-label="$store.lang.current === 'en' ? 'Category' : 'Uri'" @else aria-label="Category" @endif
+                        @if($citizen) :aria-label="$store.lang.current === 'en' ? 'Category' : 'Kategorya'" @else aria-label="Category" @endif
                         class="w-full appearance-none text-[11px] font-medium text-ink-body rounded-xl py-2 pl-2.5 pr-7 border-0 surface-pressed-sm outline-none focus:bg-white/90 focus:ring-4 focus:ring-brand-100 truncate">
-                    <option value="" @if($citizen) x-text="$store.lang.current === 'en' ? 'All categories' : 'Lahat ng uri'" @endif>{{ $citizen ? 'Lahat ng uri' : 'All categories' }}</option>
+                    <option value="" @if($citizen) x-text="$store.lang.current === 'en' ? 'All categories' : 'Lahat ng kategorya'" @endif>{{ $citizen ? 'Lahat ng kategorya' : 'All categories' }}</option>
                     <template x-for="k in {{ $S }}.categories" :key="k.key">
                         <option :value="k.key" :selected="k.key === {{ $S }}.bellCategory" x-text="{{ $S }}.kindName(k.key) + ' (' + ({{ $S }}.bellTab === 'unread' ? k.unread : k.total) + ')'"></option>
                     </template>
@@ -82,7 +82,7 @@
             <div class="flex flex-col items-center text-center px-6 py-8" x-show="!{{ $S }}.bellLoading && !{{ $S }}.bellItems.length">
                 <span class="w-11 h-11 rounded-2xl surface-pressed text-ink-muted grid place-items-center mb-2"><i data-lucide="bell-off" class="w-5 h-5"></i></span>
                 <p class="text-xs text-ink-muted" x-show="{{ $S }}.bellTab === 'unread' && !{{ $S }}.bellCategory">{{ $t('You\'re all caught up.', 'Nabasa mo na lahat.') }}</p>
-                <p class="text-xs text-ink-muted" x-show="{{ $S }}.bellCategory">{{ $t('No notifications of this kind.', 'Walang abiso sa uring ito.') }}</p>
+                <p class="text-xs text-ink-muted" x-show="{{ $S }}.bellCategory">{{ $t('No notifications of this kind.', 'Walang abiso sa kategoryang ito.') }}</p>
                 <p class="text-xs text-ink-muted" x-show="!{{ $S }}.bellFiltered">{{ $t('No notifications yet.', 'Wala pang abiso.') }}</p>
             </div>
         </div>

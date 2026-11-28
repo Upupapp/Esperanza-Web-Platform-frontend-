@@ -55,9 +55,9 @@
                        class="w-full pl-9 pr-3 {{ $field }}">
             </div>
             <div class="relative w-full sm:w-auto">
-                <select x-model="category" @change="apply()" @if($citizen) :aria-label="$store.lang.current === 'en' ? 'Category' : 'Uri'" @else aria-label="Category" @endif
+                <select x-model="category" @change="apply()" @if($citizen) :aria-label="$store.lang.current === 'en' ? 'Category' : 'Kategorya'" @else aria-label="Category" @endif
                         class="w-full sm:w-56 appearance-none pl-3 pr-8 text-ink-body {{ $field }}">
-                    <option value="" @if($citizen) x-text="$store.lang.current === 'en' ? 'All categories' : 'Lahat ng uri'" @endif>{{ $citizen ? 'Lahat ng uri' : 'All categories' }}</option>
+                    <option value="" @if($citizen) x-text="$store.lang.current === 'en' ? 'All categories' : 'Lahat ng kategorya'" @endif>{{ $citizen ? 'Lahat ng kategorya' : 'All categories' }}</option>
                     <template x-for="k in {{ $S }}.categories" :key="k.key">
                         <option :value="k.key" :selected="k.key === category" x-text="kindLabel(k)"></option>
                     </template>
