@@ -21,7 +21,7 @@ class CitizensBugHuntWebTest extends TestCase
         $page = $this->source('resources/views/admin/constituents.blade.php');
         $this->assertStringContainsString("if (a.status === 'Approved' && a.identity_status !== 'Verified' && a.id_status === 'Pending Review') return 'New ID Sent';", $page);
         $this->assertStringContainsString("pending: n('Pending Review') + n('New ID Sent'),", $page);
-        $this->assertStringContainsString("accounts: this.citizenAccountList.filter(i => this.cvNeedsReview(i)).length,", $page);
+        $this->assertStringContainsString('accounts: this.citizenAccountList.filter(i => this.cvNeedsReview(i)).length,', $page);
         $this->assertStringContainsString("if (!this.cvStatusFilter && status === 'Archived') return false;", $page);
         $this->assertStringNotContainsString("(i.citizen_account?.email || '').toLowerCase().includes(q)", $page);
 
@@ -101,7 +101,7 @@ class CitizensBugHuntWebTest extends TestCase
 
         $modal = $this->source('resources/views/admin/constituents/modal-citizen-account.blade.php');
         $this->assertStringNotContainsString('It is retried automatically.', $modal);
-        $this->assertStringContainsString("(c.reasons || []).map(r => window.cvWords(r))", $modal);
+        $this->assertStringContainsString('(c.reasons || []).map(r => window.cvWords(r))', $modal);
         $this->assertStringContainsString('window.cvWords(h.method)', $modal);
         $this->assertStringContainsString('window.cvWords(h.action)', $modal);
     }

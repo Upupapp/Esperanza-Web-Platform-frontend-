@@ -77,7 +77,7 @@ class Sweep1118web1Test extends TestCase
     public function test_the_registry_csv_has_flat_quoted_formula_safe_cells(): void
     {
         $page = $this->page();
-        $export = substr($page, strpos($page, 'exportCSV(rows, filename) {'), 1800);
+        $export = substr($page, strpos($page, 'exportCSV(rows, filename) {'), 3000);
 
         $this->assertStringNotContainsString('JSON.stringify', $export);
         // A livelihood becomes its label, a programs list one joined cell.
@@ -85,7 +85,7 @@ class Sweep1118web1Test extends TestCase
         // A leading = + - @ tab or CR is opened as text; quotes are doubled.
         $this->assertStringContainsString("const safe=/^[=+\\-@\\t\\r]/.test(s)?'\\''+s:s;", $export);
         $this->assertStringContainsString("'\\x22'+safe.replace(/\\x22/g,'\\x22\\x22')+'\\x22'", $export);
-        $this->assertStringContainsString("const csv='\\uFEFF'+[keys.map(cell).join(','),...rows.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\\r\\n');", $export);
+        $this->assertStringContainsString("const csv='\\uFEFF'+[keys.map(k=>cell(head(k))).join(','),...rows.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\\r\\n');", $export);
         $this->assertStringContainsString("type:'text/csv;charset=utf-8'", $export);
     }
 

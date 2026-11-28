@@ -28,7 +28,7 @@
                 sex: i.sex, civil_status: i.civil_status, contact: i.contact, occupation: i.occupation,
                 livelihood_code: i.livelihood?.code || '', livelihood_other: i.livelihood?.other || '',
                 education: i.education, income_range: i.income_range, sitio: i.sitio, relation: i.relation,
-                // The staff keys, with a resident's own ticks ("Senior Citizen")
+                // The staff keys, with a resident's own ticks ('Senior Citizen')
                 // shown ticked as their key; saved back in the words they
                 // were, so a tick is never stored twice (bug hunt 25 Nov, #7).
                 tags: registryTags(i.tags),

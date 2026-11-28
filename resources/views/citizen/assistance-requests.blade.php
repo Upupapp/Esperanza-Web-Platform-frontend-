@@ -183,7 +183,7 @@
                 r.status = d.status;
                 r.office = d.office || r.office;
                 r.remarks = d.decision_remarks || null;
-                // The server's own text: "Other: <what was typed>" (bug hunt 25 Nov, C10).
+                // The server's own text: 'Other: <what was typed>' (bug hunt 25 Nov, C10).
                 r.purpose = d.purpose || ((d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose);
                 r.canResubmit = !!d.can_resubmit;
                 // The resident withdrew it themselves (C2).
@@ -581,7 +581,7 @@
                         return (this.types[this.selectedType]?.fields || []).filter((f) => {
                             if (!f.required || f.type === 'derived_age' || !this.fieldShown(f)) return false;
                             const v = this.formData[f.key];
-                            // "Other" needs what it is (bug hunt 25 Nov, C10).
+                            // 'Other' needs what it is (bug hunt 25 Nov, C10).
                             if (f.allowOther && /^others?$/i.test(String(v ?? '')) && String(this.formData[f.key + '_other'] ?? '').trim() === '') return true;
                             return Array.isArray(v) ? v.length === 0 : String(v ?? '').trim() === '';
                         }).map((f) => f.label);

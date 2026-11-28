@@ -102,15 +102,15 @@ class NotificationsRedesignTest extends TestCase
     {
         $js = $this->source('resources/js/notifications.js');
 
-        foreach (["{ unread: 1 }", "{ category: f.category }", "{ q }", "{ since: f.since }", "{ until: f.until }"] as $param) {
+        foreach (['{ unread: 1 }', '{ category: f.category }', '{ q }', '{ since: f.since }', '{ until: f.until }'] as $param) {
             $this->assertStringContainsString($param, $js);
         }
-        $this->assertStringContainsString("this.serverFiltered = meta?.filtered === true;", $js);
+        $this->assertStringContainsString('this.serverFiltered = meta?.filtered === true;', $js);
         $this->assertStringContainsString('get shown() { return this.serverFiltered || !this.filtering ? this.items : this.items.filter((n) => matches(n, this.filters)); },', $js);
-        $this->assertStringContainsString("if (Array.isArray(meta?.categories)) this.kinds = meta.categories;", $js);
+        $this->assertStringContainsString('if (Array.isArray(meta?.categories)) this.kinds = meta.categories;', $js);
         // When, from this browser's midnight.
         $this->assertStringContainsString("if (when === '7d') return { since: back(midnight, -6).toISOString(), until: null };", $js);
-        $this->assertStringContainsString("return { since: start.toISOString(), until: back(start, 1).toISOString() };", $js);
+        $this->assertStringContainsString('return { since: start.toISOString(), until: back(start, 1).toISOString() };', $js);
     }
 
     public function test_messages_from_residents_and_staff_links_follow_the_pages_checks(): void

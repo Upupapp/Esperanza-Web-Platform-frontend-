@@ -144,7 +144,8 @@ class Sweep1118web3Test extends TestCase
         $this->assertStringContainsString("const typePerm = (t) => (t && (t.submodule || t.key)) || '';", $js);
         $this->assertStringContainsString('if (sv && sv.submodule_key) t.submodule = sv.submodule_key;', $js);
         $this->assertStringContainsString("return this.apCatalog().filter((t) => can(typePerm(t), 'create'));", $js);
-        $this->assertStringContainsString("can(typePerm(this.apType || { key: this.apKey }), 'release')", $js);
+        // Recording a past case is the import step since the bug hunt (25 Nov, A2/A3).
+        $this->assertStringContainsString("canStep(typePerm(this.apType || { key: this.apKey }), 'import')", $js);
         $this->assertStringNotContainsString("can(t.key, 'create')", $js);
         $this->assertStringNotContainsString("can(this.apKey, 'release')", $js);
     }

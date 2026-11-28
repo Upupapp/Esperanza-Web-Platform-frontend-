@@ -113,7 +113,7 @@
                 this.loadTileCounts(may);
                 const [residents, households, families, citizens, issues, encoders, coverage] = await Promise.all([
                     {{-- A to Z (bug hunt 25 Nov, #13): the server's default is newest
-                         first, and the registry opened at "Zaldy". --}}
+                         first, and the registry opened at Zaldy. --}}
                     $api.getAll('/admin/residents', { params: { sort: 'name', direction: 'asc' } }),
                     $api.getAll('/admin/households', { params: { sort: 'label', direction: 'asc' } }),
                     $api.getAll('/admin/families'),
