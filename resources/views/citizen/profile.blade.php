@@ -343,13 +343,14 @@
                         <span
                             class="inline-flex items-center gap-1 text-[11px] font-medium rounded-full px-2 py-0.5 border"
                             :class="$store.citizenSession.account?.fullServiceAccess ? 'text-emerald-100 bg-emerald-500/20 border-emerald-400/30' : 'text-amber-100 bg-amber-500/20 border-amber-400/30'"
-                            x-text="$store.citizenSession.account?.fullServiceAccess ? ($store.lang.current === 'en' ? 'Verified Resident' : 'Verified na Residente') : ($store.citizenSession.account?.status || ($store.lang.current === 'en' ? 'Unverified' : 'Hindi Pa Verified'))"
+                            x-text="$store.citizenSession.account?.fullServiceAccess ? ($store.lang.current === 'en' ? 'Verified Resident' : 'Verified na Residente') : ($store.citizenSession.account?.status === 'Approved' ? ($store.lang.current === 'en' ? 'Approved · requests paused' : 'Approved · naka-pause ang requests') : ($store.citizenSession.account?.status || ($store.lang.current === 'en' ? 'Unverified' : 'Hindi Pa Verified')))"
                         ></span>
                     </div>
                     <p class="text-sm text-white/60 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span class="flex items-center gap-1.5"><i data-lucide="hash" class="w-3.5 h-3.5"></i><span x-text="$store.citizenSession.account?.id"></span></span>
                         <span class="flex items-center gap-1.5"><i data-lucide="map-pinned" class="w-3.5 h-3.5"></i><span x-text="'Brgy. ' + ($store.citizenSession.account?.barangay || '—')"></span></span>
-                        <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i><span x-text="($store.lang.current === 'en' ? 'Resident since ' : 'Residente mula ') + ($store.citizenSession.account?.residentSince || '—')"></span></span>
+                        {{-- Only when known: no screen asks it, so it read "Resident since —" for everyone (bug hunt 25 Nov, #24). --}}
+                        <span class="flex items-center gap-1.5" x-show="$store.citizenSession.account?.residentSince" x-cloak><i data-lucide="calendar" class="w-3.5 h-3.5"></i><span x-text="($store.lang.current === 'en' ? 'Resident since ' : 'Residente mula ') + ($store.citizenSession.account?.residentSince || '')"></span></span>
                     </p>
                     <p class="text-xs text-amber-100 mt-1.5" x-show="photo.latest?.status === 'Pending Review'" x-cloak
                        x-text="$store.lang.current === 'en' ? 'Your new photo is waiting for LGU approval.' : 'Naghihintay ng pag-apruba ng LGU ang iyong bagong litrato.'"></p>

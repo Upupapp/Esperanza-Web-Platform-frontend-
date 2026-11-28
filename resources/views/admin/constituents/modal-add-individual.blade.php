@@ -300,6 +300,7 @@
                             <option value="Widowed">Widowed</option>
                             <option value="Separated">Separated</option>
                             <option value="Annulled">Annulled</option>
+                            <option value="Divorced">Divorced</option>
                             <option value="Live-in">Live-in</option>
                         </select>
                     </div>

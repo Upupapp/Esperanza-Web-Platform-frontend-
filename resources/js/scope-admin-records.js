@@ -17,6 +17,22 @@ import { registerOccasions } from './admin-occasions';
 import { telHref, GUARDIAN_SOURCES } from './guardian-scan';
 import { reasonText } from './resident-import-ui';
 
+// The account window's codes in words (bug hunt 25 Nov, #22): "Reasons:
+// NOT_COMPLETED", "(manual, ...)", "(revoked, ...)" read as raw codes.
+const CV_WORDS = {
+    not_completed: 'Not completed', manual: 'checked by hand', revoked: 'revoked', restored: 'restored',
+    rejected: 'not approved', approved: 'approved', automated: 'automatic check', auto: 'automatic check',
+    abandoned: 'not finished', expired: 'expired', declined: 'declined',
+};
+window.cvWords = (code) => {
+    const raw = String(code ?? '').trim();
+    if (!raw) return '';
+    const key = raw.toLowerCase();
+    if (CV_WORDS[key]) return CV_WORDS[key];
+    const words = key.replace(/[_-]+/g, ' ');
+    return /^[A-Z0-9_]+$/.test(raw) ? words.charAt(0).toUpperCase() + words.slice(1) : raw;
+};
+
 const OPEN = ['Submitted', 'Under Review'];
 
 // The statuses these screens show, in x-ui.badge's colours. The badge's
@@ -1736,8 +1752,12 @@ export function register(Alpine) {
             const f = this.icForm;
             const no = this.icFor;
             if (!no || this.icBusy) return;
-            if (!f.first_name.trim() || !f.last_name.trim() || !f.birthdate || !f.sex || !f.barangay) {
-                this.icError = 'Fill in the first and last name, the birth date, the sex and the barangay.';
+            // A birth date or sex the account never had is not asked for: an
+            // officer fixing a misspelled name had to invent them (bug hunt
+            // 25 Nov, #18). One the account has stays required.
+            const had = this.accountDetail || {};
+            if (!f.first_name.trim() || !f.last_name.trim() || !f.barangay || (had.birthdate && !f.birthdate) || (had.sex && !f.sex)) {
+                this.icError = 'Fill in the first and last name, the barangay, and the birth date and sex the account has.';
                 return;
             }
             if (f.reason.trim().length < 10) {
@@ -1751,8 +1771,8 @@ export function register(Alpine) {
                 middle_name: f.middle_name.trim() || null,
                 last_name: f.last_name.trim(),
                 suffix: f.suffix.trim() || null,
-                birthdate: f.birthdate,
-                sex: f.sex,
+                birthdate: f.birthdate || null,
+                sex: f.sex || null,
                 barangay: f.barangay,
                 reason: f.reason.trim(),
                 data_request_ref: f.data_request_ref || null,

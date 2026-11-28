@@ -11,12 +11,16 @@
     get open() { return showMerge },
     set open(v) { showMerge = v },
 
-    keep: 'A',
+    {{-- Record A is the issue's record, the later entry; Record B is the
+         older record it was found to repeat. The older one is kept unless the
+         officer chooses otherwise (bug hunt 25 Nov, #15: B was labelled the
+         duplicate and archived by default). --}}
+    keep: 'B',
     note: '',
     merging: false,
     loadingRecords: false,
 
-    reset() { this.keep = 'A'; this.note = ''; },
+    reset() { this.keep = 'B'; this.note = ''; },
 
     // The Registry list fetch is intentionally lean (no household/family) --
     // the merge decision needs the fuller record, same as openIndividual().
@@ -106,7 +110,7 @@
                 >
                     <div class="flex items-center gap-2 mb-3">
                         <span class="flex items-center justify-center w-6 h-6 rounded-full clay-blue text-xs font-bold shrink-0">A</span>
-                        <span class="text-xs font-bold text-brand-700 uppercase tracking-wider">Record A</span>
+                        <span class="text-xs font-bold text-brand-700 uppercase tracking-wider">Record A — Suspected Duplicate</span>
                         <span class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ring-1"
                               :class="keep === 'A' ? 'bg-brand-100 text-brand-700 ring-brand-200' : 'bg-slate-100 text-ink-muted ring-slate-200'"
                               x-text="keep === 'A' ? 'Will keep' : 'Will archive'"></span>
@@ -124,7 +128,7 @@
                 >
                     <div class="flex items-center gap-2 mb-3">
                         <span class="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-bold shrink-0">B</span>
-                        <span class="text-xs font-bold text-rose-700 uppercase tracking-wider">Record B — Suspected Duplicate</span>
+                        <span class="text-xs font-bold text-rose-700 uppercase tracking-wider">Record B — Original (older)</span>
                         <span class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ring-1"
                               :class="keep === 'B' ? 'bg-brand-100 text-brand-700 ring-brand-200' : 'bg-slate-100 text-ink-muted ring-slate-200'"
                               x-text="keep === 'B' ? 'Will keep' : 'Will archive'"></span>

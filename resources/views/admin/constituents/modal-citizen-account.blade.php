@@ -236,9 +236,9 @@
                             <div><dt class="text-ink-muted">Face match</dt><dd class="font-semibold text-ink" x-text="(c.face_match?.status || 'Not run') + (c.face_match?.score != null ? ' (' + c.face_match.score + ')' : '')"></dd></div>
                             <div><dt class="text-ink-muted">Liveness</dt><dd class="font-semibold text-ink" x-text="(c.liveness?.status || 'Not run') + (c.liveness?.score != null ? ' (' + c.liveness.score + ')' : '')"></dd></div>
                         </dl>
-                        <p x-show="(c.reasons || []).length" class="text-xs text-slate-700" x-text="'Reasons: ' + (c.reasons || []).join(', ')"></p>
+                        <p x-show="(c.reasons || []).length" class="text-xs text-slate-700" x-text="'Reasons: ' + (c.reasons || []).map(r => window.cvWords(r)).join(', ')"></p>
                         <p x-show="[...(c.document?.warnings || []), ...(c.face_match?.warnings || []), ...(c.liveness?.warnings || [])].length" class="text-[11px] text-ink-muted" x-text="'Provider warnings: ' + [...(c.document?.warnings || []), ...(c.face_match?.warnings || []), ...(c.liveness?.warnings || [])].join(', ')"></p>
-                        <p x-show="c.error" class="text-xs text-amber-700" x-text="'Could not run yet (' + c.error + '), attempt ' + c.attempts + '. It is retried automatically.'"></p>
+                        <p x-show="c.error" class="text-xs text-amber-700" x-text="c.error === 'abandoned' ? 'The resident did not finish this check (attempt ' + c.attempts + '). They can start a new one.' : 'Could not run (' + window.cvWords(c.error) + '), attempt ' + c.attempts + '.'"></p>
                         {{-- What the ID says, beside what the account says (2026-10-16):
                              the ID never overwrites the account; a difference
                              stops the check here, for the officer. --}}
@@ -294,7 +294,7 @@
                             <li class="flex flex-wrap gap-x-2 text-slate-700">
                                 <span class="text-ink-muted" x-text="h.at ? new Date(h.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span>
                                 <span class="font-semibold" x-text="(h.from || '—') + ' → ' + h.to"></span>
-                                <span x-text="'(' + h.method + (h.actor_name ? ', ' + h.actor_name : (h.actor_type === 'system' ? ', automated' : '')) + ')'"></span>
+                                <span x-text="'(' + window.cvWords(h.method) + (h.actor_name ? ', ' + h.actor_name : (h.actor_type === 'system' ? ', automated' : '')) + ')'"></span>
                                 <span x-show="h.reason" class="basis-full text-ink-muted" x-text="h.reason"></span>
                             </li>
                         </template>
@@ -399,7 +399,7 @@
                         <li class="flex flex-wrap gap-x-2 text-slate-700">
                             <span class="text-ink-muted" x-text="h.at ? new Date(h.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span>
                             <span class="font-semibold" x-text="(h.from_status || '—') + ' → ' + h.to_status"></span>
-                            <span x-text="'(' + h.action + (h.actor_name ? ', ' + h.actor_name : '') + ')'"></span>
+                            <span x-text="'(' + window.cvWords(h.action) + (h.actor_name ? ', ' + h.actor_name : '') + ')'"></span>
                             <span x-show="h.reason" class="basis-full text-ink-muted" x-text="h.reason"></span>
                         </li>
                     </template>

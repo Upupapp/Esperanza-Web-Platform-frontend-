@@ -84,7 +84,7 @@
                 <input aria-label="Citizen verification search"
                     type="text"
                     x-model="cvSearch"
-                    :placeholder="cvType === 'Individual' ? 'Search by name, resident ID, barangay, or email…' : 'Search by name, ID, barangay, or head…'"
+                    :placeholder="cvType === 'Individual' ? 'Search by name, resident ID, account no. or barangay…' : 'Search by name, ID, barangay, or head…'"
                     class="w-full pl-8 pr-4 py-2 text-sm rounded-xl placeholder-slate-400 text-ink focus:outline-none transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                 />
             </div>
@@ -99,7 +99,7 @@
                 >
                     <option value="">All Statuses</option>
                     <template x-if="cvType === 'Individual'">
-                        <template x-for="s in ['Pending Review', 'Under Verification', 'Approved', 'Rejected', 'Not Registered']" :key="s">
+                        <template x-for="s in ['Pending Review', 'New ID Sent', 'Under Verification', 'Approved', 'Rejected', 'Not Registered', 'Archived']" :key="s">
                             <option :value="s" x-text="s"></option>
                         </template>
                     </template>
@@ -266,7 +266,8 @@
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"
                                     :class="{
                                         'bg-emerald-50 text-emerald-700 ring-emerald-200': cvStatusOf(i) === 'Approved',
-                                        'bg-amber-50 text-amber-700 ring-amber-200': cvStatusOf(i) === 'Pending Review',
+                                        'bg-amber-50 text-amber-700 ring-amber-200': ['Pending Review', 'New ID Sent'].includes(cvStatusOf(i)),
+                                        'bg-slate-100 text-ink-muted ring-slate-200': cvStatusOf(i) === 'Archived',
                                         'bg-indigo-50 text-indigo-700 ring-indigo-200': cvStatusOf(i) === 'Under Verification',
                                         'bg-rose-50 text-rose-700 ring-rose-200': cvStatusOf(i) === 'Rejected',
                                     }"
@@ -275,7 +276,8 @@
                                         class="w-1.5 h-1.5 rounded-full"
                                         :class="{
                                             'bg-emerald-500': cvStatusOf(i) === 'Approved',
-                                            'bg-amber-500': cvStatusOf(i) === 'Pending Review',
+                                            'bg-amber-500': ['Pending Review', 'New ID Sent'].includes(cvStatusOf(i)),
+                                            'bg-slate-400': cvStatusOf(i) === 'Archived',
                                             'bg-indigo-500': cvStatusOf(i) === 'Under Verification',
                                             'bg-rose-500': cvStatusOf(i) === 'Rejected',
                                         }"
@@ -298,13 +300,13 @@
                                      (submitted ID, selfie, verification signals) first.
                                      "Review" is the only action available here. --}}
                                 <button
-                                    x-show="i.citizen_account && (['Pending Review', 'Under Verification'].includes(i.citizen_account.status) || i.citizen_account.photo_pending) && (can('const_citizen_verification', 'verify') || can('const_citizen_verification', 'reject'))"
+                                    x-show="i.citizen_account && (cvNeedsReview(i) || i.citizen_account.photo_pending) && (can('const_citizen_verification', 'verify') || can('const_citizen_verification', 'reject'))"
                                     @click="openAccount(i)"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
-                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openAccount(i)" x-show="i.citizen_account && !['Pending Review', 'Under Verification'].includes(i.citizen_account.status) && !i.citizen_account.photo_pending"
+                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openAccount(i)" x-show="i.citizen_account && !cvNeedsReview(i) && !i.citizen_account.photo_pending"
         role="button"
         tabindex="0"
         @keydown.enter.prevent="openAccount(i)"

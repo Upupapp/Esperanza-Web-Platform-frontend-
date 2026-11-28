@@ -218,7 +218,8 @@
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div>
                             <p class="text-[11px] text-rose-600 font-semibold uppercase tracking-wider mb-1">
-                                Suspected Duplicate Record
+                                {{-- The older record this one repeats (#15). --}}
+                                Original Record (older)
                             </p>
                             <p class="text-sm font-bold text-ink" x-text="dqRecordName(selectedDQIssue?.merge_candidate) || '—'"></p>
                             <p class="text-xs text-ink-muted font-mono mt-0.5" x-text="selectedDQIssue?.merge_candidate"></p>

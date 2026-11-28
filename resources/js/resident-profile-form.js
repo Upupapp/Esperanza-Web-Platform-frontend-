@@ -7,7 +7,9 @@ import api from './api/client';
 // PUT /citizen/resident-profile.
 const options = {
     sex: ['Male', 'Female'],
-    civilStatus: ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'],
+    // The registry's own list too (bug hunt 25 Nov, #29): an officer's
+    // Annulled or Live-in read blank here, where civil status is required.
+    civilStatus: ['Single', 'Married', 'Live-in', 'Widowed', 'Separated', 'Annulled', 'Divorced'],
     education: ['No Formal Education', 'Elementary', 'High School', 'Senior High School', 'Vocational', 'College', 'Post Graduate'],
     relation: ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Parent', 'Sibling', 'Grandchild', 'Other Relative', 'Non-Relative'],
     income: ['No Income', 'Below ₱5,000', '₱5,000–₱9,999', '₱10,000–₱14,999', '₱15,000–₱24,999', '₱25,000–₱49,999', '₱50,000 and above'],
@@ -138,7 +140,8 @@ export function residentProfileForm() {
             this.members.push(blankMember());
             this.$nextTick(() => window.renderIcons?.());
         },
-        removeMember(i) { if (!this.readOnly) this.members.splice(i, 1); },
+        // A saved member stays: the barangay removes them (#8).
+        removeMember(i) { if (!this.readOnly && !this.members[i]?.ref) this.members.splice(i, 1); },
 
         // What is still missing before the barangay can check it.
         get problems() {

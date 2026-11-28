@@ -352,6 +352,12 @@
 
             </div>{{-- /Archive --}}
 
+            {{-- What happens to the resident's account (bug hunt 25 Nov, #1, #2). --}}
+            <p x-show="selectedIndividual?.citizen_account" x-cloak class="text-xs text-amber-800 bg-amber-50 rounded-xl px-3 py-2">
+                <span x-show="lifecycleAction === 'Transfer'">This resident has an account: it moves to the new barangay with the record, and their Resident ID shows it. A transfer out of the municipality closes it.</span>
+                <span x-show="lifecycleAction !== 'Transfer'">This resident has an account: it is closed with the record, and their Resident ID stops being valid.</span>
+            </p>
+
         </div>{{-- /body --}}
 
 

@@ -61,7 +61,7 @@
                 <x-livelihood-select model="personal" id="rp-livelihood" class="sm:col-span-2" :label-class="$labelClass" :input-class="$inputClass" />
                 <div>
                     <label class="{{ $labelClass }}" for="rp-education"><x-ui.t fil="Natapos na pag-aaral" en="Education" /></label>
-                    <select id="rp-education" x-model="personal.education" class="{{ $inputClass }}"><option value="">—</option><template x-for="o in options.education" :key="o"><option :value="o" x-text="o"></option></template></select>
+                    <select id="rp-education" x-model="personal.education" class="{{ $inputClass }}"><option value="">—</option>{{-- What the registry has, though not one of the choices (an import's "College Level"): shown, not blank (#29). --}}<template x-if="personal.education && !options.education.includes(personal.education)"><option :value="personal.education" x-text="personal.education" selected></option></template><template x-for="o in options.education" :key="o"><option :value="o" x-text="o"></option></template></select>
                 </div>
                 <div>
                     <label class="{{ $labelClass }}" for="rp-income"><x-ui.t fil="Buwanang kita ng sambahayan" en="Household monthly income" /></label>
@@ -120,7 +120,11 @@
                     <div class="rounded-xl border border-slate-200 p-3 space-y-3">
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-xs font-semibold text-ink" x-text="(en ? 'Family member ' : 'Kasapi ') + (i + 1)"></p>
-                            <button type="button" x-show="!readOnly" @click="removeMember(i)" class="text-xs text-rose-600 hover:text-rose-700"><x-ui.t fil="Alisin" en="Remove" /></button>
+                            {{-- Only a member not saved yet: one the barangay has on record is
+                                 removed by the barangay, so the save kept them and the
+                                 Remove did nothing (bug hunt 25 Nov, #8). --}}
+                            <button type="button" x-show="!readOnly && !m.ref" @click="removeMember(i)" class="text-xs text-rose-600 hover:text-rose-700"><x-ui.t fil="Alisin" en="Remove" /></button>
+                            <span x-show="!readOnly && m.ref" x-cloak class="text-[11px] text-ink-muted"><x-ui.t fil="Para alisin, sabihan ang barangay" en="To remove, ask your barangay" /></span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div class="sm:col-span-2">

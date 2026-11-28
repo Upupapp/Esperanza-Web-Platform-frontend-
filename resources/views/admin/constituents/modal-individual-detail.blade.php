@@ -20,6 +20,7 @@
         editing: false,
         saving: false,
         edit: {},
+        tagWords: {},
         lopen: false,
         startEdit() {
             const i = selectedIndividual;
@@ -27,8 +28,13 @@
                 sex: i.sex, civil_status: i.civil_status, contact: i.contact, occupation: i.occupation,
                 livelihood_code: i.livelihood?.code || '', livelihood_other: i.livelihood?.other || '',
                 education: i.education, income_range: i.income_range, sitio: i.sitio, relation: i.relation,
-                tags: [...(i.tags || [])],
+                // The staff keys, with a resident's own ticks ("Senior Citizen")
+                // shown ticked as their key; saved back in the words they
+                // were, so a tick is never stored twice (bug hunt 25 Nov, #7).
+                tags: registryTags(i.tags),
             };
+            this.tagWords = {};
+            (i.tags || []).forEach(t => { const k = registryTags([t])[0]; if (k && k !== t) this.tagWords[k] = t; });
             this.editing = true;
         },
         toggleEditTag(tag) {
@@ -41,7 +47,7 @@
             try {
                 // The classification goes only when changed: saving another
                 // field must not turn the matcher's reading into a staff choice.
-                const body = { ...this.edit };
+                const body = { ...this.edit, tags: (this.edit.tags || []).map(k => this.tagWords?.[k] || k) };
                 const was = selectedIndividual.livelihood || {};
                 if ((body.livelihood_code || '') === (was.code || '') && (body.livelihood_other || '') === (was.other || '')) { delete body.livelihood_code; delete body.livelihood_other; }
                 const res = await $api.put('/admin/residents/' + selectedIndividual.ref, body);
@@ -537,6 +543,7 @@
                                 <option value="Widowed">Widowed</option>
                                 <option value="Separated">Separated</option>
                                 <option value="Annulled">Annulled</option>
+                                <option value="Divorced">Divorced</option>
                                 <option value="Live-in">Live-in</option>
                             </select>
                         </div>

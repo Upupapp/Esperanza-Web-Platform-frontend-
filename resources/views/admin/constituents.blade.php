@@ -66,6 +66,11 @@
             this.$watch('filterKey', () => { this.pages = {}; });
             this.$watch('cvTagFilter', () => this.loadCvTagged());
             await this.loadRegistry();
+            {{-- Live (bug hunt 25 Nov, #20): another officer's approval, or a
+                 resident's new ID or profile, shows without a reload. The
+                 accounts and the tiles only - the registry's thousands of rows
+                 are not fetched again every time. --}}
+            this.$store.live.on(this.$el, 'residents', () => this.refreshAccounts(), { busy: () => this.showAccountReview || this.processingCitizen });
             {{-- From the top bar's search: a resident's record (?ref=) or a
                  barangay's registry (?barangay=). --}}
             const params = new URLSearchParams(window.location.search);
@@ -107,8 +112,10 @@
                 {{-- Asked first, so the server answers them before the lists' pages. --}}
                 this.loadTileCounts(may);
                 const [residents, households, families, citizens, issues, encoders, coverage] = await Promise.all([
-                    $api.getAll('/admin/residents'),
-                    $api.getAll('/admin/households'),
+                    {{-- A to Z (bug hunt 25 Nov, #13): the server's default is newest
+                         first, and the registry opened at "Zaldy". --}}
+                    $api.getAll('/admin/residents', { params: { sort: 'name', direction: 'asc' } }),
+                    $api.getAll('/admin/households', { params: { sort: 'label', direction: 'asc' } }),
                     $api.getAll('/admin/families'),
                     {{-- A citizen-verification queue's 'Not Registered' bucket needs
                          every resident, so this joins onto individuals below rather
@@ -120,7 +127,10 @@
                     {{-- Encoder list for the Assign action -- not everyone who can
                          see the queue can see Personnel, so this degrades to an
                          empty picker rather than failing the page. --}}
-                    may('um_personnel') ? $api.getAll('/admin/users').catch(() => ({ data: [] })) : none(),
+                    {{-- Or, for an officer who assigns issues but cannot read Personnel
+                         (the Records Officer), the officers they may assign to (#14). --}}
+                    may('um_personnel') ? $api.getAll('/admin/users').catch(() => ({ data: [] }))
+                        : (this.can('const_data_quality', 'assign') ? $api.get('/admin/data-quality/assignees').catch(() => ({ data: [] })) : none()),
                     {{-- Profiling Coverage tab. `meta.municipal` is only present for
                          a municipality-scoped actor -- null for a barangay-scoped one. --}}
                     may('const_barangay') ? $api.get('/admin/coverage').catch(() => ({ data: [], meta: null })) : none({ meta: null }),
@@ -148,6 +158,27 @@
                 this.remote = { key: '', rows: null, loading: false, total: 0, page: 1, lastPage: 1, params: {} };
                 this.queueRemoteSearch(0);
             }
+        },
+
+        async refreshAccounts() {
+            const may = (sub) => this.$store.session.canPerm(sub, 'view');
+            this.loadTileCounts(may);
+            if (!may('const_citizen_verification')) return;
+            const res = await $api.getAll('/admin/citizens').catch(() => null);
+            if (!res) return;
+            this.citizens = res.data || [];
+            const byRef = {};
+            this.citizens.forEach(c => { if (c.resident_profile?.ref) byRef[c.resident_profile.ref] = c; });
+            this.citizensByRef = byRef;
+            this.individuals = this.individuals.map(i => ({ ...i, citizen_account: byRef[i.ref] || null }));
+        },
+        {{-- An account the officer just decided, in every copy the page keeps:
+             a row for an account whose record is not among the loaded residents
+             is rebuilt from this.citizens on each render, and kept saying
+             Pending Review until a reload (#20). --}}
+        keepAccount(updated) {
+            if (!updated?.account_no) return;
+            this.citizens = (this.citizens || []).map(c => c.account_no === updated.account_no ? { ...c, ...updated } : c);
         },
 
         {{-- One row a list: the totals are in each page's meta, and the residents'
@@ -487,7 +518,7 @@
         get verificationQueueParts() {
             const started = r => ['For Validation', 'Partially Verified'].includes(r.verification);
             return {
-                accounts: this.citizenAccountList.filter(i => ['Pending Review', 'Under Verification'].includes(this.cvStatusOf(i))).length,
+                accounts: this.citizenAccountList.filter(i => this.cvNeedsReview(i)).length,
                 families: this.cvFamilyList.filter(started).length,
                 households: this.cvHouseholdList.filter(started).length,
             };
@@ -501,8 +532,13 @@
             const a = i?.citizen_account;
             if (!a) return 'Not Registered';
             if (a.status === 'Pending Review' && a.identity_status === 'Verified') return 'Under Verification';
+            {{-- An approved resident whose ID check was revoked sent a new ID:
+                 it waits for an officer like any new one (bug hunt 25 Nov, #5). --}}
+            if (a.status === 'Approved' && a.identity_status !== 'Verified' && a.id_status === 'Pending Review') return 'New ID Sent';
             return a.status;
         },
+        {{-- The statuses that wait on an officer's review. --}}
+        cvNeedsReview(i) { return ['Pending Review', 'Under Verification', 'New ID Sent'].includes(this.cvStatusOf(i)); },
         get pendingCitizenVerificationCount() {
             const p = this.verificationQueueParts;
             return p.accounts + p.families + p.households;
@@ -516,27 +552,33 @@
             const list = this.citizenAccountList;
             const n = s => list.filter(i => this.cvStatusOf(i) === s).length;
             return {
-                pending: n('Pending Review'),
+                {{-- A new ID sent counts with the IDs not confirmed yet (#5). --}}
+                pending: n('Pending Review') + n('New ID Sent'),
                 underVerification: n('Under Verification'),
                 verified: n('Approved'),
                 rejected: n('Rejected'),
                 notRegistered: n('Not Registered'),
+                archived: n('Archived'),
             };
         },
         get filteredCitizenAccounts() {
             let list = this.citizenAccountList.filter(i => {
-                if (this.cvStatusFilter && this.cvStatusOf(i) !== this.cvStatusFilter) return false;
+                const status = this.cvStatusOf(i);
+                {{-- Archived accounts only when asked for: no card counted them (#28). --}}
+                if (!this.cvStatusFilter && status === 'Archived') return false;
+                if (this.cvStatusFilter && status !== this.cvStatusFilter && !(this.cvStatusFilter === 'Pending Review' && status === 'New ID Sent')) return false;
                 if (this.cvBarangayFilter && i.barangay !== this.cvBarangayFilter) return false;
                 if (this.cvTagFilter && !this.cvTagged.refs?.has(i.ref)) return false;
                 if (this.cvSearch) {
                     const q = this.cvSearch.toLowerCase();
-                    return (i.name || '').toLowerCase().includes(q) || (i.ref || '').toLowerCase().includes(q) || (i.barangay || '').toLowerCase().includes(q) || (i.citizen_account?.email || '').toLowerCase().includes(q);
+                    {{-- Not the email: the list's is masked, so it never matched (#27). The account number does. --}}
+                    return (i.name || '').toLowerCase().includes(q) || (i.ref || '').toLowerCase().includes(q) || (i.barangay || '').toLowerCase().includes(q) || (i.citizen_account?.account_no || '').toLowerCase().includes(q);
                 }
                 return true;
             });
             const priority = i => {
                 if (!i.citizen_account) return 2;
-                return ['Pending Review', 'Under Verification'].includes(this.cvStatusOf(i)) ? 0 : 1;
+                return this.cvNeedsReview(i) ? 0 : 1;
             };
             return [...list].sort((a, b) => priority(a) - priority(b));
         },
@@ -546,6 +588,7 @@
             try {
                 const res = await $api.post('/admin/citizens/' + i.citizen_account.account_no + '/verify', {});
                 i.citizen_account = { ...i.citizen_account, ...res.data };
+                this.keepAccount(i.citizen_account);
                 this.$dispatch('toast', { message: i.name + '\'s citizen account was verified.', variant: 'success' });
             } catch (err) {
                 this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not verify this account.', variant: 'error' });
@@ -557,6 +600,7 @@
             try {
                 const res = await $api.post('/admin/citizens/' + i.citizen_account.account_no + '/reject', { remarks: this.rejectAccountRemarks.trim() });
                 i.citizen_account = { ...i.citizen_account, ...res.data };
+                this.keepAccount(i.citizen_account);
                 this.rejectAccountRemarks = '';
                 this.$dispatch('toast', { message: i.name + '\'s citizen account was rejected.', variant: 'error' });
             } catch (err) {
@@ -969,7 +1013,10 @@
                  like a formula is opened as text. --}}
             const flat=v=>Array.isArray(v)?v.map(flat).filter(x=>x!=='').join('; '):(v&&typeof v==='object'?(v.full_label??v.label??v.name??v.ref??''):(v??''));
             const cell=v=>{const s=String(flat(v));const safe=/^[=+\-@\t\r]/.test(s)?'\''+s:s;return /[\x22,\n\r]/.test(safe)?'\x22'+safe.replace(/\x22/g,'\x22\x22')+'\x22':safe;};
-            const csv='\uFEFF'+[keys.map(cell).join(','),...rows.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n');
+            {{-- Headers in words, not raw keys (bug hunt 25 Nov, #31). --}}
+            const words={ref:'Reference No.',dob:'Birth Date',sitio:'Purok / Sitio',civil_status:'Civil Status',income_range:'Income Range',head_name:'Head',head_ref:'Head Reference No.',household_ref:'Household Reference No.',member_count:'Members',family_type:'Family Type',dwelling_type:'Dwelling Type',housing_tenure:'Housing Tenure',flood_risk:'Flood Risk',imported_from:'Imported From'};
+            const head=k=>words[k]||String(k).replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+            const csv='\uFEFF'+[keys.map(k=>cell(head(k))).join(','),...rows.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n');
             const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),download:filename});
             a.click(); this.$dispatch('toast',{message:'Exported successfully.',variant:'success'});
         },

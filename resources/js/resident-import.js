@@ -508,8 +508,9 @@ export function dateOrderOf(values) {
 
 export function normSex(value) {
     const s = headerKey(value);
-    if (['m', 'male', 'lalaki', 'l', 'boy', 'man'].includes(s)) return 'Male';
-    if (['f', 'female', 'babae', 'b', 'girl', 'woman'].includes(s)) return 'Female';
+    // "Lalake" and "Babai" are common spellings too (bug hunt 25 Nov, #25: they came in blank).
+    if (['m', 'male', 'lalaki', 'lalake', 'l', 'boy', 'man'].includes(s)) return 'Male';
+    if (['f', 'female', 'babae', 'babai', 'b', 'girl', 'woman'].includes(s)) return 'Female';
     return null;
 }
 
